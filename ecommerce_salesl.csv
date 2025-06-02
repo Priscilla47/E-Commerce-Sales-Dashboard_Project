@@ -1,0 +1,501 @@
+OrderID,Date,Product,Category,UnitPrice,Quantity,CustomerID,Country
+1000,2025-04-17,Blender,Home Goods,61.18,3,CUST410,Nigeria
+1001,2025-02-10,Smartphone,Electronics,470.38,5,CUST545,Brazil
+1002,2025-04-20,Laptop,Electronics,687.62,3,CUST155,UK
+1003,2025-02-16,Smartphone,Electronics,518.42,5,CUST654,India
+1004,2025-04-30,Laptop,Electronics,758.7,5,CUST332,Cameroon
+1005,2025-03-24,Blender,Home Goods,55.7,4,CUST250,UK
+1006,2025-02-18,Blender,Home Goods,65.41,2,CUST704,Australia
+1007,2025-04-20,Laptop,Electronics,722.69,4,CUST328,UK
+1008,2025-01-18,Coffee Maker,Home Goods,84.31,3,CUST832,Germany
+1009,2025-01-23,Book,Books,10.81,1,CUST870,Canada
+1010,2025-02-04,T-shirt,Clothing,21.38,1,CUST110,India
+1011,2025-01-29,Headphones,Electronics,116.17,5,CUST632,Australia
+1012,2025-01-24,Smartphone,Electronics,473.7,2,CUST823,Canada
+1013,2025-04-27,Blender,Home Goods,57.4,3,CUST669,Brazil
+1014,2025-02-09,T-shirt,Clothing,21.28,1,CUST435,Brazil
+1015,2025-01-12,Laptop,Electronics,704.6,1,CUST911,Canada
+1016,2025-02-15,Smartphone,Electronics,513.1,4,CUST399,Canada
+1017,2025-03-08,Book,Books,9.46,5,CUST430,Nigeria
+1018,2025-02-20,Blender,Home Goods,65.5,4,CUST803,Canada
+1019,2025-04-03,Coffee Maker,Home Goods,83.66,5,CUST498,UK
+1020,2025-02-23,Headphones,Electronics,116.08,2,CUST344,France
+1021,2025-04-01,Desk Lamp,Home Goods,25.14,3,CUST698,USA
+1022,2025-04-27,Desk Lamp,Home Goods,23.98,2,CUST542,Germany
+1023,2025-03-05,Blender,Home Goods,64.36,5,CUST119,Australia
+1024,2025-02-20,T-shirt,Clothing,19.04,4,CUST514,Brazil
+1025,2025-04-02,Headphones,Electronics,112.7,1,CUST727,Cameroon
+1026,2025-04-04,Desk Lamp,Home Goods,24.82,4,CUST982,UK
+1027,2025-01-30,Book,Books,9.39,2,CUST274,Germany
+1028,2025-02-09,Book,Books,10.64,2,CUST305,Australia
+1029,2025-04-13,Coffee Maker,Home Goods,93.32,1,CUST681,USA
+1030,2025-02-11,Desk Lamp,Home Goods,24.33,1,CUST809,India
+1031,2025-04-23,Desk Lamp,Home Goods,23.92,2,CUST477,India
+1032,2025-04-27,Smartphone,Electronics,510.3,4,CUST781,Canada
+1033,2025-04-10,Smartphone,Electronics,516.14,2,CUST205,India
+1034,2025-01-02,Jeans,Clothing,38.6,1,CUST138,Australia
+1035,2025-01-15,Book,Books,10.5,4,CUST669,USA
+1036,2025-01-05,Laptop,Electronics,697.94,1,CUST330,Germany
+1037,2025-04-22,Jeans,Clothing,37.05,3,CUST256,India
+1038,2025-02-24,Phone Case,Accessories,14.47,4,CUST510,Nigeria
+1039,2025-04-07,Blender,Home Goods,60.54,2,CUST421,UK
+1040,2025-03-08,T-shirt,Clothing,20.07,2,CUST687,France
+1041,2025-04-21,Desk Lamp,Home Goods,23.09,4,CUST917,India
+1042,2025-03-08,Laptop,Electronics,735.88,5,CUST362,Canada
+1043,2025-04-16,Jeans,Clothing,39.1,2,CUST286,Brazil
+1044,2025-02-17,Coffee Maker,Home Goods,88.58,2,CUST485,Cameroon
+1045,2025-03-31,Desk Lamp,Home Goods,23.56,4,CUST445,Brazil
+1046,2025-01-11,Smartphone,Electronics,511.19,2,CUST603,USA
+1047,2025-04-10,Coffee Maker,Home Goods,91.13,3,CUST138,Canada
+1048,2025-01-10,Phone Case,Accessories,15.69,1,CUST422,USA
+1049,2025-04-05,Blender,Home Goods,57.47,5,CUST167,Australia
+1050,2025-01-11,T-shirt,Clothing,19.88,3,CUST862,Australia
+1051,2025-04-09,T-shirt,Clothing,20.45,4,CUST240,UK
+1052,2025-04-30,Blender,Home Goods,58.05,2,CUST296,Brazil
+1053,2025-03-13,Blender,Home Goods,65.3,3,CUST767,France
+1054,2025-01-19,Jeans,Clothing,40.05,1,CUST797,USA
+1055,2025-03-31,Blender,Home Goods,62.7,5,CUST869,Germany
+1056,2025-02-05,Smartphone,Electronics,507.7,3,CUST343,India
+1057,2025-01-06,Laptop,Electronics,721.7,4,CUST290,Brazil
+1058,2025-02-28,Book,Books,10.77,1,CUST207,India
+1059,2025-04-22,Book,Books,9.2,2,CUST295,UK
+1060,2025-01-26,Book,Books,10.56,4,CUST453,Cameroon
+1061,2025-01-21,Phone Case,Accessories,15.94,1,CUST507,Brazil
+1062,2025-03-16,Jeans,Clothing,39.68,3,CUST443,France
+1063,2025-03-14,Jeans,Clothing,43.65,3,CUST937,Canada
+1064,2025-02-24,Laptop,Electronics,774.83,4,CUST163,Nigeria
+1065,2025-03-01,Laptop,Electronics,818.62,5,CUST841,Brazil
+1066,2025-03-18,Coffee Maker,Home Goods,79.01,5,CUST897,Germany
+1067,2025-02-27,Blender,Home Goods,56.57,4,CUST801,Australia
+1068,2025-03-13,Desk Lamp,Home Goods,24.4,1,CUST674,Germany
+1069,2025-03-29,Blender,Home Goods,62.78,5,CUST215,India
+1070,2025-04-05,Jeans,Clothing,43.01,3,CUST836,Nigeria
+1071,2025-02-07,Coffee Maker,Home Goods,83.93,2,CUST423,Cameroon
+1072,2025-02-04,Smartphone,Electronics,545.56,3,CUST100,Brazil
+1073,2025-03-25,Desk Lamp,Home Goods,26.87,1,CUST768,UK
+1074,2025-02-18,Smartphone,Electronics,484.63,4,CUST909,Brazil
+1075,2025-01-09,T-shirt,Clothing,18.96,2,CUST817,India
+1076,2025-03-01,Coffee Maker,Home Goods,83.2,4,CUST258,USA
+1077,2025-02-09,Coffee Maker,Home Goods,77.07,1,CUST554,Australia
+1078,2025-03-23,Smartphone,Electronics,526.17,5,CUST405,Australia
+1079,2025-03-19,Coffee Maker,Home Goods,76.73,1,CUST829,France
+1080,2025-04-16,Smartphone,Electronics,511.45,4,CUST387,India
+1081,2025-01-29,Book,Books,10.11,2,CUST440,UK
+1082,2025-04-15,Jeans,Clothing,37.76,1,CUST190,Canada
+1083,2025-02-09,Blender,Home Goods,57.57,1,CUST291,Nigeria
+1084,2025-02-23,T-shirt,Clothing,20.17,2,CUST158,Cameroon
+1085,2025-01-30,Book,Books,9.21,3,CUST447,Germany
+1086,2025-01-24,Phone Case,Accessories,16.17,1,CUST554,Germany
+1087,2025-02-06,Blender,Home Goods,58.43,3,CUST950,Australia
+1088,2025-02-07,Smartphone,Electronics,516.82,1,CUST647,France
+1089,2025-02-15,Smartphone,Electronics,500.17,3,CUST976,Germany
+1090,2025-03-04,Coffee Maker,Home Goods,78.68,3,CUST860,Australia
+1091,2025-02-15,Laptop,Electronics,814.46,3,CUST738,Australia
+1092,2025-01-11,Jeans,Clothing,38.69,5,CUST714,Canada
+1093,2025-04-27,Smartphone,Electronics,460.23,2,CUST500,Canada
+1094,2025-04-03,Smartphone,Electronics,456.42,3,CUST957,Australia
+1095,2025-05-01,Coffee Maker,Home Goods,79.51,4,CUST523,Germany
+1096,2025-01-11,Jeans,Clothing,40.28,3,CUST516,Canada
+1097,2025-02-25,Laptop,Electronics,811.23,1,CUST971,USA
+1098,2025-02-11,T-shirt,Clothing,21.63,3,CUST207,Germany
+1099,2025-03-31,Coffee Maker,Home Goods,78.44,1,CUST884,UK
+1100,2025-03-07,Phone Case,Accessories,13.86,3,CUST242,UK
+1101,2025-03-31,Phone Case,Accessories,15.78,4,CUST210,Cameroon
+1102,2025-02-25,Smartphone,Electronics,512.64,3,CUST320,Cameroon
+1103,2025-03-28,Book,Books,10.55,3,CUST872,Nigeria
+1104,2025-03-08,Coffee Maker,Home Goods,79.41,5,CUST396,Nigeria
+1105,2025-02-07,Headphones,Electronics,109.28,5,CUST240,France
+1106,2025-03-01,Headphones,Electronics,116.3,2,CUST620,Germany
+1107,2025-02-06,Desk Lamp,Home Goods,26.59,1,CUST308,India
+1108,2025-04-05,Smartphone,Electronics,519.84,5,CUST959,Germany
+1109,2025-04-13,Headphones,Electronics,109.84,5,CUST762,Australia
+1110,2025-02-09,Blender,Home Goods,57.58,1,CUST105,France
+1111,2025-03-13,Coffee Maker,Home Goods,85.06,3,CUST121,Nigeria
+1112,2025-01-29,Jeans,Clothing,41.09,2,CUST781,USA
+1113,2025-04-08,Book,Books,9.1,1,CUST688,Cameroon
+1114,2025-04-21,Jeans,Clothing,43.13,1,CUST113,USA
+1115,2025-01-23,Jeans,Clothing,42.84,2,CUST751,Germany
+1116,2025-03-17,Book,Books,9.22,5,CUST788,UK
+1117,2025-01-30,Smartphone,Electronics,508.17,3,CUST265,Canada
+1118,2025-01-25,Phone Case,Accessories,16.33,5,CUST515,France
+1119,2025-04-07,Desk Lamp,Home Goods,27.0,4,CUST188,France
+1120,2025-02-08,Smartphone,Electronics,502.86,1,CUST534,UK
+1121,2025-03-02,Smartphone,Electronics,527.61,5,CUST479,Australia
+1122,2025-01-05,Headphones,Electronics,128.46,1,CUST642,Australia
+1123,2025-01-03,Headphones,Electronics,118.7,2,CUST330,France
+1124,2025-03-03,Coffee Maker,Home Goods,88.58,1,CUST509,Australia
+1125,2025-04-25,Jeans,Clothing,41.07,3,CUST826,Canada
+1126,2025-01-22,Desk Lamp,Home Goods,22.85,3,CUST125,France
+1127,2025-02-23,Desk Lamp,Home Goods,24.19,4,CUST339,Australia
+1128,2025-03-17,Desk Lamp,Home Goods,27.43,3,CUST824,Canada
+1129,2025-04-30,Book,Books,10.13,2,CUST817,India
+1130,2025-04-15,Headphones,Electronics,121.41,3,CUST282,Australia
+1131,2025-01-18,Book,Books,9.3,2,CUST988,France
+1132,2025-04-17,Headphones,Electronics,128.15,4,CUST183,Cameroon
+1133,2025-04-23,T-shirt,Clothing,18.98,3,CUST751,Germany
+1134,2025-03-21,Book,Books,10.29,5,CUST881,India
+1135,2025-03-26,Laptop,Electronics,766.23,3,CUST987,Cameroon
+1136,2025-03-26,Coffee Maker,Home Goods,87.76,5,CUST398,Nigeria
+1137,2025-02-15,Headphones,Electronics,127.99,5,CUST312,Nigeria
+1138,2025-02-08,Blender,Home Goods,64.23,5,CUST347,UK
+1139,2025-04-03,Book,Books,10.61,1,CUST632,Nigeria
+1140,2025-04-23,Smartphone,Electronics,530.31,5,CUST745,Brazil
+1141,2025-02-12,Jeans,Clothing,41.59,2,CUST142,Cameroon
+1142,2025-04-10,Book,Books,9.92,1,CUST782,Canada
+1143,2025-03-19,Jeans,Clothing,36.03,5,CUST172,France
+1144,2025-04-29,Book,Books,10.63,4,CUST938,Nigeria
+1145,2025-04-27,Desk Lamp,Home Goods,26.77,1,CUST275,France
+1146,2025-04-17,Headphones,Electronics,116.84,4,CUST710,France
+1147,2025-03-17,Book,Books,9.95,5,CUST309,Germany
+1148,2025-04-01,Jeans,Clothing,37.03,2,CUST524,Brazil
+1149,2025-01-15,Coffee Maker,Home Goods,87.57,4,CUST979,USA
+1150,2025-01-08,T-shirt,Clothing,21.66,3,CUST925,India
+1151,2025-04-16,Coffee Maker,Home Goods,87.43,5,CUST841,Germany
+1152,2025-03-06,Blender,Home Goods,57.32,3,CUST915,Brazil
+1153,2025-04-27,T-shirt,Clothing,18.83,4,CUST744,Australia
+1154,2025-01-19,Coffee Maker,Home Goods,93.3,4,CUST725,India
+1155,2025-02-14,Phone Case,Accessories,15.43,3,CUST426,Nigeria
+1156,2025-03-06,Book,Books,10.35,4,CUST455,UK
+1157,2025-03-21,T-shirt,Clothing,20.05,3,CUST851,Germany
+1158,2025-01-28,T-shirt,Clothing,19.05,1,CUST282,France
+1159,2025-02-05,T-shirt,Clothing,21.15,2,CUST305,France
+1160,2025-01-02,Laptop,Electronics,751.0,4,CUST355,France
+1161,2025-01-28,Smartphone,Electronics,477.33,4,CUST396,Cameroon
+1162,2025-02-24,Smartphone,Electronics,533.68,3,CUST628,Australia
+1163,2025-01-19,Phone Case,Accessories,15.29,5,CUST872,Nigeria
+1164,2025-04-12,Coffee Maker,Home Goods,90.88,5,CUST201,UK
+1165,2025-01-07,Laptop,Electronics,819.56,3,CUST920,Cameroon
+1166,2025-04-05,Jeans,Clothing,38.37,5,CUST566,France
+1167,2025-03-19,Phone Case,Accessories,14.91,4,CUST391,Brazil
+1168,2025-04-16,Headphones,Electronics,128.16,5,CUST164,Cameroon
+1169,2025-03-17,Book,Books,9.47,4,CUST485,Nigeria
+1170,2025-03-15,Smartphone,Electronics,504.37,5,CUST312,UK
+1171,2025-01-19,Desk Lamp,Home Goods,26.76,4,CUST486,UK
+1172,2025-01-14,Desk Lamp,Home Goods,25.53,2,CUST416,Brazil
+1173,2025-01-13,Phone Case,Accessories,15.86,2,CUST860,USA
+1174,2025-04-24,Coffee Maker,Home Goods,88.84,1,CUST994,Nigeria
+1175,2025-01-15,Desk Lamp,Home Goods,23.77,5,CUST387,Cameroon
+1176,2025-03-29,Desk Lamp,Home Goods,26.76,1,CUST283,Canada
+1177,2025-02-20,Desk Lamp,Home Goods,27.02,3,CUST788,Australia
+1178,2025-04-04,Headphones,Electronics,131.33,4,CUST588,India
+1179,2025-03-05,T-shirt,Clothing,19.63,4,CUST495,India
+1180,2025-03-21,Smartphone,Electronics,493.5,3,CUST895,USA
+1181,2025-03-27,Jeans,Clothing,43.81,1,CUST560,Germany
+1182,2025-04-24,Headphones,Electronics,114.39,2,CUST483,France
+1183,2025-01-21,Desk Lamp,Home Goods,24.14,5,CUST624,Nigeria
+1184,2025-04-01,Book,Books,9.41,1,CUST148,UK
+1185,2025-01-31,Phone Case,Accessories,14.75,3,CUST673,UK
+1186,2025-02-04,Headphones,Electronics,128.08,1,CUST419,Australia
+1187,2025-02-16,Blender,Home Goods,65.09,4,CUST549,UK
+1188,2025-01-13,Blender,Home Goods,55.97,3,CUST159,Nigeria
+1189,2025-04-10,Book,Books,10.38,4,CUST437,Australia
+1190,2025-01-04,Jeans,Clothing,38.86,3,CUST790,Australia
+1191,2025-01-30,Smartphone,Electronics,521.47,3,CUST528,France
+1192,2025-02-01,Desk Lamp,Home Goods,26.63,1,CUST768,Brazil
+1193,2025-03-17,Laptop,Electronics,727.84,5,CUST982,Nigeria
+1194,2025-04-18,Laptop,Electronics,717.22,4,CUST304,UK
+1195,2025-04-01,Desk Lamp,Home Goods,23.08,4,CUST778,Cameroon
+1196,2025-01-06,Coffee Maker,Home Goods,76.63,2,CUST288,Cameroon
+1197,2025-02-27,Book,Books,9.01,4,CUST585,Nigeria
+1198,2025-02-05,Phone Case,Accessories,16.36,1,CUST745,Germany
+1199,2025-03-23,Jeans,Clothing,42.05,5,CUST900,USA
+1200,2025-04-03,Laptop,Electronics,755.25,2,CUST711,Cameroon
+1201,2025-04-07,Laptop,Electronics,708.23,5,CUST714,UK
+1202,2025-02-27,Headphones,Electronics,125.35,5,CUST472,USA
+1203,2025-03-09,Desk Lamp,Home Goods,26.63,5,CUST383,Germany
+1204,2025-01-30,Laptop,Electronics,700.49,3,CUST996,Germany
+1205,2025-03-01,Headphones,Electronics,116.08,3,CUST276,Canada
+1206,2025-01-01,T-shirt,Clothing,20.46,1,CUST654,USA
+1207,2025-02-28,Smartphone,Electronics,524.53,1,CUST625,Canada
+1208,2025-04-02,Desk Lamp,Home Goods,23.15,3,CUST122,India
+1209,2025-03-28,T-shirt,Clothing,18.61,2,CUST315,Canada
+1210,2025-02-25,T-shirt,Clothing,20.45,5,CUST773,Canada
+1211,2025-02-12,Coffee Maker,Home Goods,78.65,4,CUST914,UK
+1212,2025-01-11,Laptop,Electronics,720.45,5,CUST162,India
+1213,2025-04-09,Desk Lamp,Home Goods,27.3,5,CUST433,USA
+1214,2025-01-26,Laptop,Electronics,817.24,1,CUST956,Australia
+1215,2025-03-06,Smartphone,Electronics,484.12,2,CUST248,India
+1216,2025-01-10,Headphones,Electronics,130.62,4,CUST107,Germany
+1217,2025-04-08,Coffee Maker,Home Goods,81.83,3,CUST592,Brazil
+1218,2025-03-14,Jeans,Clothing,42.92,1,CUST256,Canada
+1219,2025-01-25,Desk Lamp,Home Goods,24.17,1,CUST598,Cameroon
+1220,2025-02-23,Desk Lamp,Home Goods,24.95,5,CUST515,Nigeria
+1221,2025-02-07,Desk Lamp,Home Goods,25.07,3,CUST307,India
+1222,2025-04-26,T-shirt,Clothing,18.31,3,CUST329,India
+1223,2025-03-31,Desk Lamp,Home Goods,23.89,2,CUST742,Canada
+1224,2025-01-23,T-shirt,Clothing,20.36,2,CUST178,Cameroon
+1225,2025-03-26,Laptop,Electronics,701.14,3,CUST228,USA
+1226,2025-03-12,Jeans,Clothing,39.08,2,CUST931,Australia
+1227,2025-03-25,T-shirt,Clothing,21.17,5,CUST325,Germany
+1228,2025-04-30,Coffee Maker,Home Goods,81.97,2,CUST873,Canada
+1229,2025-04-23,Smartphone,Electronics,502.29,1,CUST447,UK
+1230,2025-03-02,Blender,Home Goods,63.52,3,CUST617,Germany
+1231,2025-01-17,Phone Case,Accessories,16.42,4,CUST416,India
+1232,2025-03-03,Jeans,Clothing,36.28,4,CUST759,Brazil
+1233,2025-02-25,T-shirt,Clothing,21.0,2,CUST275,Germany
+1234,2025-03-29,Blender,Home Goods,62.01,3,CUST545,France
+1235,2025-02-25,Headphones,Electronics,119.04,2,CUST599,UK
+1236,2025-01-28,Headphones,Electronics,123.06,1,CUST443,Cameroon
+1237,2025-03-16,T-shirt,Clothing,18.06,4,CUST729,France
+1238,2025-04-26,Desk Lamp,Home Goods,26.3,5,CUST265,Cameroon
+1239,2025-02-15,Laptop,Electronics,808.01,3,CUST533,USA
+1240,2025-01-30,Laptop,Electronics,818.28,4,CUST764,USA
+1241,2025-01-04,T-shirt,Clothing,19.69,3,CUST698,Germany
+1242,2025-02-11,Desk Lamp,Home Goods,25.48,3,CUST674,Nigeria
+1243,2025-01-20,Coffee Maker,Home Goods,85.48,4,CUST711,UK
+1244,2025-02-16,Coffee Maker,Home Goods,91.3,2,CUST437,Brazil
+1245,2025-03-27,Desk Lamp,Home Goods,23.02,3,CUST640,UK
+1246,2025-02-03,Jeans,Clothing,43.63,4,CUST794,Germany
+1247,2025-03-26,Book,Books,10.47,5,CUST750,Canada
+1248,2025-01-25,Headphones,Electronics,127.02,3,CUST765,Cameroon
+1249,2025-01-24,Phone Case,Accessories,14.54,4,CUST272,Nigeria
+1250,2025-04-20,T-shirt,Clothing,20.5,2,CUST395,India
+1251,2025-01-12,Jeans,Clothing,42.98,4,CUST204,India
+1252,2025-04-19,Desk Lamp,Home Goods,23.57,1,CUST880,Australia
+1253,2025-04-14,Coffee Maker,Home Goods,87.95,5,CUST997,USA
+1254,2025-04-09,Laptop,Electronics,689.14,2,CUST963,Nigeria
+1255,2025-04-26,Book,Books,9.97,4,CUST812,Canada
+1256,2025-04-05,T-shirt,Clothing,20.3,5,CUST981,USA
+1257,2025-03-03,Headphones,Electronics,112.62,5,CUST360,Germany
+1258,2025-03-22,Book,Books,9.12,2,CUST584,Nigeria
+1259,2025-04-10,Smartphone,Electronics,546.64,1,CUST876,UK
+1260,2025-02-04,Desk Lamp,Home Goods,23.1,4,CUST143,Nigeria
+1261,2025-04-01,Phone Case,Accessories,16.12,1,CUST424,Australia
+1262,2025-03-12,T-shirt,Clothing,21.17,2,CUST184,USA
+1263,2025-03-29,Desk Lamp,Home Goods,25.46,2,CUST943,Brazil
+1264,2025-03-22,T-shirt,Clothing,21.36,2,CUST862,UK
+1265,2025-04-05,Headphones,Electronics,123.6,3,CUST488,Brazil
+1266,2025-03-25,Coffee Maker,Home Goods,80.14,5,CUST347,Canada
+1267,2025-01-03,Blender,Home Goods,63.2,3,CUST380,India
+1268,2025-01-12,Coffee Maker,Home Goods,84.37,3,CUST997,Australia
+1269,2025-01-22,Jeans,Clothing,38.43,5,CUST893,Canada
+1270,2025-01-12,Laptop,Electronics,748.23,1,CUST880,Germany
+1271,2025-04-16,Jeans,Clothing,37.53,3,CUST748,Canada
+1272,2025-01-03,Coffee Maker,Home Goods,93.12,2,CUST930,Australia
+1273,2025-03-25,Book,Books,9.38,1,CUST199,Cameroon
+1274,2025-02-22,Desk Lamp,Home Goods,23.76,4,CUST619,Canada
+1275,2025-01-13,Book,Books,10.17,3,CUST306,India
+1276,2025-02-11,Book,Books,10.85,3,CUST966,Nigeria
+1277,2025-01-28,Phone Case,Accessories,15.19,1,CUST392,Germany
+1278,2025-04-03,Coffee Maker,Home Goods,80.8,2,CUST905,France
+1279,2025-02-26,T-shirt,Clothing,20.59,5,CUST942,USA
+1280,2025-04-23,Phone Case,Accessories,13.58,2,CUST136,USA
+1281,2025-03-21,Headphones,Electronics,113.46,4,CUST631,India
+1282,2025-01-25,Phone Case,Accessories,16.36,3,CUST522,Nigeria
+1283,2025-01-04,Coffee Maker,Home Goods,92.13,3,CUST425,USA
+1284,2025-03-06,Desk Lamp,Home Goods,24.62,2,CUST390,Cameroon
+1285,2025-03-15,Headphones,Electronics,127.64,5,CUST756,Cameroon
+1286,2025-03-21,Coffee Maker,Home Goods,77.01,5,CUST128,Australia
+1287,2025-03-06,Coffee Maker,Home Goods,83.07,3,CUST432,UK
+1288,2025-01-28,Laptop,Electronics,771.93,5,CUST872,Australia
+1289,2025-04-09,Desk Lamp,Home Goods,26.88,4,CUST316,Germany
+1290,2025-03-15,Coffee Maker,Home Goods,91.15,5,CUST463,Cameroon
+1291,2025-03-07,Headphones,Electronics,110.79,4,CUST595,India
+1292,2025-01-17,Blender,Home Goods,60.05,4,CUST468,France
+1293,2025-04-14,Book,Books,9.32,2,CUST715,Brazil
+1294,2025-04-10,T-shirt,Clothing,19.03,3,CUST846,France
+1295,2025-03-16,Laptop,Electronics,755.63,3,CUST878,USA
+1296,2025-02-03,Smartphone,Electronics,507.03,2,CUST652,Nigeria
+1297,2025-02-22,Book,Books,9.43,3,CUST374,France
+1298,2025-01-26,Smartphone,Electronics,512.0,2,CUST469,Cameroon
+1299,2025-02-19,Smartphone,Electronics,524.53,1,CUST188,Brazil
+1300,2025-03-21,Laptop,Electronics,745.36,3,CUST632,Brazil
+1301,2025-04-07,Smartphone,Electronics,483.73,5,CUST516,USA
+1302,2025-03-26,Phone Case,Accessories,13.91,3,CUST430,Nigeria
+1303,2025-02-08,Coffee Maker,Home Goods,91.02,3,CUST331,UK
+1304,2025-02-03,Coffee Maker,Home Goods,84.81,2,CUST943,India
+1305,2025-04-24,Blender,Home Goods,57.96,1,CUST514,Germany
+1306,2025-04-24,Smartphone,Electronics,544.15,1,CUST901,France
+1307,2025-04-29,Coffee Maker,Home Goods,86.65,4,CUST224,Brazil
+1308,2025-01-07,Laptop,Electronics,804.09,3,CUST971,India
+1309,2025-02-21,Coffee Maker,Home Goods,79.85,5,CUST172,Australia
+1310,2025-04-03,Jeans,Clothing,43.09,2,CUST547,Germany
+1311,2025-01-09,Phone Case,Accessories,16.19,3,CUST708,UK
+1312,2025-03-08,Phone Case,Accessories,16.36,5,CUST609,France
+1313,2025-02-27,Jeans,Clothing,38.23,4,CUST701,Cameroon
+1314,2025-02-10,Jeans,Clothing,40.98,4,CUST439,Brazil
+1315,2025-01-12,Headphones,Electronics,111.85,3,CUST533,UK
+1316,2025-03-08,Jeans,Clothing,37.86,3,CUST113,Australia
+1317,2025-04-13,Headphones,Electronics,114.75,3,CUST318,Cameroon
+1318,2025-01-24,Jeans,Clothing,37.5,5,CUST867,France
+1319,2025-03-24,Headphones,Electronics,117.5,3,CUST100,USA
+1320,2025-04-07,Smartphone,Electronics,480.57,3,CUST285,Nigeria
+1321,2025-02-23,Smartphone,Electronics,460.44,3,CUST823,USA
+1322,2025-04-05,Blender,Home Goods,57.74,2,CUST194,USA
+1323,2025-02-04,Book,Books,10.89,4,CUST620,India
+1324,2025-03-04,Blender,Home Goods,62.6,1,CUST469,Nigeria
+1325,2025-04-21,T-shirt,Clothing,20.27,3,CUST551,Germany
+1326,2025-01-21,Laptop,Electronics,816.18,4,CUST786,USA
+1327,2025-01-13,Smartphone,Electronics,513.28,5,CUST294,France
+1328,2025-01-23,Laptop,Electronics,796.83,3,CUST414,India
+1329,2025-03-17,Phone Case,Accessories,15.47,4,CUST272,USA
+1330,2025-01-21,Desk Lamp,Home Goods,26.95,2,CUST342,Nigeria
+1331,2025-05-01,Desk Lamp,Home Goods,23.56,5,CUST745,Australia
+1332,2025-04-02,Desk Lamp,Home Goods,26.47,2,CUST182,France
+1333,2025-01-31,Phone Case,Accessories,16.06,3,CUST804,Nigeria
+1334,2025-03-14,Headphones,Electronics,121.81,5,CUST532,Germany
+1335,2025-03-18,Jeans,Clothing,36.78,2,CUST301,France
+1336,2025-03-04,T-shirt,Clothing,19.07,1,CUST580,France
+1337,2025-04-25,Book,Books,10.43,3,CUST554,Nigeria
+1338,2025-01-25,Jeans,Clothing,41.89,4,CUST452,Cameroon
+1339,2025-01-16,Headphones,Electronics,126.02,2,CUST269,USA
+1340,2025-03-25,Laptop,Electronics,759.95,1,CUST960,India
+1341,2025-03-27,Headphones,Electronics,120.06,4,CUST160,France
+1342,2025-04-07,Desk Lamp,Home Goods,27.43,4,CUST323,India
+1343,2025-04-01,T-shirt,Clothing,20.51,3,CUST362,Brazil
+1344,2025-01-10,T-shirt,Clothing,19.95,1,CUST627,Cameroon
+1345,2025-03-22,Blender,Home Goods,62.96,4,CUST259,Cameroon
+1346,2025-03-28,Desk Lamp,Home Goods,24.98,5,CUST965,Germany
+1347,2025-01-17,Book,Books,10.01,5,CUST135,USA
+1348,2025-04-25,Desk Lamp,Home Goods,26.78,4,CUST786,Canada
+1349,2025-01-07,Coffee Maker,Home Goods,91.82,5,CUST421,Brazil
+1350,2025-04-11,Laptop,Electronics,761.98,5,CUST756,USA
+1351,2025-03-27,Blender,Home Goods,59.07,4,CUST372,India
+1352,2025-04-13,Laptop,Electronics,767.02,5,CUST315,France
+1353,2025-03-02,Coffee Maker,Home Goods,92.05,1,CUST146,France
+1354,2025-04-07,Blender,Home Goods,63.43,2,CUST153,Germany
+1355,2025-02-05,Jeans,Clothing,37.15,4,CUST654,Brazil
+1356,2025-04-05,Laptop,Electronics,715.53,2,CUST997,Brazil
+1357,2025-01-09,Phone Case,Accessories,14.89,4,CUST390,Canada
+1358,2025-01-10,Smartphone,Electronics,494.06,4,CUST204,Australia
+1359,2025-04-20,Headphones,Electronics,123.14,3,CUST310,Cameroon
+1360,2025-01-14,Phone Case,Accessories,15.39,2,CUST963,Canada
+1361,2025-04-03,Coffee Maker,Home Goods,91.51,2,CUST272,Nigeria
+1362,2025-03-11,Book,Books,10.51,4,CUST106,USA
+1363,2025-03-21,Laptop,Electronics,818.05,5,CUST406,USA
+1364,2025-01-11,Headphones,Electronics,118.55,5,CUST807,Australia
+1365,2025-04-20,Blender,Home Goods,54.97,2,CUST208,Nigeria
+1366,2025-04-06,Blender,Home Goods,62.07,4,CUST456,Brazil
+1367,2025-04-02,Laptop,Electronics,675.33,2,CUST370,India
+1368,2025-02-23,T-shirt,Clothing,21.85,2,CUST786,USA
+1369,2025-01-01,Coffee Maker,Home Goods,93.12,5,CUST170,Nigeria
+1370,2025-04-02,Blender,Home Goods,54.25,2,CUST485,Brazil
+1371,2025-02-04,Smartphone,Electronics,467.2,4,CUST912,France
+1372,2025-03-19,Desk Lamp,Home Goods,24.37,2,CUST873,USA
+1373,2025-02-07,Desk Lamp,Home Goods,25.85,2,CUST917,Australia
+1374,2025-03-03,Book,Books,10.23,4,CUST749,Australia
+1375,2025-04-16,Headphones,Electronics,124.49,2,CUST617,India
+1376,2025-01-10,Smartphone,Electronics,540.08,4,CUST481,Germany
+1377,2025-02-25,Laptop,Electronics,720.16,4,CUST676,UK
+1378,2025-05-01,Book,Books,9.73,4,CUST554,Australia
+1379,2025-03-03,Blender,Home Goods,65.77,1,CUST622,Nigeria
+1380,2025-02-03,Headphones,Electronics,127.87,2,CUST404,Nigeria
+1381,2025-03-27,Jeans,Clothing,43.7,1,CUST173,Canada
+1382,2025-01-05,Jeans,Clothing,36.19,2,CUST980,Germany
+1383,2025-02-02,Smartphone,Electronics,500.88,5,CUST576,Cameroon
+1384,2025-04-13,Desk Lamp,Home Goods,25.18,5,CUST499,USA
+1385,2025-02-15,Blender,Home Goods,54.75,3,CUST970,France
+1386,2025-03-07,Blender,Home Goods,59.69,5,CUST547,Brazil
+1387,2025-01-18,Phone Case,Accessories,15.39,4,CUST572,Cameroon
+1388,2025-04-28,Laptop,Electronics,713.42,4,CUST449,Nigeria
+1389,2025-04-27,Desk Lamp,Home Goods,26.08,2,CUST559,Nigeria
+1390,2025-03-31,Book,Books,10.89,2,CUST679,Cameroon
+1391,2025-03-09,Smartphone,Electronics,513.23,2,CUST617,Brazil
+1392,2025-02-06,Jeans,Clothing,43.26,3,CUST141,India
+1393,2025-01-05,Headphones,Electronics,126.17,3,CUST708,Canada
+1394,2025-04-13,Book,Books,10.57,3,CUST519,Australia
+1395,2025-03-25,Desk Lamp,Home Goods,24.85,5,CUST450,Canada
+1396,2025-04-18,Coffee Maker,Home Goods,81.4,1,CUST348,Germany
+1397,2025-03-13,Jeans,Clothing,40.55,4,CUST464,France
+1398,2025-04-02,Smartphone,Electronics,504.54,1,CUST674,Nigeria
+1399,2025-03-08,Coffee Maker,Home Goods,89.39,1,CUST832,India
+1400,2025-01-23,Jeans,Clothing,39.8,1,CUST710,France
+1401,2025-02-12,Smartphone,Electronics,483.47,1,CUST970,India
+1402,2025-04-06,Book,Books,10.63,2,CUST686,Germany
+1403,2025-03-01,Blender,Home Goods,65.62,3,CUST744,Germany
+1404,2025-03-25,T-shirt,Clothing,21.82,2,CUST165,Canada
+1405,2025-01-12,Smartphone,Electronics,507.87,4,CUST492,Cameroon
+1406,2025-01-02,Jeans,Clothing,37.58,5,CUST814,Nigeria
+1407,2025-01-11,Book,Books,10.0,4,CUST921,UK
+1408,2025-02-21,T-shirt,Clothing,20.53,3,CUST501,Cameroon
+1409,2025-03-02,Headphones,Electronics,109.59,5,CUST219,India
+1410,2025-04-12,Coffee Maker,Home Goods,85.93,1,CUST580,Cameroon
+1411,2025-03-10,Book,Books,9.28,3,CUST709,USA
+1412,2025-02-14,Smartphone,Electronics,524.46,2,CUST386,India
+1413,2025-03-03,Blender,Home Goods,57.35,2,CUST573,Germany
+1414,2025-04-12,Jeans,Clothing,38.77,4,CUST314,Canada
+1415,2025-03-28,Smartphone,Electronics,464.03,5,CUST401,Canada
+1416,2025-02-28,T-shirt,Clothing,19.87,1,CUST122,USA
+1417,2025-01-07,T-shirt,Clothing,19.15,2,CUST321,Australia
+1418,2025-03-07,Jeans,Clothing,36.22,4,CUST204,UK
+1419,2025-03-16,Blender,Home Goods,59.0,1,CUST207,Canada
+1420,2025-02-13,Headphones,Electronics,108.9,2,CUST749,UK
+1421,2025-02-17,Coffee Maker,Home Goods,79.67,3,CUST999,USA
+1422,2025-02-12,Headphones,Electronics,113.13,3,CUST792,UK
+1423,2025-02-13,Headphones,Electronics,115.05,3,CUST952,USA
+1424,2025-03-07,Desk Lamp,Home Goods,23.07,2,CUST807,USA
+1425,2025-04-11,Phone Case,Accessories,14.41,4,CUST368,Australia
+1426,2025-02-13,Desk Lamp,Home Goods,22.79,1,CUST179,Cameroon
+1427,2025-04-18,Phone Case,Accessories,13.74,4,CUST707,UK
+1428,2025-01-24,Phone Case,Accessories,16.44,3,CUST697,Canada
+1429,2025-03-30,Book,Books,9.63,1,CUST687,Brazil
+1430,2025-04-12,Smartphone,Electronics,512.75,4,CUST441,India
+1431,2025-01-03,Book,Books,10.17,1,CUST559,France
+1432,2025-04-29,Jeans,Clothing,38.81,2,CUST654,France
+1433,2025-02-17,Desk Lamp,Home Goods,26.44,1,CUST332,Canada
+1434,2025-04-19,Book,Books,9.73,5,CUST796,India
+1435,2025-04-09,Jeans,Clothing,40.04,2,CUST254,India
+1436,2025-03-10,Desk Lamp,Home Goods,27.09,5,CUST267,USA
+1437,2025-04-19,Laptop,Electronics,806.51,3,CUST630,Germany
+1438,2025-02-17,T-shirt,Clothing,21.12,4,CUST708,India
+1439,2025-04-19,Blender,Home Goods,60.66,5,CUST786,Brazil
+1440,2025-04-30,Book,Books,10.68,5,CUST852,Cameroon
+1441,2025-03-28,T-shirt,Clothing,20.19,5,CUST699,India
+1442,2025-04-03,Headphones,Electronics,125.09,4,CUST493,Brazil
+1443,2025-04-22,T-shirt,Clothing,20.73,2,CUST942,Nigeria
+1444,2025-01-26,Jeans,Clothing,43.31,1,CUST887,Cameroon
+1445,2025-03-05,Book,Books,10.98,3,CUST688,India
+1446,2025-02-03,Blender,Home Goods,64.43,4,CUST166,Australia
+1447,2025-05-01,T-shirt,Clothing,20.54,2,CUST351,India
+1448,2025-04-22,Jeans,Clothing,38.12,3,CUST786,Germany
+1449,2025-04-22,Blender,Home Goods,63.14,4,CUST310,Australia
+1450,2025-03-06,Book,Books,9.08,3,CUST301,USA
+1451,2025-04-13,Headphones,Electronics,129.38,3,CUST977,France
+1452,2025-04-06,Desk Lamp,Home Goods,24.22,2,CUST667,Cameroon
+1453,2025-04-29,T-shirt,Clothing,19.71,1,CUST308,France
+1454,2025-04-07,Book,Books,10.29,4,CUST430,Canada
+1455,2025-03-22,Coffee Maker,Home Goods,86.31,5,CUST242,UK
+1456,2025-04-05,Book,Books,10.97,5,CUST329,UK
+1457,2025-02-06,Headphones,Electronics,119.68,5,CUST716,Canada
+1458,2025-03-21,Blender,Home Goods,61.15,4,CUST566,Germany
+1459,2025-04-13,Laptop,Electronics,689.3,1,CUST904,Nigeria
+1460,2025-04-29,Blender,Home Goods,57.57,1,CUST907,Cameroon
+1461,2025-02-28,Jeans,Clothing,41.62,1,CUST266,USA
+1462,2025-01-05,Laptop,Electronics,711.62,1,CUST345,Nigeria
+1463,2025-03-03,Smartphone,Electronics,483.17,5,CUST681,Cameroon
+1464,2025-04-09,Laptop,Electronics,690.19,5,CUST433,Nigeria
+1465,2025-03-06,Smartphone,Electronics,488.03,1,CUST671,UK
+1466,2025-02-28,Smartphone,Electronics,541.78,5,CUST260,France
+1467,2025-01-30,Book,Books,9.05,2,CUST587,UK
+1468,2025-03-02,Laptop,Electronics,773.42,2,CUST747,Nigeria
+1469,2025-01-03,Laptop,Electronics,688.26,2,CUST165,USA
+1470,2025-04-10,Book,Books,10.78,3,CUST109,France
+1471,2025-02-22,Desk Lamp,Home Goods,25.89,2,CUST508,Nigeria
+1472,2025-03-17,Coffee Maker,Home Goods,90.09,2,CUST793,USA
+1473,2025-01-04,Smartphone,Electronics,503.04,1,CUST385,Australia
+1474,2025-04-16,Smartphone,Electronics,468.69,4,CUST816,Canada
+1475,2025-03-11,T-shirt,Clothing,18.45,4,CUST118,Germany
+1476,2025-04-24,Book,Books,10.19,5,CUST467,France
+1477,2025-02-02,Desk Lamp,Home Goods,23.2,4,CUST159,USA
+1478,2025-03-10,Book,Books,10.16,5,CUST708,USA
+1479,2025-04-22,Blender,Home Goods,55.2,5,CUST376,Brazil
+1480,2025-03-20,Smartphone,Electronics,471.32,2,CUST373,Australia
+1481,2025-03-24,T-shirt,Clothing,18.87,2,CUST866,Canada
+1482,2025-02-25,Phone Case,Accessories,14.62,4,CUST860,France
+1483,2025-03-21,Coffee Maker,Home Goods,84.98,4,CUST118,India
+1484,2025-02-21,Smartphone,Electronics,532.65,5,CUST506,India
+1485,2025-02-06,Coffee Maker,Home Goods,86.12,1,CUST890,India
+1486,2025-01-30,T-shirt,Clothing,20.46,1,CUST159,France
+1487,2025-01-13,Jeans,Clothing,36.83,2,CUST853,Cameroon
+1488,2025-02-18,Phone Case,Accessories,15.71,1,CUST872,Nigeria
+1489,2025-04-02,Smartphone,Electronics,466.97,4,CUST545,Germany
+1490,2025-03-12,Desk Lamp,Home Goods,26.99,3,CUST653,UK
+1491,2025-02-27,Headphones,Electronics,112.01,2,CUST753,USA
+1492,2025-03-27,Coffee Maker,Home Goods,79.41,3,CUST523,Nigeria
+1493,2025-02-10,Book,Books,10.47,1,CUST493,France
+1494,2025-01-01,Jeans,Clothing,41.18,2,CUST202,Nigeria
+1495,2025-02-17,Smartphone,Electronics,462.52,4,CUST437,India
+1496,2025-01-01,Coffee Maker,Home Goods,79.15,1,CUST894,Germany
+1497,2025-04-15,T-shirt,Clothing,20.53,1,CUST462,Nigeria
+1498,2025-03-06,Desk Lamp,Home Goods,23.11,2,CUST287,Germany
+1499,2025-01-21,Headphones,Electronics,131.18,4,CUST103,Brazil

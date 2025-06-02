@@ -1,0 +1,501 @@
+,Date,Product,Category,UnitPrice,Quantity,CustomerID,Country
+,,Blender,Home Goods,61.18,3,CUST410,Nigeria
+,,Smartphone,Electronics,470.38,5,CUST545,Brazil
+,,Laptop,Electronics,687.62,3,CUST155,UK
+,,Smartphone,Electronics,518.42,5,CUST654,India
+,,Laptop,Electronics,758.7,5,CUST332,Cameroon
+,,Blender,Home Goods,55.7,4,CUST250,UK
+,,Blender,Home Goods,65.41,2,CUST704,Australia
+,,Laptop,Electronics,722.69,4,CUST328,UK
+,,Coffee Maker,Home Goods,84.31,3,CUST832,Germany
+,,Book,Books,10.81,1,CUST870,Canada
+,,T-shirt,Clothing,21.38,1,CUST110,India
+,,Headphones,Electronics,116.17,5,CUST632,Australia
+,,Smartphone,Electronics,473.7,2,CUST823,Canada
+,,Blender,Home Goods,57.4,3,CUST669,Brazil
+,,T-shirt,Clothing,21.28,1,CUST435,Brazil
+,,Laptop,Electronics,704.6,1,CUST911,Canada
+,,Smartphone,Electronics,513.1,4,CUST399,Canada
+,,Book,Books,9.46,5,CUST430,Nigeria
+,,Blender,Home Goods,65.5,4,CUST803,Canada
+,,Coffee Maker,Home Goods,83.66,5,CUST498,UK
+,,Headphones,Electronics,116.08,2,CUST344,France
+,,Desk Lamp,Home Goods,25.14,3,CUST698,USA
+,,Desk Lamp,Home Goods,23.98,2,CUST542,Germany
+,,Blender,Home Goods,64.36,5,CUST119,Australia
+,,T-shirt,Clothing,19.04,4,CUST514,Brazil
+,,Headphones,Electronics,112.7,1,CUST727,Cameroon
+,,Desk Lamp,Home Goods,24.82,4,CUST982,UK
+,,Book,Books,9.39,2,CUST274,Germany
+,,Book,Books,10.64,2,CUST305,Australia
+,,Coffee Maker,Home Goods,93.32,1,CUST681,USA
+,,Desk Lamp,Home Goods,24.33,1,CUST809,India
+,,Desk Lamp,Home Goods,23.92,2,CUST477,India
+,,Smartphone,Electronics,510.3,4,CUST781,Canada
+,,Smartphone,Electronics,516.14,2,CUST205,India
+,,Jeans,Clothing,38.6,1,CUST138,Australia
+,,Book,Books,10.5,4,CUST669,USA
+,,Laptop,Electronics,697.94,1,CUST330,Germany
+,,Jeans,Clothing,37.05,3,CUST256,India
+,,Phone Case,Accessories,14.47,4,CUST510,Nigeria
+,,Blender,Home Goods,60.54,2,CUST421,UK
+,,T-shirt,Clothing,20.07,2,CUST687,France
+,,Desk Lamp,Home Goods,23.09,4,CUST917,India
+,,Laptop,Electronics,735.88,5,CUST362,Canada
+,,Jeans,Clothing,39.1,2,CUST286,Brazil
+,,Coffee Maker,Home Goods,88.58,2,CUST485,Cameroon
+,,Desk Lamp,Home Goods,23.56,4,CUST445,Brazil
+,,Smartphone,Electronics,511.19,2,CUST603,USA
+,,Coffee Maker,Home Goods,91.13,3,CUST138,Canada
+,,Phone Case,Accessories,15.69,1,CUST422,USA
+,,Blender,Home Goods,57.47,5,CUST167,Australia
+,,T-shirt,Clothing,19.88,3,CUST862,Australia
+,,T-shirt,Clothing,20.45,4,CUST240,UK
+,,Blender,Home Goods,58.05,2,CUST296,Brazil
+,,Blender,Home Goods,65.3,3,CUST767,France
+,,Jeans,Clothing,40.05,1,CUST797,USA
+,,Blender,Home Goods,62.7,5,CUST869,Germany
+,,Smartphone,Electronics,507.7,3,CUST343,India
+,,Laptop,Electronics,721.7,4,CUST290,Brazil
+,,Book,Books,10.77,1,CUST207,India
+,,Book,Books,9.2,2,CUST295,UK
+,,Book,Books,10.56,4,CUST453,Cameroon
+,,Phone Case,Accessories,15.94,1,CUST507,Brazil
+,,Jeans,Clothing,39.68,3,CUST443,France
+,,Jeans,Clothing,43.65,3,CUST937,Canada
+,,Laptop,Electronics,774.83,4,CUST163,Nigeria
+,,Laptop,Electronics,818.62,5,CUST841,Brazil
+,,Coffee Maker,Home Goods,79.01,5,CUST897,Germany
+,,Blender,Home Goods,56.57,4,CUST801,Australia
+,,Desk Lamp,Home Goods,24.4,1,CUST674,Germany
+,,Blender,Home Goods,62.78,5,CUST215,India
+,,Jeans,Clothing,43.01,3,CUST836,Nigeria
+,,Coffee Maker,Home Goods,83.93,2,CUST423,Cameroon
+,,Smartphone,Electronics,545.56,3,CUST100,Brazil
+,,Desk Lamp,Home Goods,26.87,1,CUST768,UK
+,,Smartphone,Electronics,484.63,4,CUST909,Brazil
+,,T-shirt,Clothing,18.96,2,CUST817,India
+,,Coffee Maker,Home Goods,83.2,4,CUST258,USA
+,,Coffee Maker,Home Goods,77.07,1,CUST554,Australia
+,,Smartphone,Electronics,526.17,5,CUST405,Australia
+,,Coffee Maker,Home Goods,76.73,1,CUST829,France
+,,Smartphone,Electronics,511.45,4,CUST387,India
+,,Book,Books,10.11,2,CUST440,UK
+,,Jeans,Clothing,37.76,1,CUST190,Canada
+,,Blender,Home Goods,57.57,1,CUST291,Nigeria
+,,T-shirt,Clothing,20.17,2,CUST158,Cameroon
+,,Book,Books,9.21,3,CUST447,Germany
+,,Phone Case,Accessories,16.17,1,CUST554,Germany
+,,Blender,Home Goods,58.43,3,CUST950,Australia
+,,Smartphone,Electronics,516.82,1,CUST647,France
+,,Smartphone,Electronics,500.17,3,CUST976,Germany
+,,Coffee Maker,Home Goods,78.68,3,CUST860,Australia
+,,Laptop,Electronics,814.46,3,CUST738,Australia
+,,Jeans,Clothing,38.69,5,CUST714,Canada
+,,Smartphone,Electronics,460.23,2,CUST500,Canada
+,,Smartphone,Electronics,456.42,3,CUST957,Australia
+,,Coffee Maker,Home Goods,79.51,4,CUST523,Germany
+,,Jeans,Clothing,40.28,3,CUST516,Canada
+,,Laptop,Electronics,811.23,1,CUST971,USA
+,,T-shirt,Clothing,21.63,3,CUST207,Germany
+,,Coffee Maker,Home Goods,78.44,1,CUST884,UK
+,,Phone Case,Accessories,13.86,3,CUST242,UK
+,,Phone Case,Accessories,15.78,4,CUST210,Cameroon
+,,Smartphone,Electronics,512.64,3,CUST320,Cameroon
+,,Book,Books,10.55,3,CUST872,Nigeria
+,,Coffee Maker,Home Goods,79.41,5,CUST396,Nigeria
+,,Headphones,Electronics,109.28,5,CUST240,France
+,,Headphones,Electronics,116.3,2,CUST620,Germany
+,,Desk Lamp,Home Goods,26.59,1,CUST308,India
+,,Smartphone,Electronics,519.84,5,CUST959,Germany
+,,Headphones,Electronics,109.84,5,CUST762,Australia
+,,Blender,Home Goods,57.58,1,CUST105,France
+,,Coffee Maker,Home Goods,85.06,3,CUST121,Nigeria
+,,Jeans,Clothing,41.09,2,CUST781,USA
+,,Book,Books,9.1,1,CUST688,Cameroon
+,,Jeans,Clothing,43.13,1,CUST113,USA
+,,Jeans,Clothing,42.84,2,CUST751,Germany
+,,Book,Books,9.22,5,CUST788,UK
+,,Smartphone,Electronics,508.17,3,CUST265,Canada
+,,Phone Case,Accessories,16.33,5,CUST515,France
+,,Desk Lamp,Home Goods,27,4,CUST188,France
+,,Smartphone,Electronics,502.86,1,CUST534,UK
+,,Smartphone,Electronics,527.61,5,CUST479,Australia
+,,Headphones,Electronics,128.46,1,CUST642,Australia
+,,Headphones,Electronics,118.7,2,CUST330,France
+,,Coffee Maker,Home Goods,88.58,1,CUST509,Australia
+,,Jeans,Clothing,41.07,3,CUST826,Canada
+,,Desk Lamp,Home Goods,22.85,3,CUST125,France
+,,Desk Lamp,Home Goods,24.19,4,CUST339,Australia
+,,Desk Lamp,Home Goods,27.43,3,CUST824,Canada
+,,Book,Books,10.13,2,CUST817,India
+,,Headphones,Electronics,121.41,3,CUST282,Australia
+,,Book,Books,9.3,2,CUST988,France
+,,Headphones,Electronics,128.15,4,CUST183,Cameroon
+,,T-shirt,Clothing,18.98,3,CUST751,Germany
+,,Book,Books,10.29,5,CUST881,India
+,,Laptop,Electronics,766.23,3,CUST987,Cameroon
+,,Coffee Maker,Home Goods,87.76,5,CUST398,Nigeria
+,,Headphones,Electronics,127.99,5,CUST312,Nigeria
+,,Blender,Home Goods,64.23,5,CUST347,UK
+,,Book,Books,10.61,1,CUST632,Nigeria
+,,Smartphone,Electronics,530.31,5,CUST745,Brazil
+,,Jeans,Clothing,41.59,2,CUST142,Cameroon
+,,Book,Books,9.92,1,CUST782,Canada
+,,Jeans,Clothing,36.03,5,CUST172,France
+,,Book,Books,10.63,4,CUST938,Nigeria
+,,Desk Lamp,Home Goods,26.77,1,CUST275,France
+,,Headphones,Electronics,116.84,4,CUST710,France
+,,Book,Books,9.95,5,CUST309,Germany
+,,Jeans,Clothing,37.03,2,CUST524,Brazil
+,,Coffee Maker,Home Goods,87.57,4,CUST979,USA
+,,T-shirt,Clothing,21.66,3,CUST925,India
+,,Coffee Maker,Home Goods,87.43,5,CUST841,Germany
+,,Blender,Home Goods,57.32,3,CUST915,Brazil
+,,T-shirt,Clothing,18.83,4,CUST744,Australia
+,,Coffee Maker,Home Goods,93.3,4,CUST725,India
+,,Phone Case,Accessories,15.43,3,CUST426,Nigeria
+,,Book,Books,10.35,4,CUST455,UK
+,,T-shirt,Clothing,20.05,3,CUST851,Germany
+,,T-shirt,Clothing,19.05,1,CUST282,France
+,,T-shirt,Clothing,21.15,2,CUST305,France
+,,Laptop,Electronics,751,4,CUST355,France
+,,Smartphone,Electronics,477.33,4,CUST396,Cameroon
+,,Smartphone,Electronics,533.68,3,CUST628,Australia
+,,Phone Case,Accessories,15.29,5,CUST872,Nigeria
+,,Coffee Maker,Home Goods,90.88,5,CUST201,UK
+,,Laptop,Electronics,819.56,3,CUST920,Cameroon
+,,Jeans,Clothing,38.37,5,CUST566,France
+,,Phone Case,Accessories,14.91,4,CUST391,Brazil
+,,Headphones,Electronics,128.16,5,CUST164,Cameroon
+,,Book,Books,9.47,4,CUST485,Nigeria
+,,Smartphone,Electronics,504.37,5,CUST312,UK
+,,Desk Lamp,Home Goods,26.76,4,CUST486,UK
+,,Desk Lamp,Home Goods,25.53,2,CUST416,Brazil
+,,Phone Case,Accessories,15.86,2,CUST860,USA
+,,Coffee Maker,Home Goods,88.84,1,CUST994,Nigeria
+,,Desk Lamp,Home Goods,23.77,5,CUST387,Cameroon
+,,Desk Lamp,Home Goods,26.76,1,CUST283,Canada
+,,Desk Lamp,Home Goods,27.02,3,CUST788,Australia
+,,Headphones,Electronics,131.33,4,CUST588,India
+,,T-shirt,Clothing,19.63,4,CUST495,India
+,,Smartphone,Electronics,493.5,3,CUST895,USA
+,,Jeans,Clothing,43.81,1,CUST560,Germany
+,,Headphones,Electronics,114.39,2,CUST483,France
+,,Desk Lamp,Home Goods,24.14,5,CUST624,Nigeria
+,,Book,Books,9.41,1,CUST148,UK
+,,Phone Case,Accessories,14.75,3,CUST673,UK
+,,Headphones,Electronics,128.08,1,CUST419,Australia
+,,Blender,Home Goods,65.09,4,CUST549,UK
+,,Blender,Home Goods,55.97,3,CUST159,Nigeria
+,,Book,Books,10.38,4,CUST437,Australia
+,,Jeans,Clothing,38.86,3,CUST790,Australia
+,,Smartphone,Electronics,521.47,3,CUST528,France
+,,Desk Lamp,Home Goods,26.63,1,CUST768,Brazil
+,,Laptop,Electronics,727.84,5,CUST982,Nigeria
+,,Laptop,Electronics,717.22,4,CUST304,UK
+,,Desk Lamp,Home Goods,23.08,4,CUST778,Cameroon
+,,Coffee Maker,Home Goods,76.63,2,CUST288,Cameroon
+,,Book,Books,9.01,4,CUST585,Nigeria
+,,Phone Case,Accessories,16.36,1,CUST745,Germany
+,,Jeans,Clothing,42.05,5,CUST900,USA
+,,Laptop,Electronics,755.25,2,CUST711,Cameroon
+,,Laptop,Electronics,708.23,5,CUST714,UK
+,,Headphones,Electronics,125.35,5,CUST472,USA
+,,Desk Lamp,Home Goods,26.63,5,CUST383,Germany
+,,Laptop,Electronics,700.49,3,CUST996,Germany
+,,Headphones,Electronics,116.08,3,CUST276,Canada
+,,T-shirt,Clothing,20.46,1,CUST654,USA
+,,Smartphone,Electronics,524.53,1,CUST625,Canada
+,,Desk Lamp,Home Goods,23.15,3,CUST122,India
+,,T-shirt,Clothing,18.61,2,CUST315,Canada
+,,T-shirt,Clothing,20.45,5,CUST773,Canada
+,,Coffee Maker,Home Goods,78.65,4,CUST914,UK
+,,Laptop,Electronics,720.45,5,CUST162,India
+,,Desk Lamp,Home Goods,27.3,5,CUST433,USA
+,,Laptop,Electronics,817.24,1,CUST956,Australia
+,,Smartphone,Electronics,484.12,2,CUST248,India
+,,Headphones,Electronics,130.62,4,CUST107,Germany
+,,Coffee Maker,Home Goods,81.83,3,CUST592,Brazil
+,,Jeans,Clothing,42.92,1,CUST256,Canada
+,,Desk Lamp,Home Goods,24.17,1,CUST598,Cameroon
+,,Desk Lamp,Home Goods,24.95,5,CUST515,Nigeria
+,,Desk Lamp,Home Goods,25.07,3,CUST307,India
+,,T-shirt,Clothing,18.31,3,CUST329,India
+,,Desk Lamp,Home Goods,23.89,2,CUST742,Canada
+,,T-shirt,Clothing,20.36,2,CUST178,Cameroon
+,,Laptop,Electronics,701.14,3,CUST228,USA
+,,Jeans,Clothing,39.08,2,CUST931,Australia
+,,T-shirt,Clothing,21.17,5,CUST325,Germany
+,,Coffee Maker,Home Goods,81.97,2,CUST873,Canada
+,,Smartphone,Electronics,502.29,1,CUST447,UK
+,,Blender,Home Goods,63.52,3,CUST617,Germany
+,,Phone Case,Accessories,16.42,4,CUST416,India
+,,Jeans,Clothing,36.28,4,CUST759,Brazil
+,,T-shirt,Clothing,21,2,CUST275,Germany
+,,Blender,Home Goods,62.01,3,CUST545,France
+,,Headphones,Electronics,119.04,2,CUST599,UK
+,,Headphones,Electronics,123.06,1,CUST443,Cameroon
+,,T-shirt,Clothing,18.06,4,CUST729,France
+,,Desk Lamp,Home Goods,26.3,5,CUST265,Cameroon
+,,Laptop,Electronics,808.01,3,CUST533,USA
+,,Laptop,Electronics,818.28,4,CUST764,USA
+,,T-shirt,Clothing,19.69,3,CUST698,Germany
+,,Desk Lamp,Home Goods,25.48,3,CUST674,Nigeria
+,,Coffee Maker,Home Goods,85.48,4,CUST711,UK
+,,Coffee Maker,Home Goods,91.3,2,CUST437,Brazil
+,,Desk Lamp,Home Goods,23.02,3,CUST640,UK
+,,Jeans,Clothing,43.63,4,CUST794,Germany
+,,Book,Books,10.47,5,CUST750,Canada
+,,Headphones,Electronics,127.02,3,CUST765,Cameroon
+,,Phone Case,Accessories,14.54,4,CUST272,Nigeria
+,,T-shirt,Clothing,20.5,2,CUST395,India
+,,Jeans,Clothing,42.98,4,CUST204,India
+,,Desk Lamp,Home Goods,23.57,1,CUST880,Australia
+,,Coffee Maker,Home Goods,87.95,5,CUST997,USA
+,,Laptop,Electronics,689.14,2,CUST963,Nigeria
+,,Book,Books,9.97,4,CUST812,Canada
+,,T-shirt,Clothing,20.3,5,CUST981,USA
+,,Headphones,Electronics,112.62,5,CUST360,Germany
+,,Book,Books,9.12,2,CUST584,Nigeria
+,,Smartphone,Electronics,546.64,1,CUST876,UK
+,,Desk Lamp,Home Goods,23.1,4,CUST143,Nigeria
+,,Phone Case,Accessories,16.12,1,CUST424,Australia
+,,T-shirt,Clothing,21.17,2,CUST184,USA
+,,Desk Lamp,Home Goods,25.46,2,CUST943,Brazil
+,,T-shirt,Clothing,21.36,2,CUST862,UK
+,,Headphones,Electronics,123.6,3,CUST488,Brazil
+,,Coffee Maker,Home Goods,80.14,5,CUST347,Canada
+,,Blender,Home Goods,63.2,3,CUST380,India
+,,Coffee Maker,Home Goods,84.37,3,CUST997,Australia
+,,Jeans,Clothing,38.43,5,CUST893,Canada
+,,Laptop,Electronics,748.23,1,CUST880,Germany
+,,Jeans,Clothing,37.53,3,CUST748,Canada
+,,Coffee Maker,Home Goods,93.12,2,CUST930,Australia
+,,Book,Books,9.38,1,CUST199,Cameroon
+,,Desk Lamp,Home Goods,23.76,4,CUST619,Canada
+,,Book,Books,10.17,3,CUST306,India
+,,Book,Books,10.85,3,CUST966,Nigeria
+,,Phone Case,Accessories,15.19,1,CUST392,Germany
+,,Coffee Maker,Home Goods,80.8,2,CUST905,France
+,,T-shirt,Clothing,20.59,5,CUST942,USA
+,,Phone Case,Accessories,13.58,2,CUST136,USA
+,,Headphones,Electronics,113.46,4,CUST631,India
+,,Phone Case,Accessories,16.36,3,CUST522,Nigeria
+,,Coffee Maker,Home Goods,92.13,3,CUST425,USA
+,,Desk Lamp,Home Goods,24.62,2,CUST390,Cameroon
+,,Headphones,Electronics,127.64,5,CUST756,Cameroon
+,,Coffee Maker,Home Goods,77.01,5,CUST128,Australia
+,,Coffee Maker,Home Goods,83.07,3,CUST432,UK
+,,Laptop,Electronics,771.93,5,CUST872,Australia
+,,Desk Lamp,Home Goods,26.88,4,CUST316,Germany
+,,Coffee Maker,Home Goods,91.15,5,CUST463,Cameroon
+,,Headphones,Electronics,110.79,4,CUST595,India
+,,Blender,Home Goods,60.05,4,CUST468,France
+,,Book,Books,9.32,2,CUST715,Brazil
+,,T-shirt,Clothing,19.03,3,CUST846,France
+,,Laptop,Electronics,755.63,3,CUST878,USA
+,,Smartphone,Electronics,507.03,2,CUST652,Nigeria
+,,Book,Books,9.43,3,CUST374,France
+,,Smartphone,Electronics,512,2,CUST469,Cameroon
+,,Smartphone,Electronics,524.53,1,CUST188,Brazil
+,,Laptop,Electronics,745.36,3,CUST632,Brazil
+,,Smartphone,Electronics,483.73,5,CUST516,USA
+,,Phone Case,Accessories,13.91,3,CUST430,Nigeria
+,,Coffee Maker,Home Goods,91.02,3,CUST331,UK
+,,Coffee Maker,Home Goods,84.81,2,CUST943,India
+,,Blender,Home Goods,57.96,1,CUST514,Germany
+,,Smartphone,Electronics,544.15,1,CUST901,France
+,,Coffee Maker,Home Goods,86.65,4,CUST224,Brazil
+,,Laptop,Electronics,804.09,3,CUST971,India
+,,Coffee Maker,Home Goods,79.85,5,CUST172,Australia
+,,Jeans,Clothing,43.09,2,CUST547,Germany
+,,Phone Case,Accessories,16.19,3,CUST708,UK
+,,Phone Case,Accessories,16.36,5,CUST609,France
+,,Jeans,Clothing,38.23,4,CUST701,Cameroon
+,,Jeans,Clothing,40.98,4,CUST439,Brazil
+,,Headphones,Electronics,111.85,3,CUST533,UK
+,,Jeans,Clothing,37.86,3,CUST113,Australia
+,,Headphones,Electronics,114.75,3,CUST318,Cameroon
+,,Jeans,Clothing,37.5,5,CUST867,France
+,,Headphones,Electronics,117.5,3,CUST100,USA
+,,Smartphone,Electronics,480.57,3,CUST285,Nigeria
+,,Smartphone,Electronics,460.44,3,CUST823,USA
+,,Blender,Home Goods,57.74,2,CUST194,USA
+,,Book,Books,10.89,4,CUST620,India
+,,Blender,Home Goods,62.6,1,CUST469,Nigeria
+,,T-shirt,Clothing,20.27,3,CUST551,Germany
+,,Laptop,Electronics,816.18,4,CUST786,USA
+,,Smartphone,Electronics,513.28,5,CUST294,France
+,,Laptop,Electronics,796.83,3,CUST414,India
+,,Phone Case,Accessories,15.47,4,CUST272,USA
+,,Desk Lamp,Home Goods,26.95,2,CUST342,Nigeria
+,,Desk Lamp,Home Goods,23.56,5,CUST745,Australia
+,,Desk Lamp,Home Goods,26.47,2,CUST182,France
+,,Phone Case,Accessories,16.06,3,CUST804,Nigeria
+,,Headphones,Electronics,121.81,5,CUST532,Germany
+,,Jeans,Clothing,36.78,2,CUST301,France
+,,T-shirt,Clothing,19.07,1,CUST580,France
+,,Book,Books,10.43,3,CUST554,Nigeria
+,,Jeans,Clothing,41.89,4,CUST452,Cameroon
+,,Headphones,Electronics,126.02,2,CUST269,USA
+,,Laptop,Electronics,759.95,1,CUST960,India
+,,Headphones,Electronics,120.06,4,CUST160,France
+,,Desk Lamp,Home Goods,27.43,4,CUST323,India
+,,T-shirt,Clothing,20.51,3,CUST362,Brazil
+,,T-shirt,Clothing,19.95,1,CUST627,Cameroon
+,,Blender,Home Goods,62.96,4,CUST259,Cameroon
+,,Desk Lamp,Home Goods,24.98,5,CUST965,Germany
+,,Book,Books,10.01,5,CUST135,USA
+,,Desk Lamp,Home Goods,26.78,4,CUST786,Canada
+,,Coffee Maker,Home Goods,91.82,5,CUST421,Brazil
+,,Laptop,Electronics,761.98,5,CUST756,USA
+,,Blender,Home Goods,59.07,4,CUST372,India
+,,Laptop,Electronics,767.02,5,CUST315,France
+,,Coffee Maker,Home Goods,92.05,1,CUST146,France
+,,Blender,Home Goods,63.43,2,CUST153,Germany
+,,Jeans,Clothing,37.15,4,CUST654,Brazil
+,,Laptop,Electronics,715.53,2,CUST997,Brazil
+,,Phone Case,Accessories,14.89,4,CUST390,Canada
+,,Smartphone,Electronics,494.06,4,CUST204,Australia
+,,Headphones,Electronics,123.14,3,CUST310,Cameroon
+,,Phone Case,Accessories,15.39,2,CUST963,Canada
+,,Coffee Maker,Home Goods,91.51,2,CUST272,Nigeria
+,,Book,Books,10.51,4,CUST106,USA
+,,Laptop,Electronics,818.05,5,CUST406,USA
+,,Headphones,Electronics,118.55,5,CUST807,Australia
+,,Blender,Home Goods,54.97,2,CUST208,Nigeria
+,,Blender,Home Goods,62.07,4,CUST456,Brazil
+,,Laptop,Electronics,675.33,2,CUST370,India
+,,T-shirt,Clothing,21.85,2,CUST786,USA
+,,Coffee Maker,Home Goods,93.12,5,CUST170,Nigeria
+,,Blender,Home Goods,54.25,2,CUST485,Brazil
+,,Smartphone,Electronics,467.2,4,CUST912,France
+,,Desk Lamp,Home Goods,24.37,2,CUST873,USA
+,,Desk Lamp,Home Goods,25.85,2,CUST917,Australia
+,,Book,Books,10.23,4,CUST749,Australia
+,,Headphones,Electronics,124.49,2,CUST617,India
+,,Smartphone,Electronics,540.08,4,CUST481,Germany
+,,Laptop,Electronics,720.16,4,CUST676,UK
+,,Book,Books,9.73,4,CUST554,Australia
+,,Blender,Home Goods,65.77,1,CUST622,Nigeria
+,,Headphones,Electronics,127.87,2,CUST404,Nigeria
+,,Jeans,Clothing,43.7,1,CUST173,Canada
+,,Jeans,Clothing,36.19,2,CUST980,Germany
+,,Smartphone,Electronics,500.88,5,CUST576,Cameroon
+,,Desk Lamp,Home Goods,25.18,5,CUST499,USA
+,,Blender,Home Goods,54.75,3,CUST970,France
+,,Blender,Home Goods,59.69,5,CUST547,Brazil
+,,Phone Case,Accessories,15.39,4,CUST572,Cameroon
+,,Laptop,Electronics,713.42,4,CUST449,Nigeria
+,,Desk Lamp,Home Goods,26.08,2,CUST559,Nigeria
+,,Book,Books,10.89,2,CUST679,Cameroon
+,,Smartphone,Electronics,513.23,2,CUST617,Brazil
+,,Jeans,Clothing,43.26,3,CUST141,India
+,,Headphones,Electronics,126.17,3,CUST708,Canada
+,,Book,Books,10.57,3,CUST519,Australia
+,,Desk Lamp,Home Goods,24.85,5,CUST450,Canada
+,,Coffee Maker,Home Goods,81.4,1,CUST348,Germany
+,,Jeans,Clothing,40.55,4,CUST464,France
+,,Smartphone,Electronics,504.54,1,CUST674,Nigeria
+,,Coffee Maker,Home Goods,89.39,1,CUST832,India
+,,Jeans,Clothing,39.8,1,CUST710,France
+,,Smartphone,Electronics,483.47,1,CUST970,India
+,,Book,Books,10.63,2,CUST686,Germany
+,,Blender,Home Goods,65.62,3,CUST744,Germany
+,,T-shirt,Clothing,21.82,2,CUST165,Canada
+,,Smartphone,Electronics,507.87,4,CUST492,Cameroon
+,,Jeans,Clothing,37.58,5,CUST814,Nigeria
+,,Book,Books,10,4,CUST921,UK
+,,T-shirt,Clothing,20.53,3,CUST501,Cameroon
+,,Headphones,Electronics,109.59,5,CUST219,India
+,,Coffee Maker,Home Goods,85.93,1,CUST580,Cameroon
+,,Book,Books,9.28,3,CUST709,USA
+,,Smartphone,Electronics,524.46,2,CUST386,India
+,,Blender,Home Goods,57.35,2,CUST573,Germany
+,,Jeans,Clothing,38.77,4,CUST314,Canada
+,,Smartphone,Electronics,464.03,5,CUST401,Canada
+,,T-shirt,Clothing,19.87,1,CUST122,USA
+,,T-shirt,Clothing,19.15,2,CUST321,Australia
+,,Jeans,Clothing,36.22,4,CUST204,UK
+,,Blender,Home Goods,59,1,CUST207,Canada
+,,Headphones,Electronics,108.9,2,CUST749,UK
+,,Coffee Maker,Home Goods,79.67,3,CUST999,USA
+,,Headphones,Electronics,113.13,3,CUST792,UK
+,,Headphones,Electronics,115.05,3,CUST952,USA
+,,Desk Lamp,Home Goods,23.07,2,CUST807,USA
+,,Phone Case,Accessories,14.41,4,CUST368,Australia
+,,Desk Lamp,Home Goods,22.79,1,CUST179,Cameroon
+,,Phone Case,Accessories,13.74,4,CUST707,UK
+,,Phone Case,Accessories,16.44,3,CUST697,Canada
+,,Book,Books,9.63,1,CUST687,Brazil
+,,Smartphone,Electronics,512.75,4,CUST441,India
+,,Book,Books,10.17,1,CUST559,France
+,,Jeans,Clothing,38.81,2,CUST654,France
+,,Desk Lamp,Home Goods,26.44,1,CUST332,Canada
+,,Book,Books,9.73,5,CUST796,India
+,,Jeans,Clothing,40.04,2,CUST254,India
+,,Desk Lamp,Home Goods,27.09,5,CUST267,USA
+,,Laptop,Electronics,806.51,3,CUST630,Germany
+,,T-shirt,Clothing,21.12,4,CUST708,India
+,,Blender,Home Goods,60.66,5,CUST786,Brazil
+,,Book,Books,10.68,5,CUST852,Cameroon
+,,T-shirt,Clothing,20.19,5,CUST699,India
+,,Headphones,Electronics,125.09,4,CUST493,Brazil
+,,T-shirt,Clothing,20.73,2,CUST942,Nigeria
+,,Jeans,Clothing,43.31,1,CUST887,Cameroon
+,,Book,Books,10.98,3,CUST688,India
+,,Blender,Home Goods,64.43,4,CUST166,Australia
+,,T-shirt,Clothing,20.54,2,CUST351,India
+,,Jeans,Clothing,38.12,3,CUST786,Germany
+,,Blender,Home Goods,63.14,4,CUST310,Australia
+,,Book,Books,9.08,3,CUST301,USA
+,,Headphones,Electronics,129.38,3,CUST977,France
+,,Desk Lamp,Home Goods,24.22,2,CUST667,Cameroon
+,,T-shirt,Clothing,19.71,1,CUST308,France
+,,Book,Books,10.29,4,CUST430,Canada
+,,Coffee Maker,Home Goods,86.31,5,CUST242,UK
+,,Book,Books,10.97,5,CUST329,UK
+,,Headphones,Electronics,119.68,5,CUST716,Canada
+,,Blender,Home Goods,61.15,4,CUST566,Germany
+,,Laptop,Electronics,689.3,1,CUST904,Nigeria
+,,Blender,Home Goods,57.57,1,CUST907,Cameroon
+,,Jeans,Clothing,41.62,1,CUST266,USA
+,,Laptop,Electronics,711.62,1,CUST345,Nigeria
+,,Smartphone,Electronics,483.17,5,CUST681,Cameroon
+,,Laptop,Electronics,690.19,5,CUST433,Nigeria
+,,Smartphone,Electronics,488.03,1,CUST671,UK
+,,Smartphone,Electronics,541.78,5,CUST260,France
+,,Book,Books,9.05,2,CUST587,UK
+,,Laptop,Electronics,773.42,2,CUST747,Nigeria
+,,Laptop,Electronics,688.26,2,CUST165,USA
+,,Book,Books,10.78,3,CUST109,France
+,,Desk Lamp,Home Goods,25.89,2,CUST508,Nigeria
+,,Coffee Maker,Home Goods,90.09,2,CUST793,USA
+,,Smartphone,Electronics,503.04,1,CUST385,Australia
+,,Smartphone,Electronics,468.69,4,CUST816,Canada
+,,T-shirt,Clothing,18.45,4,CUST118,Germany
+,,Book,Books,10.19,5,CUST467,France
+,,Desk Lamp,Home Goods,23.2,4,CUST159,USA
+,,Book,Books,10.16,5,CUST708,USA
+,,Blender,Home Goods,55.2,5,CUST376,Brazil
+,,Smartphone,Electronics,471.32,2,CUST373,Australia
+,,T-shirt,Clothing,18.87,2,CUST866,Canada
+,,Phone Case,Accessories,14.62,4,CUST860,France
+,,Coffee Maker,Home Goods,84.98,4,CUST118,India
+,,Smartphone,Electronics,532.65,5,CUST506,India
+,,Coffee Maker,Home Goods,86.12,1,CUST890,India
+,,T-shirt,Clothing,20.46,1,CUST159,France
+,,Jeans,Clothing,36.83,2,CUST853,Cameroon
+,,Phone Case,Accessories,15.71,1,CUST872,Nigeria
+,,Smartphone,Electronics,466.97,4,CUST545,Germany
+,,Desk Lamp,Home Goods,26.99,3,CUST653,UK
+,,Headphones,Electronics,112.01,2,CUST753,USA
+,,Coffee Maker,Home Goods,79.41,3,CUST523,Nigeria
+,,Book,Books,10.47,1,CUST493,France
+,,Jeans,Clothing,41.18,2,CUST202,Nigeria
+,,Smartphone,Electronics,462.52,4,CUST437,India
+,,Coffee Maker,Home Goods,79.15,1,CUST894,Germany
+,,T-shirt,Clothing,20.53,1,CUST462,Nigeria
+,,Desk Lamp,Home Goods,23.11,2,CUST287,Germany
+,,Headphones,Electronics,131.18,4,CUST103,Brazil
