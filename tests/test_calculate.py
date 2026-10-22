@@ -8,7 +8,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-import calculate as cal
+from sales_insights.analytics import legacy as cal
 
 
 def products_and_quantities(totals: dict[str, int]) -> tuple[pd.Series, pd.Series]:

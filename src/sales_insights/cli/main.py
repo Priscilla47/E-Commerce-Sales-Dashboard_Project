@@ -1,8 +1,8 @@
 #!/bin/python3
 
 import pandas as pd
-import calculate as cal
-import usage as use
+from sales_insights.analytics import legacy as cal
+from sales_insights.cli import usage as use
 import sys
 import os
 

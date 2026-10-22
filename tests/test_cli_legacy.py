@@ -10,8 +10,8 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
-import main as cli
-import usage
+from sales_insights.cli import main as cli
+from sales_insights.cli import usage
 from tests.conftest import ORDER_COLUMNS
 
 SAMPLE_DATA = Path(__file__).resolve().parent.parent / "data" / "sample_orders.csv"
