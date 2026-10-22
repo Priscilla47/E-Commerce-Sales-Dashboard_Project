@@ -76,6 +76,18 @@ $ python3 main.py -t 3 data/sample_orders.csv
     └── sample_orders.csv
 ```
 
+## Development
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -e ".[dev]"
+
+pytest
+```
+
+Every feature and every fix comes with unit tests. Tests live in `tests/` and use small fixtures that can be checked by hand.
+
 ## Roadmap
 
 - [ ] Restructure into a proper Python package with tests and CI
