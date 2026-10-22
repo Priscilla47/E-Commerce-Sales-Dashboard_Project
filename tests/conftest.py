@@ -35,3 +35,13 @@ def orders() -> pd.DataFrame:
         (1005, "2025-03-01", "Laptop", "Electronics", 500.0, 1, "C3", "France"),
     ]
     return pd.DataFrame(rows, columns=ORDER_COLUMNS)
+
+
+@pytest.fixture
+def typed_orders_with_problems(orders) -> pd.DataFrame:
+    """The orders fixture with a duplicated OrderID (lines 3 and 5) and a zero quantity (line 4)."""
+    typed = orders.copy()
+    typed["Date"] = pd.to_datetime(typed["Date"])
+    typed.loc[3, "OrderID"] = typed.loc[1, "OrderID"]
+    typed.loc[2, "Quantity"] = 0
+    return typed
