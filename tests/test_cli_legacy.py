@@ -211,3 +211,26 @@ def test_flag_missing_its_value_is_rejected(monkeypatch, capsys, orders_csv, fla
 def test_top_n_with_non_numeric_value_is_rejected(monkeypatch, capsys, ranking_csv):
     code, _ = run_cli(monkeypatch, capsys, "-t", "abc", ranking_csv)
     assert code == 84
+
+
+# --- data errors ------------------------------------------------------------------------
+
+
+def test_file_with_a_missing_column_exits_84_with_a_clear_message(monkeypatch, capsys, tmp_path):
+    path = tmp_path / "incomplete.csv"
+    path.write_text("OrderID,Date,Product\n1,2025-01-01,Book\n")
+    code, out = run_cli(monkeypatch, capsys, "-T", str(path))
+    assert code == 84
+    assert "Missing required column(s)" in out
+    assert "Quantity" in out
+
+
+def test_file_with_an_invalid_value_exits_84_with_a_clear_message(monkeypatch, capsys, tmp_path):
+    path = tmp_path / "invalid.csv"
+    path.write_text(
+        ",".join(ORDER_COLUMNS) + "\n1,not-a-date,Book,Books,10.0,1,C1,France\n"
+    )
+    code, out = run_cli(monkeypatch, capsys, "-T", str(path))
+    assert code == 84
+    assert "'Date'" in out
+    assert "not-a-date" in out

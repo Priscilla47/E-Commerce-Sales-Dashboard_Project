@@ -1,12 +1,11 @@
 #!/bin/python3
 
-import pandas as pd
 from sales_insights.analytics import legacy as cal
 from sales_insights.cli import usage as use
+from sales_insights.data.loader import load_orders
+from sales_insights.data.schema import SchemaError
 import sys
 import os
-
-#sales = pd.read_csv('ecommerce_salesl.csv')
 
 def main():
     args = sys.argv[1:]
@@ -21,7 +20,11 @@ def main():
         use.usage()
         exit(84)
     if os.path.exists(args[len(args)-1]):
-        sales = pd.read_csv(args[len(args)-1])
+        try:
+            sales = load_orders(args[len(args)-1])
+        except SchemaError as error:
+            print(error)
+            exit(84)
     else:
         print("Wrong Filepath")
         use.usage()
