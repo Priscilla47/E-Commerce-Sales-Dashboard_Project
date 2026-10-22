@@ -65,6 +65,8 @@ $ sales-insights -t 3 data/sample_orders.csv
 | `CustomerID` | Customer identifier                 |
 | `Country`    | Customer country                    |
 
+See [Data format](docs/data-schema.md) for the full description, the loading rules and the validation checks.
+
 ## Project layout
 
 ```
