@@ -1,3 +1,4 @@
+import time
 from pathlib import Path
 
 import pandas as pd
@@ -213,3 +214,47 @@ def test_bad_data_never_raises():
 def test_missing_columns_are_a_loading_problem_and_raise(typed_orders):
     with pytest.raises(SchemaError, match="Quantity"):
         validate(typed_orders.drop(columns="Quantity"))
+
+
+# --- large files ------------------------------------------------------------------------
+
+
+def large_orders(rows: int, products: int) -> pd.DataFrame:
+    """A clean frame of `rows` orders over `products` distinct products."""
+    return pd.DataFrame(
+        {
+            "OrderID": range(1, rows + 1),
+            "Date": pd.Timestamp("2025-01-01"),
+            "Product": [f"Product {i % products}" for i in range(rows)],
+            "Category": "Misc",
+            "UnitPrice": 1.0,
+            "Quantity": 1,
+            "CustomerID": "C1",
+            "Country": "France",
+        }
+    )
+
+
+def test_many_products_with_one_inconsistent_spelling_stay_fast_and_exact():
+    orders = large_orders(rows=40_000, products=8_000)
+    orders.loc[5, "Product"] = "product 5"  # the one odd spelling
+    started = time.perf_counter()
+    report = validate(orders)
+    elapsed = time.perf_counter() - started
+    (issue,) = report.issues
+    assert issue.code == "inconsistent_casing"
+    assert "'Product 5', 'product 5'" in issue.message
+    assert 7 in issue.rows  # row index 5 is CSV line 7
+    assert elapsed < 2.0
+
+
+def test_many_duplicated_order_ids_stay_fast_and_exact():
+    orders = large_orders(rows=100_000, products=10)
+    orders["OrderID"] = orders.index // 2  # every id appears twice: 50,000 duplicates
+    started = time.perf_counter()
+    report = validate(orders)
+    elapsed = time.perf_counter() - started
+    assert codes(report).count("duplicate_order_id") == 50_000
+    first = report.issues[0]
+    assert (first.message, first.rows) == ("Duplicate OrderID 0", (2, 3))
+    assert elapsed < 2.0
