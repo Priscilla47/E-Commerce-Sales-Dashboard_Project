@@ -241,3 +241,15 @@ def test_file_with_an_invalid_value_exits_84_with_a_clear_message(monkeypatch, c
     assert code == 84
     assert "'Date'" in out
     assert "not-a-date" in out
+
+
+def test_file_that_is_not_valid_csv_exits_84_with_a_clear_message(monkeypatch, capsys, tmp_path):
+    path = tmp_path / "ragged.csv"
+    path.write_text(
+        ",".join(ORDER_COLUMNS)
+        + "\n1,2025-01-01,Book,Books,10.0,1,C1,France\n2,2025-01-02,Book,Books,10.0,1,C1,France,x\n"
+    )
+    code, out = run_cli(monkeypatch, capsys, "-T", str(path))
+    assert code == 84
+    assert "not valid CSV" in out
+    assert "line 3" in out
