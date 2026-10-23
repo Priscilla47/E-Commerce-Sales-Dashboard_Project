@@ -1,5 +1,6 @@
 """Load an orders CSV file into a typed DataFrame."""
 
+import io
 import re
 from pathlib import Path
 
@@ -13,10 +14,14 @@ from sales_insights.data.schema import (
     SchemaError,
     require_columns,
 )
+from sales_insights.data.storage import Storage
 
 
-def load_orders(path: str | Path) -> pd.DataFrame:
-    """Read an orders CSV file.
+def load_orders(source: str | Path | Storage, name: str | None = None) -> pd.DataFrame:
+    """Read an orders CSV file, from a path or from a storage.
+
+    ``load_orders("data/orders.csv")`` reads a file; ``load_orders(storage, "orders.csv")``
+    reads the named file of a Storage.
 
     The result has the schema columns in schema order, then any extra columns of the file,
     then a computed ``Revenue`` column (``UnitPrice * Quantity``). Empty cells are kept as
@@ -26,13 +31,24 @@ def load_orders(path: str | Path) -> pd.DataFrame:
         FileNotFoundError: the file does not exist.
         SchemaError: the file is empty, lacks expected columns, or holds a value that cannot
             be read as its column's type.
+        TypeError: a storage is given without a name, or a name without a storage.
     """
-    path = Path(path)
+    if isinstance(source, Storage):
+        if name is None:
+            raise TypeError("A file name is required when loading from a storage")
+        return _read_csv(io.BytesIO(source.read(name)))
+    if name is not None:
+        raise TypeError("A file name can only be used together with a storage")
+    path = Path(source)
     if not path.is_file():
         raise FileNotFoundError(f"Orders file not found: {path}")
+    return _read_csv(path)
+
+
+def _read_csv(source: Path | io.BytesIO) -> pd.DataFrame:
     try:
         # Read everything as text first: "NA" is a real country code, not a missing value.
-        raw = pd.read_csv(path, dtype=str, keep_default_na=False, na_values=[""])
+        raw = pd.read_csv(source, dtype=str, keep_default_na=False, na_values=[""])
     except pd.errors.EmptyDataError as error:
         raise SchemaError("The orders file is empty: it has no header row") from error
     except pd.errors.ParserError as error:
