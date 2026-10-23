@@ -88,6 +88,13 @@ def test_missing_file_exits_84_with_usage(monkeypatch, capsys, tmp_path):
     assert "USAGE" in out
 
 
+def test_directory_instead_of_file_exits_84_with_usage(monkeypatch, capsys, tmp_path):
+    code, out = run_cli(monkeypatch, capsys, "-T", str(tmp_path))
+    assert code == 84
+    assert "Wrong Filepath" in out
+    assert "USAGE" in out
+
+
 def test_unknown_flag_exits_84_with_usage(monkeypatch, capsys, orders_csv):
     code, out = run_cli(monkeypatch, capsys, "-x", orders_csv)
     assert code == 84
