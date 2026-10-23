@@ -19,7 +19,7 @@ def main():
         print("Wrong number of argument")
         use.usage()
         exit(84)
-    if os.path.exists(args[len(args)-1]):
+    if os.path.isfile(args[len(args)-1]):
         try:
             sales = load_orders(args[len(args)-1])
         except SchemaError as error:
