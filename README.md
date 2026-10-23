@@ -48,6 +48,7 @@ $ sales-insights -t 3 data/sample_orders.csv
 1 - Smartphone  sold  186  times
 2 - Book  sold  176  times
 3 - Desk Lamp  sold  175  times
+Top  3 :  ['Smartphone', 'Book', 'Desk Lamp']
 ```
 
 ## Data format

@@ -188,3 +188,59 @@ def test_several_invalid_values_report_the_first_and_the_count(tmp_path):
     )
     with pytest.raises(SchemaError, match=r"line 2.*'bad'.*\(and 1 more\)"):
         load_orders(path)
+
+
+# --- malformed files --------------------------------------------------------------------
+
+
+def test_a_row_with_too_many_values_raises_schema_error_with_its_line(tmp_path):
+    path = write_csv(
+        tmp_path,
+        "1,2025-01-01,Book,Books,10.0,2,C1,France",
+        "2,2025-01-02,Book,Books,10.0,2,C1,France,extra",
+    )
+    with pytest.raises(SchemaError, match="not valid CSV.*line 3"):
+        load_orders(path)
+
+
+def test_every_row_with_too_many_values_raises_schema_error(tmp_path):
+    path = write_csv(
+        tmp_path,
+        "1,2025-01-01,Book,Books,10.0,2,C1,France,x",
+        "2,2025-01-02,Book,Books,10.0,2,C1,France,y",
+    )
+    with pytest.raises(SchemaError, match="more values than the header"):
+        load_orders(path)
+
+
+def test_an_unclosed_quote_raises_schema_error(tmp_path):
+    path = write_csv(tmp_path, '1,2025-01-01,"Book,Books,10.0,2,C1,France')
+    with pytest.raises(SchemaError, match="not valid CSV"):
+        load_orders(path)
+
+
+def test_a_duplicated_column_raises_schema_error_naming_it(tmp_path):
+    path = write_csv(
+        tmp_path,
+        "1,2025-01-01,Book,Books,10.0,2,C1,France,5",
+        header=HEADER + ",Quantity",
+    )
+    with pytest.raises(SchemaError, match="Duplicate column.*Quantity"):
+        load_orders(path)
+
+
+@pytest.mark.parametrize("value", ["inf", "-inf", "nan", "Infinity"])
+def test_a_non_finite_price_is_rejected(tmp_path, value):
+    path = write_csv(tmp_path, f"1,2025-01-01,Book,Books,{value},2,C1,France")
+    with pytest.raises(SchemaError, match=f"'UnitPrice'.*line 2 has '{value}'"):
+        load_orders(path)
+
+
+def test_a_header_with_a_byte_order_mark_and_windows_line_endings_loads(tmp_path):
+    path = tmp_path / "excel.csv"
+    path.write_bytes(
+        b"\xef\xbb\xbf" + HEADER.encode() + b"\r\n1,2025-01-01,Book,Books,10.0,2,C1,France\r\n"
+    )
+    orders = load_orders(path)
+    assert list(orders.columns[:2]) == ["OrderID", "Date"]
+    assert orders["Revenue"].tolist() == [20.0]
