@@ -1,11 +1,14 @@
 """The data format page must describe exactly what the code does."""
 
 import re
+import sys
 from pathlib import Path
 
+from sales_insights.cli import main as cli
 from sales_insights.data.loader import load_orders
 from sales_insights.data.schema import COLUMN_TYPES, COLUMNS, REVENUE_COLUMN
 from sales_insights.data.validation import REQUIRED_VALUE_COLUMNS, RULES, validate_orders
+from tests.conftest import ORDER_COLUMNS
 
 ROOT = Path(__file__).resolve().parent.parent
 DOC = (ROOT / "docs" / "data-schema.md").read_text()
@@ -72,3 +75,53 @@ def test_the_documented_report_example_matches_the_real_format(typed_orders_with
 
 def test_the_readme_links_to_the_page():
     assert "docs/data-schema.md" in (ROOT / "README.md").read_text()
+
+
+# --- the "Errors you may see" table, checked against the real command line ----------------
+
+
+def write_orders(tmp_path, *lines):
+    path = tmp_path / "orders.csv"
+    path.write_text("\n".join(lines) + "\n")
+    return path
+
+
+def cli_output(monkeypatch, capsys, path):
+    monkeypatch.setattr(sys, "argv", ["sales-insights", "-T", str(path)])
+    try:
+        cli.main()
+    except SystemExit as error:
+        assert error.code == 84
+    else:
+        raise AssertionError("the command line should have stopped with exit code 84")
+    return capsys.readouterr().out
+
+
+HEADER = ",".join(ORDER_COLUMNS)
+
+ERROR_SCENARIOS = {
+    "Wrong Filepath": lambda tmp_path: tmp_path / "missing.csv",
+    "The orders file is empty: it has no header row": lambda tmp_path: write_orders(tmp_path, ""),
+    "Missing required column(s): Quantity": lambda tmp_path: write_orders(
+        tmp_path, ",".join(c for c in ORDER_COLUMNS if c != "Quantity")
+    ),
+    "Column 'Date' must hold a date (YYYY-MM-DD); line 3 has 'abc'": lambda tmp_path: write_orders(
+        tmp_path,
+        HEADER,
+        "1,2025-01-01,Book,Books,10.0,1,C1,France",
+        "2,abc,Book,Books,10.0,1,C1,France",
+    ),
+}
+
+
+def test_every_documented_error_has_a_scenario():
+    assert {row[0] for row in table_rows("Errors you may see")} == set(ERROR_SCENARIOS)
+
+
+def test_every_documented_error_is_what_the_command_line_prints(monkeypatch, capsys, tmp_path):
+    for message, make_file in ERROR_SCENARIOS.items():
+        assert message in cli_output(monkeypatch, capsys, make_file(tmp_path)), message
+
+
+def test_a_folder_gives_the_same_message_as_a_missing_file(monkeypatch, capsys, tmp_path):
+    assert "Wrong Filepath" in cli_output(monkeypatch, capsys, tmp_path)

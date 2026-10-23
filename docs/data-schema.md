@@ -84,7 +84,7 @@ On the command line, each of these stops the program with exit code 84 and the m
 
 | Message | Cause | Fix |
 |---------|-------|-----|
-| `Orders file not found: <path>` | The path does not point to a file. | Check the path. |
+| `Wrong Filepath` | The path does not point to a file: it is missing, or it is a folder. The usage text follows the message. | Check the path. |
 | `The orders file is empty: it has no header row` | The file has no content. | Add the header row and the data. |
 | `Missing required column(s): Quantity` | One or more of the eight columns are absent. All missing columns are listed. | Add the columns, or rename them to match the table above. |
 | `Column 'Date' must hold a date (YYYY-MM-DD); line 3 has 'abc'` | A value cannot be read as the column's type. The first bad line is shown, with a count of the others. | Correct the value. |
