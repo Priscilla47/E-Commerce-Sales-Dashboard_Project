@@ -34,20 +34,21 @@ cd E-Commerce-Sales-Dashboard_Project
 
 python3 -m venv .venv
 source .venv/bin/activate
-pip install pandas numpy
+pip install -e .
 
-python3 main.py -T data/sample_orders.csv
-python3 main.py -t 3 data/sample_orders.csv
-python3 main.py -p Laptop -c Laptop data/sample_orders.csv
+sales-insights -T data/sample_orders.csv
+sales-insights -t 3 data/sample_orders.csv
+sales-insights -p Laptop -c Laptop data/sample_orders.csv
 ```
 
 Example output:
 
 ```
-$ python3 main.py -t 3 data/sample_orders.csv
+$ sales-insights -t 3 data/sample_orders.csv
 1 - Smartphone  sold  186  times
 2 - Book  sold  176  times
 3 - Desk Lamp  sold  175  times
+Top  3 :  ['Smartphone', 'Book', 'Desk Lamp']
 ```
 
 ## Data format
@@ -69,9 +70,13 @@ $ python3 main.py -t 3 data/sample_orders.csv
 
 ```
 .
-├── main.py        command-line entry point
-├── calculate.py   analytics functions
-├── usage.py       help text
+├── src/sales_insights/
+│   ├── analytics/   analytics functions
+│   ├── cli/         command-line interface
+│   ├── data/        data loading and validation (planned)
+│   ├── dashboard/   interactive dashboard (planned)
+│   └── ai/          AI-assisted features (planned)
+├── tests/           unit tests
 └── data/
     └── sample_orders.csv
 ```

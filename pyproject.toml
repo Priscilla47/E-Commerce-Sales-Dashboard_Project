@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "sales-insights"
-version = "0.0.1"
+dynamic = ["version"]
 description = "Explore e-commerce order data from the command line, with a dashboard and AI features planned."
 readme = "README.md"
 requires-python = ">=3.11"
@@ -21,11 +21,16 @@ dev = [
     "ruff>=0.5",
 ]
 
-# The code still lives in root-level scripts; the package layout comes with the restructuring.
-[tool.setuptools]
-py-modules = []
+[project.scripts]
+sales-insights = "sales_insights.cli.main:main"
+
+[tool.setuptools.dynamic]
+version = { attr = "sales_insights.__version__" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-pythonpath = ["."]
+pythonpath = ["src"]
 addopts = "-ra"
