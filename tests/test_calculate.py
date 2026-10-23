@@ -4,7 +4,6 @@ They record what the code does today. Known defects are written as strict xfail
 tests asserting the correct behavior, so the fixes turn them into normal tests.
 """
 
-import numpy as np
 import pandas as pd
 import pytest
 
