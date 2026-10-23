@@ -121,8 +121,11 @@ def _lines(mask: pd.Series) -> tuple[int, ...]:
 def _duplicate_order_ids(order_ids: pd.Series) -> list[Issue]:
     duplicated = order_ids.notna() & order_ids.duplicated(keep=False)
     issues = []
-    for value in sorted(order_ids[duplicated].unique()):
-        rows = _lines(order_ids.eq(value))
+    positions = np.flatnonzero(duplicated.to_numpy(dtype=bool))
+    repeated = order_ids[duplicated]
+    # One pass over the repeated ids, not one scan of the whole column per id.
+    for value, members in sorted(repeated.groupby(repeated).indices.items()):
+        rows = tuple(int(positions[member]) + 2 for member in members)
         issues.append(
             Issue("duplicate_order_id", RULES["duplicate_order_id"],
                   f"Duplicate OrderID {value}", rows, "OrderID")
@@ -138,7 +141,9 @@ def _text_issues(values: pd.Series, column: str) -> list[Issue]:
          text.ne(stripped), column)
 
     key = stripped.str.lower()
-    for spelling_key in sorted(key.dropna().unique()):
+    # Only the spellings with several variants need a closer look.
+    spellings = stripped.groupby(key).nunique()
+    for spelling_key in sorted(spellings[spellings > 1].index):
         in_group = key.eq(spelling_key)
         variants = sorted(stripped[in_group].unique())
         if len(variants) > 1:
