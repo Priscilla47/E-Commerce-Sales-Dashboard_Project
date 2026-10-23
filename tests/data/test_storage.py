@@ -76,6 +76,13 @@ def test_absolute_paths_are_refused(storage, tmp_path):
         storage.read(str(tmp_path / "secret.txt"))
 
 
+def test_a_name_with_a_null_byte_is_refused_as_a_storage_error(storage):
+    with pytest.raises(StorageError):
+        storage.read("a\x00b.csv")
+    with pytest.raises(StorageError):
+        storage.exists("a\x00b.csv")
+
+
 @pytest.mark.parametrize("name", ["", "."])
 def test_the_root_itself_is_not_a_file_name(storage, name):
     with pytest.raises(StorageError):

@@ -55,7 +55,10 @@ class LocalStorage:
         return sorted(path.name for path in self.root.iterdir() if path.is_file())
 
     def _resolve(self, name: str) -> Path:
-        path = (self.root / name).resolve()
+        try:
+            path = (self.root / name).resolve()
+        except ValueError as error:  # for instance a null byte in the name
+            raise StorageError(f"Invalid name: {name!r}") from error
         if path == self.root or not path.is_relative_to(self.root):
             raise StorageError(f"Name is outside the storage: {name!r}")
         return path
