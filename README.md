@@ -66,6 +66,8 @@ Top  3 :  ['Smartphone', 'Book', 'Desk Lamp']
 | `CustomerID` | Customer identifier                 |
 | `Country`    | Customer country                    |
 
+See [Data format](docs/data-schema.md) for the full description, the loading rules and the validation checks.
+
 ## Project layout
 
 ```
