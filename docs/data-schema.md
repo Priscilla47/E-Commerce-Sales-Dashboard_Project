@@ -32,7 +32,7 @@ Details worth knowing:
 - Empty cells are kept as missing values, not rejected. The validation step reports them.
 - Text such as `NA` is a normal value (it is a real country code), not a missing cell.
 - `OrderID` and `Quantity` are plain integers, or nullable integers when a cell is empty.
-- A value that cannot be read as its column's type (a date that is not `YYYY-MM-DD`, a price that is not a number, a quantity such as `2.5`) stops the loading with an error that gives the column, the line number and the value.
+- A value that cannot be read as its column's type (a date that is not `YYYY-MM-DD`, a price that is not a finite number such as `abc` or `inf`, a quantity such as `2.5`) stops the loading with an error that gives the column, the line number and the value.
 
 ```python
 from sales_insights.data.loader import load_orders
@@ -86,5 +86,8 @@ On the command line, each of these stops the program with exit code 84 and the m
 |---------|-------|-----|
 | `Wrong Filepath` | The path does not point to a file: it is missing, or it is a folder. The usage text follows the message. | Check the path. |
 | `The orders file is empty: it has no header row` | The file has no content. | Add the header row and the data. |
+| `The orders file is not valid CSV: Expected 8 fields in line 3, saw 9` | A row has more values than the header, or a quote is never closed. The reason and the line come from the CSV reader. | Fix the row: remove the extra value, or quote the text that contains a comma. |
+| `The orders file is not valid CSV: its rows have more values than the header` | Every row has one value too many. | Add the missing column name to the header, or remove the extra values. |
+| `Duplicate column(s) in the header: Quantity` | The same column name appears twice in the header. | Keep a single column of that name. |
 | `Missing required column(s): Quantity` | One or more of the eight columns are absent. All missing columns are listed. | Add the columns, or rename them to match the table above. |
 | `Column 'Date' must hold a date (YYYY-MM-DD); line 3 has 'abc'` | A value cannot be read as the column's type. The first bad line is shown, with a count of the others. | Correct the value. |

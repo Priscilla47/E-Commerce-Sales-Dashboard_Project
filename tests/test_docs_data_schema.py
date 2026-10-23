@@ -7,7 +7,11 @@ from pathlib import Path
 from sales_insights.cli import main as cli
 from sales_insights.data.loader import load_orders
 from sales_insights.data.schema import COLUMN_TYPES, COLUMNS, REVENUE_COLUMN
-from sales_insights.data.validation import REQUIRED_VALUE_COLUMNS, RULES, validate_orders
+from sales_insights.data.validation import (
+    REQUIRED_VALUE_COLUMNS,
+    RULES,
+    validate_orders,
+)
 from tests.conftest import ORDER_COLUMNS
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -102,6 +106,18 @@ HEADER = ",".join(ORDER_COLUMNS)
 ERROR_SCENARIOS = {
     "Wrong Filepath": lambda tmp_path: tmp_path / "missing.csv",
     "The orders file is empty: it has no header row": lambda tmp_path: write_orders(tmp_path, ""),
+    "The orders file is not valid CSV: Expected 8 fields in line 3, saw 9": lambda tmp_path: write_orders(
+        tmp_path,
+        HEADER,
+        "1,2025-01-01,Book,Books,10.0,1,C1,France",
+        "2,2025-01-02,Book,Books,10.0,1,C1,France,extra",
+    ),
+    "The orders file is not valid CSV: its rows have more values than the header": lambda tmp_path: write_orders(
+        tmp_path, HEADER, "1,2025-01-01,Book,Books,10.0,1,C1,France,x"
+    ),
+    "Duplicate column(s) in the header: Quantity": lambda tmp_path: write_orders(
+        tmp_path, HEADER + ",Quantity", "1,2025-01-01,Book,Books,10.0,1,C1,France,5"
+    ),
     "Missing required column(s): Quantity": lambda tmp_path: write_orders(
         tmp_path, ",".join(c for c in ORDER_COLUMNS if c != "Quantity")
     ),
