@@ -113,26 +113,6 @@ def test_num_products_sums_quantities_per_product(orders, product, expected):
     assert cal.num_products(product, orders["Quantity"], orders["Product"]) == expected
 
 
-# --- compare_n_pdt --------------------------------------------------------------------
-
-
-def test_compare_n_pdt_returns_index_of_element():
-    assert cal.compare_n_pdt(7, [3, 5, 7]) == 2
-
-
-def test_compare_n_pdt_returns_zero_when_not_found():
-    assert cal.compare_n_pdt(9, [3, 5, 7]) == 0
-
-
-def test_compare_n_pdt_returns_zero_for_first_element_too():
-    # Same answer for "not found" and "found first": the ambiguity behind the top-N bug.
-    assert cal.compare_n_pdt(3, [3, 5, 7]) == 0
-
-
-def test_compare_n_pdt_empty_list_returns_zero():
-    assert cal.compare_n_pdt(1, []) == 0
-
-
 # --- top_n_product --------------------------------------------------------------------
 
 

@@ -48,13 +48,6 @@ def num_products(item, arr1, pdt):
             n += arr1[i]
     return n
 
-#associate function for top_n_product
-def compare_n_pdt(elmt, items):
-    for j in range(len(items)):
-        if (elmt == items[j]):
-            return j
-    return 0
-
 #n most sold product: the biggest total quantity first, ties ordered by product name
 def top_n_product(n, arr1, pdts):
     quantities = pd.Series(arr1).reset_index(drop=True)
