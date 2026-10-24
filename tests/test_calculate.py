@@ -4,6 +4,7 @@ They record what the code does today. Known defects are written as strict xfail
 tests asserting the correct behavior, so the fixes turn them into normal tests.
 """
 
+import warnings
 from pathlib import Path
 
 import pandas as pd
@@ -306,3 +307,14 @@ def test_top_n_product_on_the_sample_dataset(capsys):
         "2 - Book  sold  176  times",
         "3 - Desk Lamp  sold  175  times",
     ]
+
+
+def test_top_n_product_ignores_categories_that_nobody_bought():
+    # A product column stored as a category keeps the unused labels; they are not products sold.
+    products = pd.Series(["A", "B", "A"], dtype=pd.CategoricalDtype(["A", "B", "Unused"]))
+    quantities = pd.Series([1, 5, 2])
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        assert cal.top_n_product(2, quantities, products) == ["B", "A"]
+    with pytest.raises(SystemExit):
+        cal.top_n_product(3, quantities, products)

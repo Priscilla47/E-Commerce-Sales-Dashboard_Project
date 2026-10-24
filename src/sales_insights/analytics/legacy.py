@@ -56,7 +56,8 @@ def num_products(item, arr1, pdt):
 def top_n_product(n, arr1, pdts):
     quantities = pd.Series(arr1).reset_index(drop=True)
     products = pd.Series(pdts).reset_index(drop=True)
-    totals = quantities.groupby(products).sum().sort_values(ascending=False, kind="stable")
+    totals = quantities.groupby(products, observed=True).sum()
+    totals = totals.sort_values(ascending=False, kind="stable")
 
     if n < 0 or n > len(totals):
         print("Wrong number of products")
