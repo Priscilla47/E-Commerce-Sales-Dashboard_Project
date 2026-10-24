@@ -38,14 +38,13 @@ def test_sum_of_two_arr_single_element():
     assert cal.sum_of_two_arr([3], [2.5]) == pytest.approx(7.5)
 
 
-@pytest.mark.xfail(
-    strict=True,
-    raises=NameError,
-    reason="known bug: 'Value_error' does not exist, so a ValueError is never raised",
+@pytest.mark.parametrize(
+    ("first", "second"),
+    [([1, 2, 3], [1, 2]), ([1, 2], [1, 2, 3]), ([1], []), ([], [1])],
 )
-def test_sum_of_two_arr_mismatched_sizes_raise_value_error():
+def test_sum_of_two_arr_mismatched_sizes_raise_value_error(first, second):
     with pytest.raises(ValueError, match="Wrong size of tables"):
-        cal.sum_of_two_arr([1, 2, 3], [1, 2])
+        cal.sum_of_two_arr(first, second)
 
 
 # --- n_number_clients -----------------------------------------------------------------
