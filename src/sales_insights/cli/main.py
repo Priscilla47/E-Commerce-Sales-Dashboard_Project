@@ -35,7 +35,7 @@ def main():
             print("Total Revenue: ", cal.sum_of_two_arr(sales["Quantity"], sales["UnitPrice"]))
             i += 1
         elif args[i] == "-c":
-            print("Number of clients that bought: ", args[i+1], "=", cal.n_number_clients(sales["Product"], args[i+1]))
+            print("Number of clients that bought: ", args[i+1], "=", cal.n_number_clients(sales["Product"], args[i+1], sales["CustomerID"]))
             i += 2
         elif args[i] == "-u":
             print("Items sold:", end=' ')
