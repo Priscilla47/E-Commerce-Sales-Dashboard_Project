@@ -1,6 +1,7 @@
 #!/bin/python3
 
 import numpy as np
+import pandas as pd
 
 ##total revenue made : qty * price
 def sum_of_two_arr(arr1, arr2):
@@ -8,17 +9,21 @@ def sum_of_two_arr(arr1, arr2):
     arr2 = np.array(arr2)
     
     if arr1.size != arr2.size:
-        raise Value_error("Wrong size of tables")
+        raise ValueError("Wrong size of tables")
     return np.sum(arr1 * arr2)
 
-##number of clients who bought a certain product
-def n_number_clients(arr1, pdt):
-    count = 0
-    
-    for i in range(len(arr1)):
-        if arr1[i] == pdt:
-            count += 1
-    return count
+##number of orders (order lines) of a certain product
+def count_orders(arr1, pdt):
+    return int((pd.Series(arr1) == pdt).sum())
+
+##number of unique customers who bought a certain product
+def n_number_clients(arr1, pdt, customers):
+    products = pd.Series(arr1).reset_index(drop=True)
+    buyers = pd.Series(customers).reset_index(drop=True)
+
+    if len(products) != len(buyers):
+        raise ValueError("Wrong size of tables")
+    return int(buyers[products == pdt].nunique())
 
 ##comparing an elmt to an array
 def compare_it(elmt, items):
@@ -47,38 +52,17 @@ def num_products(item, arr1, pdt):
             n += arr1[i]
     return n
 
-#associate function for top_n_product
-def compare_n_pdt(elmt, items):
-    for j in range(len(items)):
-        if (elmt == items[j]):
-            return j
-    return 0
-
-#n most sold product 
+#n most sold product: the biggest total quantity first, ties ordered by product name
 def top_n_product(n, arr1, pdts):
-    items = n_items(pdts)
-    arr1 = np.array(arr1)
-    item_qty = [0] * len(items)
-    top_n = []
+    quantities = pd.Series(arr1).reset_index(drop=True)
+    products = pd.Series(pdts).reset_index(drop=True)
+    totals = quantities.groupby(products, observed=True).sum()
+    totals = totals.sort_values(ascending=False, kind="stable")
 
-    if n > len(items):
+    if n < 0 or n > len(totals):
         print("Wrong number of products")
         exit(84)
-    for i in range(len(items)):
-        item_qty[i] = num_products(items[i], arr1, pdts)
-    sorted_item_qty = sorted(item_qty)
-    sorted_item_qty.reverse()
-    i = 0
-    for j in range(len(sorted_item_qty)):
-        p = compare_n_pdt(sorted_item_qty[j], item_qty)
-        if i == n:
-            break
-        if p != 0:
-            print(i+1, "-", items[p], " sold ", item_qty[p], " times")
-            top_n.append(items[p])
-            i += 1
-    return top_n
-
-#sales at a given year
-def sales_over_time(yrs):
-    return yrs
+    top = totals.head(n)
+    for rank, (product, qty) in enumerate(top.items(), start=1):
+        print(rank, "-", product, " sold ", qty, " times")
+    return list(top.index)
