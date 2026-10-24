@@ -8,7 +8,7 @@ def sum_of_two_arr(arr1, arr2):
     arr2 = np.array(arr2)
     
     if arr1.size != arr2.size:
-        raise Value_error("Wrong size of tables")
+        raise ValueError("Wrong size of tables")
     return np.sum(arr1 * arr2)
 
 ##number of clients who bought a certain product
