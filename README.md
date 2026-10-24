@@ -21,7 +21,7 @@ A CLI that reads an orders CSV and answers questions about it.
 | `-T`      | Total revenue (quantity x unit price)             |
 | `-u`      | List the unique products sold                     |
 | `-p NAME` | Units sold for one product                        |
-| `-c NAME` | Number of orders for one product                  |
+| `-c NAME` | Number of unique customers who bought a product  |
 | `-t N`    | The N best-selling products                       |
 
 The CSV path is always the last argument.
