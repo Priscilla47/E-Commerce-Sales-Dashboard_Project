@@ -31,7 +31,7 @@ def revenue_by(df: pd.DataFrame, column: str) -> pd.DataFrame:
         raise ValueError(f"The data has no column {column!r}")
 
     result = (
-        df.groupby(column, dropna=False)
+        df.groupby(column, dropna=False, observed=True)
         .agg(revenue=("Revenue", "sum"), orders=("OrderID", "nunique"))
         .reset_index()
     )
