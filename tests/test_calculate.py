@@ -4,10 +4,14 @@ They record what the code does today. Known defects are written as strict xfail
 tests asserting the correct behavior, so the fixes turn them into normal tests.
 """
 
+from pathlib import Path
+
 import pandas as pd
 import pytest
 
 from sales_insights.analytics import legacy as cal
+
+SAMPLE_DATA = Path(__file__).resolve().parent.parent / "data" / "sample_orders.csv"
 
 
 def products_and_quantities(totals: dict[str, int]) -> tuple[pd.Series, pd.Series]:
@@ -160,22 +164,99 @@ def test_top_n_product_too_many_exits_with_code_84(capsys):
     assert "Wrong number of products" in capsys.readouterr().out
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="known bug: the first product (alphabetical) is never returned",
-)
 def test_top_n_product_first_product_can_be_the_best_seller():
     products, quantities = products_and_quantities({"A": 9, "B": 3, "C": 1})
     assert cal.top_n_product(1, quantities, products) == ["A"]
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="known bug: tied products are listed twice and another product is dropped",
-)
 def test_top_n_product_handles_ties():
     products, quantities = products_and_quantities({"A": 1, "B": 2, "C": 2, "D": 5})
     assert cal.top_n_product(3, quantities, products) == ["D", "B", "C"]
+
+
+def test_top_n_product_tie_at_the_cut_off_keeps_the_name_that_comes_first():
+    products, quantities = products_and_quantities({"A": 1, "B": 2, "C": 2, "D": 5})
+    assert cal.top_n_product(2, quantities, products) == ["D", "B"]
+
+
+def test_top_n_product_tie_for_first_place_is_ordered_by_name():
+    products, quantities = products_and_quantities({"B": 4, "A": 4, "C": 1})
+    assert cal.top_n_product(2, quantities, products) == ["A", "B"]
+
+
+def test_top_n_product_tie_in_the_middle_lists_each_product_once():
+    products, quantities = products_and_quantities({"A": 5, "B": 3, "C": 3, "D": 1})
+    assert cal.top_n_product(4, quantities, products) == ["A", "B", "C", "D"]
+
+
+def test_top_n_product_one_returns_the_single_best_seller():
+    products, quantities = products_and_quantities({"A": 1, "B": 5, "C": 3})
+    assert cal.top_n_product(1, quantities, products) == ["B"]
+
+
+def test_top_n_product_all_products_returns_the_full_ranking(capsys):
+    products, quantities = products_and_quantities({"A": 1, "B": 5, "C": 3})
+    assert cal.top_n_product(3, quantities, products) == ["B", "C", "A"]
+    assert capsys.readouterr().out.splitlines() == [
+        "1 - B  sold  5  times",
+        "2 - C  sold  3  times",
+        "3 - A  sold  1  times",
+    ]
+
+
+def test_top_n_product_adds_up_the_quantities_of_a_products_order_lines():
+    products = pd.Series(["B", "A", "B", "A", "B"])
+    quantities = pd.Series([1, 2, 1, 1, 1])
+    # B: 3 units over three lines, A: 3 units over two lines -> tie, A first.
+    assert cal.top_n_product(2, quantities, products) == ["A", "B"]
+
+
+def test_top_n_product_returns_each_name_once_as_a_list():
+    products = pd.Series(["B", "A", "B", "C", "A", "B"])
+    quantities = pd.Series([1, 1, 1, 1, 1, 1])
+    result = cal.top_n_product(3, quantities, products)
+    assert isinstance(result, list)
+    assert result == ["B", "A", "C"]
+
+
+def test_top_n_product_single_product():
+    products, quantities = products_and_quantities({"Only": 4})
+    assert cal.top_n_product(1, quantities, products) == ["Only"]
+
+
+def test_top_n_product_negative_number_exits_with_code_84(capsys):
+    products, quantities = products_and_quantities({"A": 1, "B": 5})
+    with pytest.raises(SystemExit) as error:
+        cal.top_n_product(-1, quantities, products)
+    assert error.value.code == 84
+    assert "Wrong number of products" in capsys.readouterr().out
+
+
+def test_top_n_product_empty_data_returns_an_empty_list_for_zero(capsys):
+    empty = pd.Series([], dtype=object)
+    assert cal.top_n_product(0, empty, empty) == []
+    assert capsys.readouterr().out == ""
+
+
+def test_top_n_product_empty_data_exits_with_code_84_for_one():
+    empty = pd.Series([], dtype=object)
+    with pytest.raises(SystemExit) as error:
+        cal.top_n_product(1, empty, empty)
+    assert error.value.code == 84
+
+
+def test_top_n_product_on_the_sample_dataset(capsys):
+    sales = pd.read_csv(SAMPLE_DATA)
+    assert cal.top_n_product(3, sales["Quantity"], sales["Product"]) == [
+        "Smartphone",
+        "Book",
+        "Desk Lamp",
+    ]
+    assert capsys.readouterr().out.splitlines() == [
+        "1 - Smartphone  sold  186  times",
+        "2 - Book  sold  176  times",
+        "3 - Desk Lamp  sold  175  times",
+    ]
 
 
 # --- sales_over_time ------------------------------------------------------------------
