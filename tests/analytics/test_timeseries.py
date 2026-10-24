@@ -231,6 +231,27 @@ def test_an_invalid_frequency_raises_value_error(loaded_orders, freq):
         revenue_over_time(loaded_orders, freq)
 
 
+def test_dates_that_are_still_text_raise_a_clear_value_error():
+    text_dates = pd.DataFrame({"OrderID": [1], "Date": ["2025-01-05"], "Revenue": [10.0]})
+    with pytest.raises(ValueError, match="load_orders"):
+        revenue_over_time(text_dates, "M")
+
+
+def test_an_empty_table_with_untyped_columns_is_still_an_empty_result():
+    untyped = pd.DataFrame({"OrderID": [], "Date": [], "Revenue": []})
+    result = revenue_over_time(untyped, "M")
+    assert result.empty
+    assert list(result.columns) == ["period", "revenue", "orders"]
+
+
+def test_dates_with_a_timezone_keep_it_in_the_period(loaded_orders):
+    zoned = loaded_orders.copy()
+    zoned["Date"] = zoned["Date"].dt.tz_localize("Europe/Paris")
+    result = revenue_over_time(zoned, "M")
+    assert str(result["period"].dt.tz) == "Europe/Paris"
+    assert result["revenue"].tolist() == pytest.approx([520.0, 640.0, 500.0])
+
+
 def test_the_input_is_not_modified(loaded_orders):
     before = loaded_orders.copy()
     revenue_over_time(loaded_orders, "D")
