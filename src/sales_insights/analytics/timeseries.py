@@ -20,7 +20,8 @@ def revenue_over_time(df: pd.DataFrame, freq: str = "M") -> pd.DataFrame:
     ``orders`` counts distinct ``OrderID`` values. Lines without a date are left out.
 
     Raises:
-        ValueError: ``freq`` is not ``"D"``, ``"M"`` or ``"Y"``.
+        ValueError: ``freq`` is not ``"D"``, ``"M"`` or ``"Y"``, or the ``Date`` column does
+            not hold dates.
     """
     if not isinstance(freq, str) or freq not in FREQUENCIES:
         raise ValueError(f"freq must be one of 'D', 'M' or 'Y', not {freq!r}")
@@ -34,6 +35,9 @@ def revenue_over_time(df: pd.DataFrame, freq: str = "M") -> pd.DataFrame:
                 "orders": pd.Series(dtype="int64"),
             }
         )
+
+    if not pd.api.types.is_datetime64_any_dtype(dated["Date"]):
+        raise ValueError("The Date column must hold dates; load the data with load_orders first")
 
     result = (
         dated.set_index("Date")
