@@ -176,11 +176,3 @@ def test_top_n_product_first_product_can_be_the_best_seller():
 def test_top_n_product_handles_ties():
     products, quantities = products_and_quantities({"A": 1, "B": 2, "C": 2, "D": 5})
     assert cal.top_n_product(3, quantities, products) == ["D", "B", "C"]
-
-
-# --- sales_over_time ------------------------------------------------------------------
-
-
-def test_sales_over_time_is_a_stub_returning_its_input():
-    assert cal.sales_over_time(2025) == 2025
-    assert cal.sales_over_time("2025") == "2025"

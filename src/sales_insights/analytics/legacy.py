@@ -78,7 +78,3 @@ def top_n_product(n, arr1, pdts):
             top_n.append(items[p])
             i += 1
     return top_n
-
-#sales at a given year
-def sales_over_time(yrs):
-    return yrs
