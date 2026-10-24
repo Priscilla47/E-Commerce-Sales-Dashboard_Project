@@ -137,11 +137,17 @@ def test_units_sold_for_an_unknown_product_is_zero(monkeypatch, capsys, orders_c
     assert out == "Number of Unknown sold:  0\n"
 
 
-def test_clients_for_a_product_counts_orders(monkeypatch, capsys, orders_csv):
-    # Book has 3 orders from 2 distinct customers; the current output counts orders.
+def test_clients_for_a_product_counts_unique_customers(monkeypatch, capsys, orders_csv):
+    # Book has 3 orders from 2 distinct customers: the option counts the customers.
     code, out = run_cli(monkeypatch, capsys, "-c", "Book", orders_csv)
     assert code == 0
-    assert out == "Number of clients that bought:  Book = 3\n"
+    assert out == "Number of clients that bought:  Book = 2\n"
+
+
+def test_clients_for_a_product_nobody_bought_is_zero(monkeypatch, capsys, orders_csv):
+    code, out = run_cli(monkeypatch, capsys, "-c", "Unknown", orders_csv)
+    assert code == 0
+    assert out == "Number of clients that bought:  Unknown = 0\n"
 
 
 def test_top_n_products(monkeypatch, capsys, ranking_csv):
@@ -179,6 +185,13 @@ def test_sample_dataset_total_revenue(monkeypatch, capsys):
     assert out == "Total Revenue:  261333.44\n"
 
 
+def test_sample_dataset_laptop_customers(monkeypatch, capsys):
+    # 46 Laptop orders, but one customer bought it twice: 45 customers.
+    code, out = run_cli(monkeypatch, capsys, "-c", "Laptop", str(SAMPLE_DATA))
+    assert code == 0
+    assert out == "Number of clients that bought:  Laptop = 45\n"
+
+
 def test_sample_dataset_top_three(monkeypatch, capsys):
     code, out = run_cli(monkeypatch, capsys, "-t", "3", str(SAMPLE_DATA))
     assert code == 0
@@ -196,6 +209,11 @@ def test_sample_dataset_top_three(monkeypatch, capsys):
 def test_usage_lists_every_flag(capsys, flag):
     usage.usage()
     assert flag in capsys.readouterr().out
+
+
+def test_usage_says_the_c_option_counts_unique_customers(capsys):
+    usage.usage()
+    assert "unique customers" in capsys.readouterr().out
 
 
 # --- known defects ----------------------------------------------------------------------
