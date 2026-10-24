@@ -1,3 +1,4 @@
+import warnings
 from pathlib import Path
 
 import numpy as np
@@ -147,6 +148,18 @@ def test_lines_without_a_label_are_kept_so_the_totals_still_add_up():
     assert result["share"].sum() == pytest.approx(1.0)
     assert result["Country"].isna().sum() == 1
     assert result.loc[result["Country"].isna(), "revenue"].tolist() == [30.0]
+
+
+def test_unused_categories_of_a_category_column_are_not_groups(loaded_orders):
+    # A label column stored as a category keeps the labels nobody used; they are not groups.
+    countries = pd.CategoricalDtype(["France", "Italy", "UK"])
+    stored = loaded_orders.astype({"Country": countries})
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        result = revenue_by_country(stored)
+    assert result["Country"].astype(str).tolist() == ["UK", "France"]
+    assert result["revenue"].tolist() == pytest.approx([1110.0, 550.0])
+    assert result["share"].sum() == pytest.approx(1.0)
 
 
 # --- invalid columns -----------------------------------------------------------------------
