@@ -12,7 +12,7 @@ pip install -e .
 sales-insights -h
 ```
 
-It needs Python 3.11 or newer. Without installing, `PYTHONPATH=src python3 -m sales_insights.cli.main -T data/sample_orders.csv` does the same.
+It needs Python 3.11 or newer. If you only want to try it from a clone of the repository, without `pip install -e .`, install the dependencies (`pip install pandas numpy`) and run `PYTHONPATH=src python3 -m sales_insights.cli.main -T data/sample_orders.csv`.
 
 ## Usage
 
