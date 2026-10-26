@@ -95,11 +95,20 @@ See [Data format](docs/data-schema.md) for the full description, the loading rul
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -e ".[dev]"
+pre-commit install
 
 pytest
 ```
 
 Every feature and every fix comes with unit tests. Tests live in `tests/` and use small fixtures that can be checked by hand.
+
+Code style is checked by [ruff](https://docs.astral.sh/ruff/) (settings in `pyproject.toml`). `pre-commit install` runs ruff, a trailing-whitespace fixer and an end-of-file fixer before every commit; to run the same checks yourself:
+
+```bash
+ruff check .
+ruff format --check .
+pre-commit run --all-files
+```
 
 ## Roadmap
 
