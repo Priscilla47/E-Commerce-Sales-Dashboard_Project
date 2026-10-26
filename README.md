@@ -30,6 +30,11 @@ Put the CSV path last. Options can be combined and are answered in the order giv
 
 Every option, with real output and the error messages, is described in the [command-line reference](docs/cli.md).
 
+## Requirements
+
+- **Linux or macOS.** These are the supported platforms; Windows is not supported.
+- Python 3.11 or newer.
+
 ## Quick start
 
 ```bash
