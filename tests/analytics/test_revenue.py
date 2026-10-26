@@ -3,7 +3,6 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
-from sales_insights.analytics import legacy
 from sales_insights.analytics.revenue import (
     average_order_value,
     order_count,
@@ -133,7 +132,6 @@ def test_sample_dataset_numbers():
     assert average_order_value(sample) == pytest.approx(522.66688, abs=1e-5)
 
 
-def test_total_revenue_matches_the_legacy_command_line_total():
-    sample = load_orders(SAMPLE_DATA)
-    legacy_total = legacy.sum_of_two_arr(sample["Quantity"], sample["UnitPrice"])
-    assert total_revenue(sample) == pytest.approx(float(legacy_total))
+def test_total_revenue_prints_as_the_first_version_of_the_tool_printed_it():
+    # `-T` has always printed 261333.44 for the sample dataset: no float noise at the end.
+    assert str(total_revenue(load_orders(SAMPLE_DATA))) == "261333.44"
