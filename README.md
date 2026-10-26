@@ -28,6 +28,8 @@ A CLI that reads an orders CSV and answers questions about it.
 
 Put the CSV path last. Options can be combined and are answered in the order given. The exit code is 0 on success and 84 for a usage or data error (the message goes to stderr).
 
+Every option, with real output and the error messages, is described in the [command-line reference](docs/cli.md).
+
 ## Quick start
 
 ```bash
