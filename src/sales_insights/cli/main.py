@@ -126,7 +126,8 @@ def _units(orders: pd.DataFrame, product: str) -> None:
 
 def _top(orders: pd.DataFrame, n: int) -> None:
     ranking = products.top_products(orders, n)
-    for rank, (product, units) in enumerate(zip(ranking["Product"], ranking["units"]), start=1):
+    pairs = zip(ranking["Product"], ranking["units"], strict=True)
+    for rank, (product, units) in enumerate(pairs, start=1):
         print(rank, "-", product, " sold ", int(units), " times")
     print("Top ", n, ": ", ranking["Product"].tolist())
 
@@ -137,7 +138,7 @@ def _by(orders: pd.DataFrame, what: str) -> None:
         labels = table["period"].dt.strftime("%Y-%m")
         rows = [
             (label, f"{amount:.2f}", str(count))
-            for label, amount, count in zip(labels, table["revenue"], table["orders"])
+            for label, amount, count in zip(labels, table["revenue"], table["orders"], strict=True)
         ]
         _print_table("Revenue by month", ("Month", "Revenue", "Orders"), rows)
         return
@@ -147,7 +148,7 @@ def _by(orders: pd.DataFrame, what: str) -> None:
     rows = [
         ("(missing)" if pd.isna(label) else str(label), f"{amount:.2f}", str(count), f"{share:.1%}")
         for label, amount, count, share in zip(
-            table[column], table["revenue"], table["orders"], table["share"]
+            table[column], table["revenue"], table["orders"], table["share"], strict=True
         )
     ]
     _print_table(f"Revenue by {what}", (column, "Revenue", "Orders", "Share"), rows)
