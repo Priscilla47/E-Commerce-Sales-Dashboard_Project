@@ -258,3 +258,33 @@ def test_many_duplicated_order_ids_stay_fast_and_exact():
     first = report.issues[0]
     assert (first.message, first.rows) == ("Duplicate OrderID 0", (2, 3))
     assert elapsed < 2.0
+
+
+# --- dates with a time zone ---------------------------------------------------------------
+
+
+@pytest.fixture
+def zoned_orders(typed_orders):
+    zoned = typed_orders.copy()
+    zoned["Date"] = zoned["Date"].dt.tz_localize("Europe/Paris")
+    return zoned
+
+
+def test_dates_with_a_time_zone_can_be_validated(zoned_orders):
+    assert validate(zoned_orders).issues == []
+
+
+def test_a_future_date_with_a_time_zone_is_flagged(zoned_orders):
+    zoned_orders.loc[2, "Date"] = pd.Timestamp("2026-06-01", tz="Europe/Paris")
+    (issue,) = validate(zoned_orders).issues
+    assert (issue.code, issue.rows) == ("future_date", (4,))
+
+
+def test_dates_with_a_time_zone_are_validated_without_a_reference_date(zoned_orders):
+    assert validate_orders(zoned_orders).issues == []
+
+
+def test_a_reference_date_with_a_time_zone_works_with_plain_dates(typed_orders):
+    today = pd.Timestamp("2025-02-10", tz="Europe/Paris")
+    report = validate_orders(typed_orders, today=today)
+    assert [(i.code, i.rows) for i in report.issues] == [("future_date", (5, 6, 7))]
