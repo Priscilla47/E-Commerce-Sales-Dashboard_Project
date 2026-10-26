@@ -86,6 +86,7 @@ def validate_orders(orders: pd.DataFrame, today: pd.Timestamp | None = None) -> 
     """
     require_columns(orders.columns)
     today = pd.Timestamp.today().normalize() if today is None else today
+    today = _match_time_zone(today, orders["Date"])
     issues: list[Issue] = []
 
     for column in REQUIRED_VALUE_COLUMNS:
@@ -105,6 +106,16 @@ def validate_orders(orders: pd.DataFrame, today: pd.Timestamp | None = None) -> 
         issues.extend(_text_issues(orders[column], column))
 
     return ValidationReport(issues)
+
+
+def _match_time_zone(today: pd.Timestamp, dates: pd.Series) -> pd.Timestamp:
+    """Give ``today`` the time zone of the dates (or none), so the two can be compared."""
+    zone = dates.dt.tz if pd.api.types.is_datetime64_any_dtype(dates) else None
+    if zone is not None and today.tzinfo is None:
+        return today.tz_localize(zone)
+    if zone is None and today.tzinfo is not None:
+        return today.tz_localize(None)
+    return today
 
 
 def _add(issues: list[Issue], code: str, message: str, mask: pd.Series, column: str) -> None:

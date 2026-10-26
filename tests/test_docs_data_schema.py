@@ -1,7 +1,6 @@
 """The data format page must describe exactly what the code does."""
 
 import re
-import sys
 from pathlib import Path
 
 from sales_insights.cli import main as cli
@@ -90,21 +89,24 @@ def write_orders(tmp_path, *lines):
     return path
 
 
-def cli_output(monkeypatch, capsys, path):
-    monkeypatch.setattr(sys, "argv", ["sales-insights", "-T", str(path)])
-    try:
-        cli.main()
-    except SystemExit as error:
-        assert error.code == 84
-    else:
-        raise AssertionError("the command line should have stopped with exit code 84")
-    return capsys.readouterr().out
+def write_orders_bytes(tmp_path, content):
+    path = tmp_path / "orders.csv"
+    path.write_bytes(content)
+    return path
+
+
+def cli_error(capsys, path):
+    """Run ``sales-insights -T path``, which must fail with exit code 84, and return stderr."""
+    assert cli.main(["-T", str(path)]) == 84
+    captured = capsys.readouterr()
+    assert captured.out == ""
+    return captured.err
 
 
 HEADER = ",".join(ORDER_COLUMNS)
 
 ERROR_SCENARIOS = {
-    "Wrong Filepath": lambda tmp_path: tmp_path / "missing.csv",
+    "Orders file not found: <path>": lambda tmp_path: tmp_path / "missing.csv",
     "The orders file is empty: it has no header row": lambda tmp_path: write_orders(tmp_path, ""),
     "The orders file is not valid CSV: Expected 8 fields in line 3, saw 9": lambda tmp_path: write_orders(
         tmp_path,
@@ -118,8 +120,17 @@ ERROR_SCENARIOS = {
     "Duplicate column(s) in the header: Quantity": lambda tmp_path: write_orders(
         tmp_path, HEADER + ",Quantity", "1,2025-01-01,Book,Books,10.0,1,C1,France,5"
     ),
+    "The orders file is not UTF-8 text; in a spreadsheet, save it as 'CSV UTF-8'": lambda tmp_path: (
+        write_orders_bytes(tmp_path, (HEADER + "\n1,2025-01-01,Café,Books,10.0,1,C1,France\n").encode("latin-1"))
+    ),
     "Missing required column(s): Quantity": lambda tmp_path: write_orders(
         tmp_path, ",".join(c for c in ORDER_COLUMNS if c != "Quantity")
+    ),
+    "Column 'Date' mixes time zones; write every date with the same offset, or none": lambda tmp_path: write_orders(
+        tmp_path,
+        HEADER,
+        "1,2025-01-01T10:00:00+01:00,Book,Books,10.0,1,C1,France",
+        "2,2025-01-02T10:00:00+02:00,Book,Books,10.0,1,C1,France",
     ),
     "Column 'Date' must hold a date (YYYY-MM-DD); line 3 has 'abc'": lambda tmp_path: write_orders(
         tmp_path,
@@ -134,10 +145,12 @@ def test_every_documented_error_has_a_scenario():
     assert {row[0] for row in table_rows("Errors you may see")} == set(ERROR_SCENARIOS)
 
 
-def test_every_documented_error_is_what_the_command_line_prints(monkeypatch, capsys, tmp_path):
+def test_every_documented_error_is_what_the_command_line_prints(capsys, tmp_path):
     for message, make_file in ERROR_SCENARIOS.items():
-        assert message in cli_output(monkeypatch, capsys, make_file(tmp_path)), message
+        path = make_file(tmp_path)
+        expected = f"sales-insights: error: {message.replace('<path>', str(path))}"
+        assert expected in cli_error(capsys, path), message
 
 
-def test_a_folder_gives_the_same_message_as_a_missing_file(monkeypatch, capsys, tmp_path):
-    assert "Wrong Filepath" in cli_output(monkeypatch, capsys, tmp_path)
+def test_a_folder_gives_the_same_message_as_a_missing_file(capsys, tmp_path):
+    assert f"Orders file not found: {tmp_path}" in cli_error(capsys, tmp_path)
