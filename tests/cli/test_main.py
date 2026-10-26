@@ -182,6 +182,7 @@ def test_empty_file_exits_84_with_a_clear_message(capsys, tmp_path):
     path.write_text("")
     code, out, err = run(capsys, "-T", str(path))
     assert code == 84
+    assert out == ""
     assert "The orders file is empty" in err
 
 
