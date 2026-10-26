@@ -245,7 +245,14 @@ def test_top_products_an_n_out_of_range_raises_value_error(n):
         top_products(totals({"A": 1, "B": 5}), n)
 
 
-@pytest.mark.parametrize("n", [1.0, "2", None, True])
+@pytest.mark.parametrize("n", [np.int64(2), np.int32(2), np.uint8(2), np.intp(2)])
+def test_top_products_accepts_numpy_integers_like_python_ones(n):
+    # Counts computed with numpy or pandas (a max, a slider, a length) are numpy integers.
+    data = totals({"A": 1, "B": 5, "C": 3})
+    pd.testing.assert_frame_equal(top_products(data, n), top_products(data, 2))
+
+
+@pytest.mark.parametrize("n", [1.0, np.float64(2.0), "2", None, True, np.True_])
 def test_top_products_an_n_that_is_not_a_whole_number_raises_type_error(n):
     with pytest.raises(TypeError, match="whole number"):
         top_products(totals({"A": 1, "B": 5}), n)

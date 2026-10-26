@@ -5,6 +5,9 @@ name (the match is case-sensitive). Missing cells are skipped: a line without a 
 no units, and a line without a customer is not counted as a customer.
 """
 
+import operator
+
+import numpy as np
 import pandas as pd
 
 
@@ -35,11 +38,15 @@ def top_products(df: pd.DataFrame, n: int) -> pd.DataFrame:
     that sold the same quantity ordered by name.
 
     Raises:
-        TypeError: ``n`` is not a whole number.
+        TypeError: ``n`` is not a whole number (a Python or numpy integer).
         ValueError: ``n`` is negative or larger than the number of products.
     """
-    if not isinstance(n, int) or isinstance(n, bool):
-        raise TypeError(f"n must be a whole number, not {n!r}")
+    try:
+        if isinstance(n, bool | np.bool_):
+            raise TypeError
+        n = operator.index(n)  # a Python int or a numpy integer, nothing else
+    except TypeError:
+        raise TypeError(f"n must be a whole number, not {n!r}") from None
 
     # observed=True: with a category column, keep only the products that really occur.
     units = df.groupby("Product", observed=True)["Quantity"].sum()
