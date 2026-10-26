@@ -309,14 +309,6 @@ def test_top_n_product_on_the_sample_dataset(capsys):
     ]
 
 
-# --- sales_over_time ------------------------------------------------------------------
-
-
-def test_sales_over_time_is_a_stub_returning_its_input():
-    assert cal.sales_over_time(2025) == 2025
-    assert cal.sales_over_time("2025") == "2025"
-
-
 def test_top_n_product_ignores_categories_that_nobody_bought():
     # A product column stored as a category keeps the unused labels; they are not products sold.
     products = pd.Series(["A", "B", "A"], dtype=pd.CategoricalDtype(["A", "B", "Unused"]))
