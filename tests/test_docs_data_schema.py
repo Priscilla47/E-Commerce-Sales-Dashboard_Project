@@ -83,16 +83,9 @@ def test_the_readme_links_to_the_page():
 # --- the "Errors you may see" table, checked against the real command line ----------------
 
 
-def write_orders(tmp_path, *lines):
-    path = tmp_path / "orders.csv"
-    path.write_text("\n".join(lines) + "\n")
-    return path
-
-
-def write_orders_bytes(tmp_path, content):
-    path = tmp_path / "orders.csv"
-    path.write_bytes(content)
-    return path
+def lines(*rows: str) -> bytes:
+    """The bytes of a CSV file made of these lines."""
+    return ("\n".join(rows) + "\n").encode()
 
 
 def cli_error(capsys, path):
@@ -104,41 +97,42 @@ def cli_error(capsys, path):
 
 
 HEADER = ",".join(ORDER_COLUMNS)
+ROW = "1,2025-01-01,Book,Books,10.0,1,C1,France"
 
+# Each documented message, with the content of a file that makes the command print it.
+# None stands for a path that does not exist.
 ERROR_SCENARIOS = {
-    "Orders file not found: <path>": lambda tmp_path: tmp_path / "missing.csv",
-    "The orders file is empty: it has no header row": lambda tmp_path: write_orders(tmp_path, ""),
-    "The orders file is not valid CSV: Expected 8 fields in line 3, saw 9": lambda tmp_path: write_orders(
-        tmp_path,
-        HEADER,
-        "1,2025-01-01,Book,Books,10.0,1,C1,France",
-        "2,2025-01-02,Book,Books,10.0,1,C1,France,extra",
+    "Orders file not found: <path>": None,
+    "The orders file is empty: it has no header row": b"",
+    "The orders file is not valid CSV: Expected 8 fields in line 3, saw 9": lines(
+        HEADER, ROW, "2,2025-01-02,Book,Books,10.0,1,C1,France,extra"
     ),
-    "The orders file is not valid CSV: its rows have more values than the header": lambda tmp_path: write_orders(
-        tmp_path, HEADER, "1,2025-01-01,Book,Books,10.0,1,C1,France,x"
+    "The orders file is not valid CSV: its rows have more values than the header": lines(
+        HEADER, ROW + ",x"
     ),
-    "Duplicate column(s) in the header: Quantity": lambda tmp_path: write_orders(
-        tmp_path, HEADER + ",Quantity", "1,2025-01-01,Book,Books,10.0,1,C1,France,5"
+    "Duplicate column(s) in the header: Quantity": lines(HEADER + ",Quantity", ROW + ",5"),
+    "The orders file is not UTF-8 text; in a spreadsheet, save it as 'CSV UTF-8'": (
+        lines(HEADER, "1,2025-01-01,Café,Books,10.0,1,C1,France").decode().encode("latin-1")
     ),
-    "The orders file is not UTF-8 text; in a spreadsheet, save it as 'CSV UTF-8'": lambda tmp_path: (
-        write_orders_bytes(tmp_path, (HEADER + "\n1,2025-01-01,Café,Books,10.0,1,C1,France\n").encode("latin-1"))
+    "Missing required column(s): Quantity": lines(
+        ",".join(c for c in ORDER_COLUMNS if c != "Quantity")
     ),
-    "Missing required column(s): Quantity": lambda tmp_path: write_orders(
-        tmp_path, ",".join(c for c in ORDER_COLUMNS if c != "Quantity")
-    ),
-    "Column 'Date' mixes time zones; write every date with the same offset, or none": lambda tmp_path: write_orders(
-        tmp_path,
+    "Column 'Date' mixes time zones; write every date with the same offset, or none": lines(
         HEADER,
         "1,2025-01-01T10:00:00+01:00,Book,Books,10.0,1,C1,France",
         "2,2025-01-02T10:00:00+02:00,Book,Books,10.0,1,C1,France",
     ),
-    "Column 'Date' must hold a date (YYYY-MM-DD); line 3 has 'abc'": lambda tmp_path: write_orders(
-        tmp_path,
-        HEADER,
-        "1,2025-01-01,Book,Books,10.0,1,C1,France",
-        "2,abc,Book,Books,10.0,1,C1,France",
+    "Column 'Date' must hold a date (YYYY-MM-DD); line 3 has 'abc'": lines(
+        HEADER, ROW, "2,abc,Book,Books,10.0,1,C1,France"
     ),
 }
+
+
+def orders_file(tmp_path, content):
+    path = tmp_path / "orders.csv"
+    if content is not None:
+        path.write_bytes(content)
+    return path
 
 
 def test_every_documented_error_has_a_scenario():
@@ -146,8 +140,8 @@ def test_every_documented_error_has_a_scenario():
 
 
 def test_every_documented_error_is_what_the_command_line_prints(capsys, tmp_path):
-    for message, make_file in ERROR_SCENARIOS.items():
-        path = make_file(tmp_path)
+    for message, content in ERROR_SCENARIOS.items():
+        path = orders_file(tmp_path, content)
         expected = f"sales-insights: error: {message.replace('<path>', str(path))}"
         assert expected in cli_error(capsys, path), message
 
