@@ -90,12 +90,22 @@ def validate_orders(orders: pd.DataFrame, today: pd.Timestamp | None = None) -> 
     issues: list[Issue] = []
 
     for column in REQUIRED_VALUE_COLUMNS:
-        _add(issues, "missing_value", f"Missing value in column '{column}'",
-             orders[column].isna(), column)
+        _add(
+            issues,
+            "missing_value",
+            f"Missing value in column '{column}'",
+            orders[column].isna(),
+            column,
+        )
 
     for column in NON_NEGATIVE_COLUMNS:
-        _add(issues, "negative_value", f"Negative value in column '{column}'",
-             orders[column].lt(0), column)
+        _add(
+            issues,
+            "negative_value",
+            f"Negative value in column '{column}'",
+            orders[column].lt(0),
+            column,
+        )
 
     issues.extend(_duplicate_order_ids(orders["OrderID"]))
 
@@ -138,8 +148,13 @@ def _duplicate_order_ids(order_ids: pd.Series) -> list[Issue]:
     for value, members in sorted(repeated.groupby(repeated).indices.items()):
         rows = tuple(int(positions[member]) + 2 for member in members)
         issues.append(
-            Issue("duplicate_order_id", RULES["duplicate_order_id"],
-                  f"Duplicate OrderID {value}", rows, "OrderID")
+            Issue(
+                "duplicate_order_id",
+                RULES["duplicate_order_id"],
+                f"Duplicate OrderID {value}",
+                rows,
+                "OrderID",
+            )
         )
     return issues
 
@@ -148,8 +163,13 @@ def _text_issues(values: pd.Series, column: str) -> list[Issue]:
     text = values.astype("string")
     stripped = text.str.strip()
     issues = []
-    _add(issues, "untrimmed_text", f"Leading or trailing spaces in column '{column}'",
-         text.ne(stripped), column)
+    _add(
+        issues,
+        "untrimmed_text",
+        f"Leading or trailing spaces in column '{column}'",
+        text.ne(stripped),
+        column,
+    )
 
     key = stripped.str.lower()
     # Only the spellings with several variants need a closer look.
@@ -160,9 +180,13 @@ def _text_issues(values: pd.Series, column: str) -> list[Issue]:
         if len(variants) > 1:
             shown = ", ".join(repr(variant) for variant in variants)
             issues.append(
-                Issue("inconsistent_casing", RULES["inconsistent_casing"],
-                      f"Inconsistent casing in column '{column}': {shown}",
-                      _lines(in_group), column)
+                Issue(
+                    "inconsistent_casing",
+                    RULES["inconsistent_casing"],
+                    f"Inconsistent casing in column '{column}': {shown}",
+                    _lines(in_group),
+                    column,
+                )
             )
     return issues
 
