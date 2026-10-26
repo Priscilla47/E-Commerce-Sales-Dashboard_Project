@@ -15,16 +15,18 @@ A Python tool to explore e-commerce order data: revenue, best-selling products, 
 
 A CLI that reads an orders CSV and answers questions about it.
 
-| Flag      | Description                                       |
-|-----------|---------------------------------------------------|
-| `-h`      | Show usage                                        |
-| `-T`      | Total revenue (quantity x unit price)             |
-| `-u`      | List the unique products sold                     |
-| `-p NAME` | Units sold for one product                        |
-| `-c NAME` | Number of unique customers who bought a product  |
-| `-t N`    | The N best-selling products                       |
+| Option                     | Description                                                  |
+|----------------------------|--------------------------------------------------------------|
+| `-h`                       | Show the help                                                |
+| `-T`                       | Total revenue (quantity x unit price)                        |
+| `-u`                       | List the unique products sold                                |
+| `-p NAME`                  | Units sold for one product                                   |
+| `-c NAME`                  | Number of unique customers who bought a product              |
+| `-t N`                     | The N best-selling products                                  |
+| `--by country\|category\|month` | Revenue, orders and share of the total for each value  |
+| `--validate`               | Check the data and print what is wrong with it               |
 
-The CSV path is always the last argument.
+Put the CSV path last. Options can be combined and are answered in the order given. The exit code is 0 on success and 84 for a usage or data error (the message goes to stderr).
 
 ## Quick start
 
@@ -39,6 +41,8 @@ pip install -e .
 sales-insights -T data/sample_orders.csv
 sales-insights -t 3 data/sample_orders.csv
 sales-insights -p Laptop -c Laptop data/sample_orders.csv
+sales-insights --by country data/sample_orders.csv
+sales-insights --validate data/sample_orders.csv
 ```
 
 Example output:
@@ -73,9 +77,9 @@ See [Data format](docs/data-schema.md) for the full description, the loading rul
 ```
 .
 ├── src/sales_insights/
-│   ├── analytics/   analytics functions
+│   ├── analytics/   revenue, products, breakdowns and time series
 │   ├── cli/         command-line interface
-│   ├── data/        data loading and validation (planned)
+│   ├── data/        data loading, validation and storage
 │   ├── dashboard/   interactive dashboard (planned)
 │   └── ai/          AI-assisted features (planned)
 ├── tests/           unit tests
@@ -98,8 +102,8 @@ Every feature and every fix comes with unit tests. Tests live in `tests/` and us
 ## Roadmap
 
 - [ ] Restructure into a proper Python package with tests and CI
-- [ ] Data loading with validation and clear error messages
-- [ ] More analytics: revenue by country, category and time period
+- [x] Data loading with validation and clear error messages
+- [x] More analytics: revenue by country, category and time period
 - [ ] Interactive dashboard
 - [ ] AI features: natural-language questions, automatic insights, revenue forecasting
 - [ ] Docker image and deployment guide
