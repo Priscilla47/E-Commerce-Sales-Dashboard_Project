@@ -48,26 +48,96 @@ def test_sum_of_two_arr_mismatched_sizes_raise_value_error(first, second):
         cal.sum_of_two_arr(first, second)
 
 
-# --- n_number_clients -----------------------------------------------------------------
+# --- count_orders ---------------------------------------------------------------------
 
 
 @pytest.mark.parametrize(
     ("product", "expected"),
     [("Book", 3), ("Laptop", 2), ("Phone", 1), ("Unknown", 0)],
 )
-def test_n_number_clients_counts_matching_rows(orders, product, expected):
-    assert cal.n_number_clients(orders["Product"], product) == expected
+def test_count_orders_counts_the_order_lines_of_a_product(orders, product, expected):
+    assert cal.count_orders(orders["Product"], product) == expected
 
 
-def test_n_number_clients_counts_orders_not_unique_customers(orders):
-    # Customer C1 bought Book twice, yet both orders are counted (see the fix issue).
-    book_customers = orders.loc[orders["Product"] == "Book", "CustomerID"]
-    assert book_customers.nunique() == 2
-    assert cal.n_number_clients(orders["Product"], "Book") == 3
+def test_count_orders_counts_a_repeat_customer_every_time(orders):
+    # Customer C1 bought Book twice: both orders are counted.
+    assert cal.count_orders(orders["Product"], "Book") == 3
+
+
+def test_count_orders_is_case_sensitive(orders):
+    assert cal.count_orders(orders["Product"], "book") == 0
+
+
+def test_count_orders_of_empty_data_is_zero():
+    assert cal.count_orders(pd.Series([], dtype=object), "Book") == 0
+
+
+def test_count_orders_returns_a_plain_integer(orders):
+    assert type(cal.count_orders(orders["Product"], "Book")) is int
+
+
+# --- n_number_clients -----------------------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    ("product", "expected"),
+    [("Book", 2), ("Laptop", 2), ("Phone", 1), ("Unknown", 0)],
+)
+def test_n_number_clients_counts_unique_customers(orders, product, expected):
+    assert cal.n_number_clients(orders["Product"], product, orders["CustomerID"]) == expected
+
+
+def test_n_number_clients_counts_a_repeat_customer_once(orders):
+    # Customer C1 bought Book twice, C2 once: 3 orders but 2 customers.
+    assert cal.count_orders(orders["Product"], "Book") == 3
+    assert cal.n_number_clients(orders["Product"], "Book", orders["CustomerID"]) == 2
+
+
+def test_n_number_clients_two_different_customers_count_two():
+    products = pd.Series(["Book", "Book"])
+    customers = pd.Series(["C1", "C2"])
+    assert cal.n_number_clients(products, "Book", customers) == 2
+
+
+def test_n_number_clients_only_counts_the_customers_of_that_product(orders):
+    # C3 bought Laptop and Phone, but is not a Book customer.
+    assert cal.n_number_clients(orders["Product"], "Book", orders["CustomerID"]) == 2
+    assert cal.n_number_clients(orders["Product"], "Phone", orders["CustomerID"]) == 1
 
 
 def test_n_number_clients_is_case_sensitive(orders):
-    assert cal.n_number_clients(orders["Product"], "book") == 0
+    assert cal.n_number_clients(orders["Product"], "book", orders["CustomerID"]) == 0
+
+
+def test_n_number_clients_does_not_count_an_empty_customer_id():
+    products = pd.Series(["Book", "Book", "Book"])
+    customers = pd.Series(["C1", None, "C1"])
+    assert cal.n_number_clients(products, "Book", customers) == 1
+
+
+def test_n_number_clients_of_empty_data_is_zero():
+    empty = pd.Series([], dtype=object)
+    assert cal.n_number_clients(empty, "Book", empty) == 0
+
+
+def test_n_number_clients_accepts_plain_lists():
+    assert cal.n_number_clients(["Book", "Pen", "Book"], "Book", ["C1", "C2", "C1"]) == 1
+
+
+def test_n_number_clients_returns_a_plain_integer(orders):
+    result = cal.n_number_clients(orders["Product"], "Book", orders["CustomerID"])
+    assert type(result) is int
+
+
+def test_n_number_clients_mismatched_sizes_raise_value_error():
+    with pytest.raises(ValueError, match="Wrong size of tables"):
+        cal.n_number_clients(["Book", "Pen"], "Book", ["C1"])
+
+
+def test_n_number_clients_ignores_the_row_labels_of_the_inputs():
+    products = pd.Series(["Book", "Pen", "Book"], index=[10, 20, 30])
+    customers = pd.Series(["C1", "C2", "C3"], index=[7, 8, 9])
+    assert cal.n_number_clients(products, "Book", customers) == 2
 
 
 # --- compare_it -----------------------------------------------------------------------
