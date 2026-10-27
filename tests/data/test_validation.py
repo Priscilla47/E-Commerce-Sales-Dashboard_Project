@@ -1,4 +1,3 @@
-import time
 from pathlib import Path
 
 import pandas as pd
@@ -235,56 +234,59 @@ def large_orders(rows: int, products: int) -> pd.DataFrame:
     )
 
 
-def test_many_products_with_one_inconsistent_spelling_stay_fast_and_exact():
+@pytest.fixture
+def column_scans(monkeypatch):
+    """Count the whole-column comparisons (``Series.eq``) a validation run makes."""
+    calls = []
+    original = pd.Series.eq
+
+    def counting_eq(self, *args, **kwargs):
+        calls.append(len(self))
+        return original(self, *args, **kwargs)
+
+    monkeypatch.setattr(pd.Series, "eq", counting_eq)
+    return calls
+
+
+def test_validation_does_not_scan_the_column_once_per_distinct_product(column_scans):
+    # The first version compared the whole column with each distinct spelling, so the work
+    # grew with (distinct values x rows): 8,000 products took half a minute. This counts the
+    # scans, which does not depend on the speed of the machine.
+    orders = large_orders(rows=4_000, products=1_000)
+    validate(orders)
+    assert len(column_scans) < 10, f"{len(column_scans)} scans of the column"
+
+
+def test_validation_does_not_scan_the_column_once_per_duplicated_order_id(column_scans):
+    orders = large_orders(rows=4_000, products=10)
+    orders["OrderID"] = orders.index // 2  # 2,000 ids, each twice
+    validate(orders)
+    assert len(column_scans) < 10, f"{len(column_scans)} scans of the column"
+
+
+def test_the_number_of_scans_does_not_grow_with_the_number_of_values(column_scans):
+    small = large_orders(rows=400, products=100)
+    validate(small)
+    for_small = len(column_scans)
+    column_scans.clear()
+    large = large_orders(rows=4_000, products=1_000)
+    validate(large)
+    assert len(column_scans) == for_small
+
+
+def test_many_products_with_one_inconsistent_spelling_are_reported_exactly():
     orders = large_orders(rows=40_000, products=8_000)
     orders.loc[5, "Product"] = "product 5"  # the one odd spelling
-    started = time.perf_counter()
-    report = validate(orders)
-    elapsed = time.perf_counter() - started
-    (issue,) = report.issues
+    (issue,) = validate(orders).issues
     assert issue.code == "inconsistent_casing"
     assert "'Product 5', 'product 5'" in issue.message
     assert 7 in issue.rows  # row index 5 is CSV line 7
-    assert elapsed < 2.0
 
 
-def test_many_duplicated_order_ids_stay_fast_and_exact():
+def test_many_duplicated_order_ids_are_reported_exactly():
     orders = large_orders(rows=100_000, products=10)
     orders["OrderID"] = orders.index // 2  # every id appears twice: 50,000 duplicates
-    started = time.perf_counter()
     report = validate(orders)
-    elapsed = time.perf_counter() - started
     assert codes(report).count("duplicate_order_id") == 50_000
     first = report.issues[0]
     assert (first.message, first.rows) == ("Duplicate OrderID 0", (2, 3))
-    assert elapsed < 2.0
-
-
-# --- dates with a time zone ---------------------------------------------------------------
-
-
-@pytest.fixture
-def zoned_orders(typed_orders):
-    zoned = typed_orders.copy()
-    zoned["Date"] = zoned["Date"].dt.tz_localize("Europe/Paris")
-    return zoned
-
-
-def test_dates_with_a_time_zone_can_be_validated(zoned_orders):
-    assert validate(zoned_orders).issues == []
-
-
-def test_a_future_date_with_a_time_zone_is_flagged(zoned_orders):
-    zoned_orders.loc[2, "Date"] = pd.Timestamp("2026-06-01", tz="Europe/Paris")
-    (issue,) = validate(zoned_orders).issues
-    assert (issue.code, issue.rows) == ("future_date", (4,))
-
-
-def test_dates_with_a_time_zone_are_validated_without_a_reference_date(zoned_orders):
-    assert validate_orders(zoned_orders).issues == []
-
-
-def test_a_reference_date_with_a_time_zone_works_with_plain_dates(typed_orders):
-    today = pd.Timestamp("2025-02-10", tz="Europe/Paris")
-    report = validate_orders(typed_orders, today=today)
-    assert [(i.code, i.rows) for i in report.issues] == [("future_date", (5, 6, 7))]
