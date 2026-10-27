@@ -94,6 +94,8 @@ See [Data format](docs/data-schema.md) for the full description, the loading rul
     └── sample_orders.csv
 ```
 
+How the pieces fit together, the rule about what may import what, and how to add a function are described in [Architecture](docs/architecture.md).
+
 ## Development
 
 ```bash

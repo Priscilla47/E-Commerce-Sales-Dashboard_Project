@@ -121,7 +121,7 @@ def slug(heading: str) -> str:
     return re.sub(r"[^\w\- ]", "", heading.lower()).replace(" ", "-")
 
 
-@pytest.mark.parametrize("page", ["cli.md", "data-schema.md"])
+@pytest.mark.parametrize("page", ["cli.md", "data-schema.md", "architecture.md"])
 def test_the_links_of_the_page_point_to_something_that_exists(page):
     text = (DOCS / page).read_text()
     for target in re.findall(r"\]\(([^)]+)\)", text):
