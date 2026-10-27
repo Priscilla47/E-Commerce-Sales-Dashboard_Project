@@ -80,9 +80,9 @@ Take `sales-insights -T -t 3 data/sample_orders.csv`:
 Say we want the average number of units per order. Four steps, each with a place:
 
 1. **Write the function** in the analytics module of the same subject, here `src/sales_insights/analytics/revenue.py` (or a new module in the same folder when the subject is new). It takes the loaded table and returns a plain number or a table. Give it a docstring that says what it returns, what it does for empty data, and what it raises.
-2. **Write its tests** in the matching file, here `tests/analytics/test_revenue.py`, with the `loaded_orders` fixture, whose values can be checked by hand. Cover the normal case, empty data, a single order, a missing cell, and the type of the result. Write them first and see them fail.
+2. **Write its tests** in the matching file, here `tests/analytics/test_revenue.py`: import the new function at the top of the file and use the `loaded_orders` fixture, whose values can be checked by hand. Cover the normal case, empty data, a single order, a missing cell, and the type of the result. Write them first and see them fail.
 3. **Document it.** The docstring is the documentation of the function. If it is also a command-line option, add the option in `cli/main.py`, its tests in `tests/cli/test_main.py`, and a row and an example in [the command-line reference](cli.md); the tests of that page fail until they agree with the code.
-4. **Check everything**: `pytest`, `ruff check .` and `ruff format --check .` (or `pre-commit run --all-files`).
+4. **Check everything**: `pytest`, `ruff check .` and `ruff format --check .` (or `pre-commit run --all-files`). The imports must stay sorted; `ruff check --fix .` sorts them for you.
 
 The function and its test for the example look like this:
 
