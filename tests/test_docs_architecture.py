@@ -48,8 +48,19 @@ def packages_in(src: Path) -> set[str]:
     return {path.parent.name for path in src.glob("*/__init__.py")}
 
 
+def is_dynamic_import(call: ast.Call) -> bool:
+    """``import_module(...)``, ``importlib.import_module(...)`` or ``__import__(...)``."""
+    function = call.func
+    name = function.id if isinstance(function, ast.Name) else getattr(function, "attr", "")
+    return name in {"import_module", "__import__"}
+
+
 def imports_of(path: Path, src: Path) -> set[str]:
-    """The packages of the project that the module at ``path`` imports, whatever the style."""
+    """The packages of the project that the module at ``path`` imports, whatever the style.
+
+    Besides ``import`` statements it finds ``import_module("pkg.module")`` and
+    ``__import__("pkg.module")`` with a literal name. A name computed at run time cannot be seen.
+    """
     package = src.name
     known = packages_in(src)
     here = [package, *path.relative_to(src).parent.parts]  # the package of the module
@@ -63,6 +74,11 @@ def imports_of(path: Path, src: Path) -> set[str]:
             targets = [module]
             if module == [package]:  # from sales_insights import cli
                 targets += [[package, alias.name] for alias in node.names]
+        elif isinstance(node, ast.Call) and is_dynamic_import(node) and node.args:
+            first = node.args[0]
+            if not (isinstance(first, ast.Constant) and isinstance(first.value, str)):
+                continue  # a name only known at run time cannot be checked
+            targets = [first.value.split(".")]
         else:
             continue
         for target in targets:
@@ -190,6 +206,36 @@ def write(src, relative, code):
     ],
 )
 def test_the_scanner_finds_an_import_in_every_style(toy, code, expected):
+    module = write(toy, "alpha/module.py", code)
+    assert imports_of(module, toy) == expected
+
+
+@pytest.mark.parametrize(
+    ("code", "expected"),
+    [
+        ('import importlib\nimportlib.import_module("toy.beta")\n', {"beta"}),
+        ('import importlib\nimportlib.import_module("toy.beta.deep")\n', {"beta"}),
+        ('from importlib import import_module\nimport_module("toy.gamma")\n', {"gamma"}),
+        ('__import__("toy.delta")\n', {"delta"}),
+        ('import importlib\nimportlib.import_module("toy", "x")\n', set()),
+        ('import importlib\nimportlib.import_module("os.path")\n', set()),
+        ("import importlib\nimportlib.import_module(name)\n", set()),
+        ('import importlib\nimportlib.import_module(".beta", package="toy.alpha")\n', set()),
+        ("def import_module(x):\n    return x\nimport_module('toy.beta')\n", {"beta"}),
+    ],
+    ids=[
+        "import_module",
+        "import_module deep",
+        "from-imported import_module",
+        "__import__",
+        "not a package of the project",
+        "standard library",
+        "name only known at run time",
+        "relative name",
+        "any function of that name",
+    ],
+)
+def test_the_scanner_finds_an_import_made_by_a_call(toy, code, expected):
     module = write(toy, "alpha/module.py", code)
     assert imports_of(module, toy) == expected
 
