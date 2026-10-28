@@ -34,7 +34,7 @@ Solid arrows exist today. Dashed arrows are planned, or optional: the command li
 
 ## Packages
 
-The code is in `src/sales_insights/`. The table is also the **dependency rule**: a package may import only from the packages in its third column, never from the ones in its fourth. The tests read this table and check every import in the code against it.
+The code is in `src/sales_insights/`. The table is also the **dependency rule**: a package may import only from the packages in its third column, never from the ones in its fourth. The tests read this table and check every import in the code against it, `import` statements as well as `import_module("...")` calls with a literal name; a module name computed at run time cannot be checked.
 
 | Package | Responsibility | May import | Must not import |
 |---------|----------------|------------|-----------------|
