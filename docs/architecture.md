@@ -1,6 +1,6 @@
 # Architecture
 
-This page explains how the project is organised, so that you can find your way in the code, add to it, and know what is not built yet. For the commands, see the [command-line reference](cli.md); for the file format, see [Data format](data-schema.md).
+This page explains how the project is organised, so that you can find your way in the code, add to it, and know what is not built yet. For the commands, see the [command-line reference](cli.md); for the file format, see [Data format](data-schema.md); for why pandas and Streamlit were chosen, see the [decision records](decisions/README.md).
 
 ## Goal and design principles
 
