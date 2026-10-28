@@ -1,4 +1,5 @@
-import time
+import contextlib
+import signal
 from pathlib import Path
 
 import pandas as pd
@@ -235,29 +236,122 @@ def large_orders(rows: int, products: int) -> pd.DataFrame:
     )
 
 
-def test_many_products_with_one_inconsistent_spelling_stay_fast_and_exact():
+@pytest.fixture
+def column_scans(monkeypatch):
+    """Count the whole-column comparisons a validation run makes: ``eq`` and ``==``."""
+    calls = []
+
+    def counting(original):
+        def wrapper(self, *args, **kwargs):
+            calls.append(len(self))
+            return original(self, *args, **kwargs)
+
+        return wrapper
+
+    monkeypatch.setattr(pd.Series, "eq", counting(pd.Series.eq))
+    monkeypatch.setattr(pd.Series, "__eq__", counting(pd.Series.__eq__))
+    return calls
+
+
+@contextlib.contextmanager
+def cpu_time_limit(seconds: float):
+    """Fail the test as soon as the code under it has used ``seconds`` of processor time.
+
+    Processor time, unlike the clock on the wall, does not grow when the machine is busy with
+    other work, so a generous limit does not fail at random on a shared CI runner. The check
+    interrupts the code, so a slow version fails after the limit instead of after minutes.
+    """
+
+    def too_slow(signum, frame):
+        raise AssertionError(f"used more than {seconds} s of processor time")
+
+    previous = signal.signal(signal.SIGPROF, too_slow)
+    signal.setitimer(signal.ITIMER_PROF, seconds)
+    try:
+        yield
+    finally:
+        signal.setitimer(signal.ITIMER_PROF, 0)
+        signal.signal(signal.SIGPROF, previous)
+
+
+needs_posix_timers = pytest.mark.skipif(
+    not hasattr(signal, "setitimer"), reason="needs POSIX interval timers (Linux and macOS)"
+)
+
+
+def test_validation_does_not_scan_the_column_once_per_distinct_product(column_scans):
+    # The first version compared the whole column with each distinct spelling, so the work
+    # grew with (distinct values x rows): 8,000 products took half a minute. This counts the
+    # scans, which does not depend on the speed of the machine.
+    orders = large_orders(rows=4_000, products=1_000)
+    validate(orders)
+    assert len(column_scans) < 10, f"{len(column_scans)} scans of the column"
+
+
+def test_validation_does_not_scan_the_column_once_per_duplicated_order_id(column_scans):
+    orders = large_orders(rows=4_000, products=10)
+    orders["OrderID"] = orders.index // 2  # 2,000 ids, each twice
+    validate(orders)
+    assert len(column_scans) < 10, f"{len(column_scans)} scans of the column"
+
+
+def test_the_number_of_scans_does_not_grow_with_the_number_of_values(column_scans):
+    small = large_orders(rows=400, products=100)
+    validate(small)
+    for_small = len(column_scans)
+    column_scans.clear()
+    large = large_orders(rows=4_000, products=1_000)
+    validate(large)
+    assert len(column_scans) == for_small
+
+
+# The limits are about 50 times what the code uses on an idle machine for the products and
+# 5 times for the order ids; the first version needed 34 s and 10 s.
+
+
+@needs_posix_timers
+def test_many_products_are_validated_within_a_generous_processor_time_limit():
+    orders = large_orders(rows=40_000, products=8_000)
+    with cpu_time_limit(6):
+        validate(orders)
+
+
+@needs_posix_timers
+def test_many_duplicated_order_ids_are_validated_within_a_generous_processor_time_limit():
+    orders = large_orders(rows=100_000, products=10)
+    orders["OrderID"] = orders.index // 2  # every id appears twice: 50,000 duplicates
+    with cpu_time_limit(5):
+        validate(orders)
+
+
+def test_the_processor_time_limit_interrupts_slow_code():
+    with pytest.raises(AssertionError, match="processor time"), cpu_time_limit(0.2):
+        while True:
+            sum(range(10_000))
+
+
+def test_the_processor_time_limit_is_removed_afterwards():
+    with cpu_time_limit(60):
+        pass
+    assert signal.getitimer(signal.ITIMER_PROF) == (0.0, 0.0)
+
+
+def test_many_products_with_one_inconsistent_spelling_are_reported_exactly():
     orders = large_orders(rows=40_000, products=8_000)
     orders.loc[5, "Product"] = "product 5"  # the one odd spelling
-    started = time.perf_counter()
-    report = validate(orders)
-    elapsed = time.perf_counter() - started
-    (issue,) = report.issues
+    (issue,) = validate(orders).issues
     assert issue.code == "inconsistent_casing"
     assert "'Product 5', 'product 5'" in issue.message
     assert 7 in issue.rows  # row index 5 is CSV line 7
-    assert elapsed < 2.0
 
 
-def test_many_duplicated_order_ids_stay_fast_and_exact():
+def test_many_duplicated_order_ids_are_reported_exactly():
     orders = large_orders(rows=100_000, products=10)
     orders["OrderID"] = orders.index // 2  # every id appears twice: 50,000 duplicates
-    started = time.perf_counter()
     report = validate(orders)
-    elapsed = time.perf_counter() - started
     assert codes(report).count("duplicate_order_id") == 50_000
     first = report.issues[0]
     assert (first.message, first.rows) == ("Duplicate OrderID 0", (2, 3))
-    assert elapsed < 2.0
 
 
 # --- dates with a time zone ---------------------------------------------------------------
