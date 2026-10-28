@@ -121,14 +121,18 @@ def slug(heading: str) -> str:
     return re.sub(r"[^\w\- ]", "", heading.lower()).replace(" ", "-")
 
 
-@pytest.mark.parametrize("page", ["cli.md", "data-schema.md", "architecture.md"])
+@pytest.mark.parametrize(
+    "page", ["cli.md", "data-schema.md", "architecture.md", "decisions/README.md"]
+)
 def test_the_links_of_the_page_point_to_something_that_exists(page):
     text = (DOCS / page).read_text()
     for target in re.findall(r"\]\(([^)]+)\)", text):
         if target.startswith("http"):
             continue
         file_part, _, anchor = target.partition("#")
-        linked = DOCS / file_part if file_part else DOCS / page
+        # A link is relative to the folder of the page that holds it.
+        linked = (DOCS / page).parent / file_part if file_part else DOCS / page
+        linked = linked.resolve()
         assert linked.is_file(), target
         if anchor:
             headings = re.findall(r"^#+ (.+)$", linked.read_text(), re.MULTILINE)
