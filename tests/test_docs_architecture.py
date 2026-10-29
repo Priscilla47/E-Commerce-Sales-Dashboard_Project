@@ -8,8 +8,6 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
-from sales_insights.data.loader import load_orders
-
 ROOT = Path(__file__).resolve().parent.parent
 PACKAGE = "sales_insights"
 SRC = ROOT / "src" / PACKAGE
@@ -362,14 +360,6 @@ def test_the_arrows_of_the_diagram_follow_the_dependency_rule():
 def example_code() -> str:
     steps = section("Add an analytics function")
     return re.search(r"```python\n(.*?)```", steps, re.DOTALL).group(1)
-
-
-@pytest.fixture
-def loaded_orders(orders, tmp_path):
-    """The shared fixture loaded as the application loads a file (as in tests/analytics)."""
-    path = tmp_path / "orders.csv"
-    orders.to_csv(path, index=False)
-    return load_orders(path)
 
 
 def test_the_example_function_and_its_test_run_on_the_shared_fixture(loaded_orders):

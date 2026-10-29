@@ -106,7 +106,7 @@ The dependency rule applies as soon as the function is written: if it needs some
 `tests/` mirrors `src/sales_insights/`:
 
 - `tests/data/`, `tests/analytics/` and `tests/cli/` hold the tests of the package of the same name, one test file per module.
-- The fixtures are small tables whose results can be checked by hand. `orders` (in `tests/conftest.py`) is six lines, with a revenue of 1660.0, and `typed_orders_with_problems` is the same with two planted problems. `typed_orders` (in `tests/data/`) has its dates parsed, `loaded_orders` (in `tests/analytics/`) went through `load_orders`, and `orders_csv`, `faulty_csv` and `ranking_csv` (in `tests/cli/`) are files on disk.
+- The fixtures are small tables whose results can be checked by hand. `orders` (in `tests/conftest.py`) is six lines, with a revenue of 1660.0, `typed_orders_with_problems` is the same with two planted problems, and `loaded_orders` went through `load_orders`. `typed_orders` (in `tests/data/`) has its dates parsed, and `orders_csv`, `faulty_csv` and `ranking_csv` (in `tests/cli/`) are files on disk.
 - Every analytics function is also checked on the real sample dataset, `data/sample_orders.csv`, whose figures are written in the tests.
 - The command line is tested by calling `main([...])` directly and reading stdout, stderr and the exit code; a few tests run it as a real program.
 - The pages of `docs/` are tested against the code (`test_docs_*.py`): the columns, the options, the examples with their output, the error messages and the links must match what the code does. This page is one of them.
