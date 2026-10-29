@@ -105,7 +105,7 @@ pip install -e ".[dashboard]"
 streamlit run src/sales_insights/dashboard/app.py
 ```
 
-Streamlit prints a link, usually `http://localhost:8501`. In the sidebar, choose **Sample data** (the file in `data/`) or **Upload a CSV** to load your own orders file (the columns are in [Data format](docs/data-schema.md)). A file that cannot be loaded shows what to change instead of a figure. More pages of the dashboard come with the next releases.
+Streamlit prints a link, usually `http://localhost:8501`. In the sidebar, choose **Sample data** (the file in `data/`) or **Upload a CSV** to load your own orders file (the columns are in [Data format](docs/data-schema.md)). Four cards show **Revenue**, **Orders**, **Average order value** and **Customers**; the **Period**, **Countries** and **Categories** filters in the sidebar change them. A file that cannot be loaded shows what to change instead of a figure. More pages of the dashboard come with the next releases.
 
 ## Development
 
