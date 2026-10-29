@@ -4,6 +4,8 @@ The page only asks the user for a data source and draws what ``analytics`` retur
 no calculation of its own.
 """
 
+import re
+
 import streamlit as st
 
 from sales_insights.analytics.filters import available_values, filter_orders
@@ -11,6 +13,8 @@ from sales_insights.analytics.revenue import order_count
 from sales_insights.dashboard.data_source import (
     SAMPLE_PATH,
     LoadedData,
+    count_problems,
+    describe_problems,
     load_from_bytes,
     load_from_path,
     sample_is_available,
@@ -18,6 +22,7 @@ from sales_insights.dashboard.data_source import (
 from sales_insights.dashboard.kpis import compute_kpis, format_kpis
 from sales_insights.dashboard.selection import as_filter, period_bounds
 from sales_insights.data.schema import SchemaError
+from sales_insights.data.validation import WARNING, ValidationReport
 
 SAMPLE = "Sample data"
 UPLOAD = "Upload a CSV"
@@ -51,6 +56,34 @@ def _choose_data() -> LoadedData | None:
     except SchemaError as error:
         st.error(str(error))
         return None
+
+
+def _plain(text: str) -> str:
+    """Escape the characters of ``text`` that Markdown would interpret (it comes from a file)."""
+    return re.sub(r"([\\`*_\[\]()<>#|~$])", r"\\\1", text)
+
+
+def _bullets(lines: list[str]) -> str:
+    return "\n".join(f"- {_plain(line)}" for line in lines)
+
+
+def _plural(count: int, word: str) -> str:
+    return f"{count} {word}" if count == 1 else f"{count} {word}s"
+
+
+def _show_findings(report: ValidationReport) -> None:
+    """Say what the validation found: errors in a warning box, warnings in a collapsed note."""
+    if report.errors:
+        count = _plural(count_problems(report), "error")
+        st.warning(
+            f"{count} found in the data, so some figures may be unreliable "
+            f"(the lines below are line numbers of the file):\n\n"
+            f"{_bullets(describe_problems(report))}"
+        )
+    if report.warnings:
+        count = _plural(count_problems(report, severity=WARNING), "warning")
+        with st.expander(f"{count} about the data"):
+            st.markdown(_bullets(describe_problems(report, severity=WARNING)))
 
 
 def _filtered(orders):
@@ -95,6 +128,7 @@ def main() -> None:
         st.stop()
     loaded_count = order_count(loaded.orders)
     st.caption(f"{loaded_count} {'order' if loaded_count == 1 else 'orders'} loaded")
+    _show_findings(loaded.report)
     _show_cards(_filtered(loaded.orders))
 
 
