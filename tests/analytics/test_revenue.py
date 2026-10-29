@@ -7,6 +7,7 @@ from sales_insights.analytics.revenue import (
     average_order_value,
     order_count,
     total_revenue,
+    unique_customers,
     units_sold,
 )
 from sales_insights.data.loader import load_orders
@@ -135,3 +136,46 @@ def test_sample_dataset_numbers():
 def test_total_revenue_prints_as_the_first_version_of_the_tool_printed_it():
     # `-T` has always printed 261333.44 for the sample dataset: no float noise at the end.
     assert str(total_revenue(load_orders(SAMPLE_DATA))) == "261333.44"
+
+
+# --- unique_customers -------------------------------------------------------------------------
+
+
+def customers_table(ids: list) -> pd.DataFrame:
+    return pd.DataFrame({"CustomerID": ids})
+
+
+def test_unique_customers_counts_each_customer_once(loaded_orders):
+    # C1 twice, C2 twice, C3 twice over six lines.
+    assert unique_customers(loaded_orders) == 3
+
+
+def test_unique_customers_of_empty_data_is_zero(loaded_orders):
+    assert unique_customers(loaded_orders.iloc[0:0]) == 0
+
+
+def test_unique_customers_of_a_single_customer_is_one():
+    assert unique_customers(customers_table(["C9", "C9", "C9"])) == 1
+
+
+def test_unique_customers_skips_missing_cells():
+    assert unique_customers(customers_table(["C1", None, float("nan"), "C2", pd.NA])) == 2
+    assert unique_customers(customers_table([None, None])) == 0
+
+
+def test_unique_customers_is_case_and_space_sensitive_like_the_data():
+    # The ids are compared as they are written; cleaning them is not this function's job.
+    assert unique_customers(customers_table(["C1", "c1", "C1 "])) == 3
+
+
+def test_unique_customers_returns_a_python_int(loaded_orders):
+    assert type(unique_customers(loaded_orders)) is int
+
+
+def test_unique_customers_on_the_sample_data_is_below_the_orders_and_matches_pandas():
+    from sales_insights.data.loader import load_orders
+
+    orders = load_orders(Path(__file__).resolve().parents[2] / "data" / "sample_orders.csv")
+    expected = len(set(orders["CustomerID"].dropna()))
+    assert unique_customers(orders) == expected
+    assert 0 < expected <= order_count(orders)

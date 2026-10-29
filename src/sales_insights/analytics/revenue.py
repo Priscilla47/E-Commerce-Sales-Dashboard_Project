@@ -29,6 +29,11 @@ def average_order_value(df: pd.DataFrame) -> float:
     return total_revenue(df) / orders
 
 
+def unique_customers(df: pd.DataFrame) -> int:
+    """The number of distinct, non-missing ``CustomerID`` values; 0 for no lines."""
+    return int(df["CustomerID"].nunique())
+
+
 def units_sold(df: pd.DataFrame) -> int:
     """The sum of ``Quantity`` over every line; 0 for no lines."""
     return int(df["Quantity"].sum())
