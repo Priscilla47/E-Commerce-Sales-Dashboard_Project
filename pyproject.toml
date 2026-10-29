@@ -21,6 +21,9 @@ dev = [
     "ruff>=0.5",
     "pre-commit>=3.7",
 ]
+dashboard = [
+    "streamlit>=1.40",
+]
 
 [project.scripts]
 sales-insights = "sales_insights.cli.main:main"
