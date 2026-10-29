@@ -96,6 +96,17 @@ See [Data format](docs/data-schema.md) for the full description, the loading rul
 
 How the pieces fit together, the rule about what may import what, and how to add a function are described in [Architecture](docs/architecture.md). The choices behind them are explained in the [decision records](docs/decisions/README.md).
 
+## Dashboard
+
+The dashboard is an optional extra, so the command line stays light to install.
+
+```bash
+pip install -e ".[dashboard]"
+streamlit run src/sales_insights/dashboard/app.py
+```
+
+Streamlit prints a link, usually `http://localhost:8501`. In the sidebar, choose **Sample data** (the file in `data/`) or **Upload a CSV** to load your own orders file (the columns are in [Data format](docs/data-schema.md)). A file that cannot be loaded shows what to change instead of a figure. More pages of the dashboard come with the next releases.
+
 ## Development
 
 ```bash
