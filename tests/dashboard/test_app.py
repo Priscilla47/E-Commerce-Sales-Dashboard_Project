@@ -103,3 +103,126 @@ def test_an_upload_with_data_errors_does_not_crash_the_page(app):
     app = upload(app, (HEADER + "1,2025-01-05,Book,Books,10,-2,C1,France\n").encode())
     assert not app.exception
     assert "1 order loaded" in texts(app)
+
+
+# --- key figures and filters ---------------------------------------------------------------
+# Expected values are computed here with plain pandas on the raw file, not with the code under
+# test.
+
+import datetime  # noqa: E402
+
+import pandas as pd  # noqa: E402
+
+SAMPLE = pd.read_csv(
+    APP.parents[3] / "data" / "sample_orders.csv", keep_default_na=False, na_values=[""]
+)
+SAMPLE["Revenue"] = SAMPLE["UnitPrice"] * SAMPLE["Quantity"]
+
+
+def cards(at: AppTest) -> dict[str, str]:
+    return {metric.label: metric.value for metric in at.metric}
+
+
+def expected_cards(rows: pd.DataFrame) -> dict[str, str]:
+    orders = rows["OrderID"].nunique()
+    average = rows["Revenue"].sum() / orders if orders else 0.0
+    return {
+        "Revenue": f"{rows['Revenue'].sum():,.2f}",
+        "Orders": f"{orders:,}",
+        "Average order value": f"{average:,.2f}",
+        "Customers": f"{rows['CustomerID'].nunique():,}",
+    }
+
+
+def test_four_cards_show_the_key_figures_of_the_sample(app):
+    app.run()
+    assert list(cards(app)) == ["Revenue", "Orders", "Average order value", "Customers"]
+    assert cards(app) == expected_cards(SAMPLE)
+    assert cards(app)["Revenue"] == "261,333.44"
+
+
+def test_the_sidebar_has_a_period_and_two_selectors_filled_from_the_data(app):
+    app.run()
+    assert app.sidebar.date_input[0].label == "Period"
+    assert app.sidebar.date_input[0].value == (
+        datetime.date.fromisoformat(SAMPLE["Date"].min()),
+        datetime.date.fromisoformat(SAMPLE["Date"].max()),
+    )
+    labels = {box.label: box for box in app.sidebar.multiselect}
+    assert set(labels) == {"Countries", "Categories"}
+    assert labels["Countries"].options == sorted(SAMPLE["Country"].dropna().unique())
+    assert labels["Categories"].options == sorted(SAMPLE["Category"].dropna().unique())
+    assert labels["Countries"].value == labels["Countries"].options
+
+
+def test_choosing_a_country_changes_the_cards(app):
+    app.run()
+    country = sorted(SAMPLE["Country"].dropna().unique())[0]
+    countries = next(box for box in app.sidebar.multiselect if box.label == "Countries")
+    countries.set_value([country]).run()
+    assert not app.exception
+    assert cards(app) == expected_cards(SAMPLE[SAMPLE["Country"] == country])
+    assert cards(app)["Revenue"] != "261,333.44"
+
+
+def test_choosing_a_category_changes_the_cards(app):
+    app.run()
+    category = sorted(SAMPLE["Category"].dropna().unique())[0]
+    categories = next(box for box in app.sidebar.multiselect if box.label == "Categories")
+    categories.set_value([category]).run()
+    assert cards(app) == expected_cards(SAMPLE[SAMPLE["Category"] == category])
+
+
+def test_choosing_a_period_changes_the_cards(app):
+    app.run()
+    start, end = datetime.date(2025, 2, 1), datetime.date(2025, 3, 31)
+    app.sidebar.date_input[0].set_value((start, end)).run()
+    dates = pd.to_datetime(SAMPLE["Date"])
+    rows = SAMPLE[(dates >= "2025-02-01") & (dates < "2025-04-01")]
+    assert 0 < len(rows) < len(SAMPLE)
+    assert cards(app) == expected_cards(rows)
+
+
+def test_a_filter_that_matches_nothing_shows_zeros_and_no_error(app):
+    app.run()
+    countries = next(box for box in app.sidebar.multiselect if box.label == "Countries")
+    countries.set_value([]).run()
+    assert not app.exception
+    assert not app.error
+    assert cards(app) == {
+        "Revenue": "0.00",
+        "Orders": "0",
+        "Average order value": "0.00",
+        "Customers": "0",
+    }
+
+
+def test_an_upload_gets_its_own_filters_and_cards(app):
+    content = (
+        HEADER + "1,2025-01-05,Book,Books,10,2,C1,France\n2,2025-01-06,Book,Books,10,1,C2,UK\n"
+    ).encode()
+    app = upload(app, content)
+    assert not app.exception
+    assert cards(app)["Revenue"] == "30.00"
+    assert cards(app)["Customers"] == "2"
+    countries = next(box for box in app.sidebar.multiselect if box.label == "Countries")
+    assert countries.options == ["France", "UK"]
+    countries.set_value(["UK"]).run()
+    assert cards(app)["Revenue"] == "10.00"
+
+
+def test_selecting_everything_keeps_an_order_whose_country_is_missing(app):
+    content = (
+        HEADER + "1,2025-01-05,Book,Books,10,2,C1,France\n2,2025-01-06,Book,Books,10,1,C2,\n"
+    ).encode()
+    app = upload(app, content)
+    assert cards(app)["Orders"] == "2"
+    assert cards(app)["Revenue"] == "30.00"
+
+
+def test_an_upload_without_any_date_still_shows_the_cards(app):
+    content = (HEADER + "1,,Book,Books,10,2,C1,France\n").encode()
+    app = upload(app, content)
+    assert not app.exception
+    assert cards(app)["Revenue"] == "20.00"
+    assert not app.sidebar.date_input
