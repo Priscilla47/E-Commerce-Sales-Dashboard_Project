@@ -48,6 +48,20 @@ def load_orders(source: str | Path | Storage, name: str | None = None) -> pd.Dat
     return _read_csv(path)
 
 
+def load_orders_from_bytes(content: bytes | bytearray | memoryview) -> pd.DataFrame:
+    """Read an orders CSV file whose content is already in memory, such as an upload.
+
+    The result and the errors are those of ``load_orders``.
+
+    Raises:
+        SchemaError: as for ``load_orders`` (an empty content is an empty file).
+        TypeError: ``content`` is not bytes.
+    """
+    if not isinstance(content, bytes | bytearray | memoryview):
+        raise TypeError(f"Expected the bytes of a file, not {type(content).__name__}")
+    return _read_csv(io.BytesIO(content))
+
+
 def _read_csv(source: Path | io.BytesIO) -> pd.DataFrame:
     try:
         # Read everything as text first: "NA" is a real country code, not a missing value.
