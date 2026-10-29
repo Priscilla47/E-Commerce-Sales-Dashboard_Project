@@ -7,12 +7,15 @@ from sales_insights.analytics.revenue import order_count, total_revenue
 from sales_insights.dashboard.data_source import (
     SAMPLE_PATH,
     LoadedData,
+    count_problems,
+    describe_problems,
     load_from_bytes,
     load_from_path,
     load_from_upload,
     sample_is_available,
 )
 from sales_insights.data.schema import SchemaError
+from sales_insights.data.validation import ERROR, WARNING, Issue, ValidationReport
 
 REPOSITORY = Path(__file__).resolve().parents[2]
 
@@ -140,3 +143,154 @@ def test_a_file_that_is_not_a_csv_raises_only_a_schema_error(content):
 def test_the_data_source_module_does_not_need_streamlit():
     source = (REPOSITORY / "src/sales_insights/dashboard/data_source.py").read_text()
     assert "streamlit" not in source
+
+
+# --- describe_problems -----------------------------------------------------------------------
+
+
+def report_with(
+    rows: list[int], severity: str = ERROR, message: str = "Bad value"
+) -> ValidationReport:
+    return ValidationReport([Issue("negative_value", severity, message, tuple(rows), "Quantity")])
+
+
+def test_no_problem_gives_no_line():
+    assert describe_problems(ValidationReport()) == []
+
+
+def test_one_problem_is_one_line_with_its_line_number():
+    report = report_with([12], message="Negative value in column 'Quantity'")
+    assert describe_problems(report) == ["line 12: Negative value in column 'Quantity'"]
+
+
+def test_an_issue_on_several_lines_gives_one_message_per_line():
+    report = report_with([2, 3], message="Duplicate OrderID 1")
+    assert describe_problems(report) == [
+        "line 2: Duplicate OrderID 1",
+        "line 3: Duplicate OrderID 1",
+    ]
+
+
+def test_exactly_twenty_problems_are_all_listed_without_a_trailer():
+    lines = describe_problems(report_with(list(range(2, 22))))
+    assert len(lines) == 20
+    assert not lines[-1].startswith("and ")
+
+
+def test_twenty_one_problems_list_twenty_and_one_more():
+    lines = describe_problems(report_with(list(range(2, 23))))
+    assert len(lines) == 21
+    assert lines[:20] == [f"line {n}: Bad value" for n in range(2, 22)]
+    assert lines[20] == "and 1 more"
+
+
+def test_fifty_problems_list_twenty_and_thirty_more():
+    lines = describe_problems(report_with(list(range(2, 52))))
+    assert len(lines) == 21
+    assert lines[-1] == "and 30 more"
+
+
+def test_the_limit_can_be_changed():
+    lines = describe_problems(report_with([2, 3, 4, 5]), limit=2)
+    assert lines == ["line 2: Bad value", "line 3: Bad value", "and 2 more"]
+
+
+def test_problems_are_ordered_by_line_number():
+    report = ValidationReport(
+        [
+            Issue("missing_value", ERROR, "Missing value in column 'UnitPrice'", (9,), "UnitPrice"),
+            Issue("negative_value", ERROR, "Negative value in column 'Quantity'", (4,), "Quantity"),
+        ]
+    )
+    assert describe_problems(report) == [
+        "line 4: Negative value in column 'Quantity'",
+        "line 9: Missing value in column 'UnitPrice'",
+    ]
+
+
+def test_the_errors_are_listed_by_default_and_the_warnings_on_request():
+    report = ValidationReport(
+        [
+            Issue("negative_value", ERROR, "An error", (2,), None),
+            Issue("zero_quantity", WARNING, "A warning", (3,), None),
+        ]
+    )
+    assert describe_problems(report) == ["line 2: An error"]
+    assert describe_problems(report, severity=WARNING) == ["line 3: A warning"]
+
+
+def test_a_real_report_is_described_line_by_line(orders, tmp_path):
+    bad = orders.copy()
+    bad.loc[0, "Quantity"] = -4
+    bad.loc[3, "UnitPrice"] = None
+    path = tmp_path / "bad.csv"
+    bad.to_csv(path, index=False)
+    assert describe_problems(load_from_path(path).report) == [
+        "line 2: Negative value in column 'Quantity'",
+        "line 5: Missing value in column 'UnitPrice'",
+    ]
+
+
+# --- no file can make the loading fail with anything but a SchemaError -------------------------
+
+
+def damaged_versions(content: bytes, count: int = 400) -> list[bytes]:
+    import random
+
+    rng = random.Random(44)
+    versions = [b"", b"\n", b",", b'"', b"\xef\xbb\xbf", b"\x00" * 50, content[:7], content * 2]
+    for _ in range(count):
+        data = bytearray(content)
+        for _ in range(rng.randint(1, 8)):
+            kind = rng.choice(["flip", "cut", "insert", "delete", "quote", "newline"])
+            at = rng.randrange(len(data)) if data else 0
+            if kind == "flip" and data:
+                data[at] = rng.randrange(256)
+            elif kind == "cut":
+                del data[at:]
+            elif kind == "insert":
+                data[at:at] = bytes(rng.randrange(256) for _ in range(rng.randint(1, 5)))
+            elif kind == "delete" and data:
+                del data[at : at + rng.randint(1, 6)]
+            elif kind == "quote":
+                data[at:at] = b'"'
+            else:
+                data[at:at] = b"\r\n"
+        versions.append(bytes(data))
+    return versions
+
+
+def test_damaged_files_load_or_raise_only_a_schema_error(csv_bytes):
+    for content in damaged_versions(csv_bytes):
+        try:
+            loaded = load_from_bytes(content)
+        except SchemaError:
+            continue
+        assert isinstance(loaded.report, ValidationReport)
+
+
+def test_damaged_sample_files_load_or_raise_only_a_schema_error():
+    content = SAMPLE_PATH.read_bytes()[:3000]
+    for damaged in damaged_versions(content, count=150):
+        try:
+            load_from_bytes(damaged)
+        except SchemaError:
+            pass
+
+
+def test_count_problems_counts_lines_not_findings():
+    report = ValidationReport(
+        [
+            Issue("negative_value", ERROR, "Negative", (2, 3, 4), "Quantity"),
+            Issue("missing_value", ERROR, "Missing", (9,), "UnitPrice"),
+            Issue("zero_quantity", WARNING, "Zero", (5, 6), "Quantity"),
+        ]
+    )
+    assert count_problems(report) == 4
+    assert count_problems(report, severity=WARNING) == 2
+    assert count_problems(ValidationReport()) == 0
+
+
+def test_count_problems_is_the_number_of_lines_describe_problems_would_list_without_a_limit():
+    report = report_with(list(range(2, 52)))
+    assert count_problems(report) == len(describe_problems(report, limit=1000)) == 50
