@@ -385,6 +385,37 @@ def test_the_report_refuses_what_the_forecast_refuses():
         forecast_with_error(orders_from(linear(2)), 3)
 
 
+# --- revenue too large to forecast ------------------------------------------------------------
+
+
+@pytest.mark.parametrize("method", ["naive", "holt_winters"])
+@pytest.mark.parametrize("size", [1e101, 1e150, 1e300])
+def test_a_revenue_too_large_to_forecast_is_refused_not_overflowed(method, size):
+    import warnings
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")  # a numpy overflow warning would be a failure
+        with pytest.raises(ValueError, match="too large to forecast"):
+            forecast_revenue(orders_from([size] * 30), 3, method)
+
+
+def test_evaluate_and_the_report_refuse_it_too():
+    huge = orders_from([1e300] * 30)
+    with pytest.raises(ValueError, match="too large to forecast"):
+        evaluate(huge, "holt_winters")
+    with pytest.raises(ValueError, match="too large to forecast"):
+        forecast_with_error(huge, 3)
+
+
+def test_a_large_but_reasonable_revenue_is_still_forecast_without_a_warning():
+    import warnings
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        table = forecast_revenue(orders_from([1e12 + 1e9 * i for i in range(30)]), 3).table
+    assert np.isfinite(table[["forecast", "lower", "upper"]].to_numpy()).all()
+
+
 # --- what the module is allowed to do ---------------------------------------------------------
 
 

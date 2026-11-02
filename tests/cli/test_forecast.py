@@ -168,3 +168,13 @@ def test_the_forecast_does_not_change_the_other_answers(capsys):
     _, alone, _ = run(capsys, "-T", SAMPLE)
     _, together, _ = run(capsys, "-T", "--forecast", "1", SAMPLE)
     assert together.startswith(alone)
+
+
+def test_a_revenue_too_large_to_forecast_exits_84_with_a_message_and_no_numpy_warning(
+    capsys, tmp_path
+):
+    path = monthly_csv(tmp_path, [10] * 28 + ["1e308", 10])
+    code, _, err = run(capsys, "--forecast", "2", path)
+    assert code == 84
+    assert "too large to forecast" in err
+    assert "RuntimeWarning" not in err and "overflow" not in err
