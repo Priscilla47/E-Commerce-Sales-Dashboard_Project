@@ -30,7 +30,9 @@ def app() -> AppTest:
 
 def figures(at: AppTest):
     """The figures drawn on the page, in order."""
-    return [pio.from_json(chart.proto.spec) for chart in at.get("plotly_chart")]
+    if not at.tabs:  # the page is blocked: no tab is drawn
+        return []
+    return [pio.from_json(chart.proto.spec) for chart in at.tabs[0].get("plotly_chart")]
 
 
 def values(figure, axis):
@@ -160,7 +162,7 @@ def test_a_filter_that_matches_nothing_says_so_in_place_of_each_chart(app):
     assert not app.exception
     assert not app.error
     assert figures(app) == []
-    assert [info.value for info in app.info] == [NO_MATCH] * 3
+    assert [info.value for info in app.tabs[0].info] == [NO_MATCH] * 3
 
 
 def test_the_cards_stay_on_screen_with_zeros_when_nothing_matches(app):
@@ -179,13 +181,13 @@ def test_the_message_goes_away_when_the_filter_matches_again(app):
     by_label(app.sidebar.multiselect, "Countries").set_value([]).run()
     by_label(app.sidebar.multiselect, "Countries").set_value(["France"]).run()
     assert len(figures(app)) == 3
-    assert [info.value for info in app.info] == []
+    assert [info.value for info in app.tabs[0].info] == []
 
 
 def test_the_message_is_only_shown_for_a_chart_that_has_nothing(app):
     # Orders without a date: the time chart has nothing to draw, the other two do.
     page = upload(app, HEADER + "1,,Book,Books,10,2,C1,France\n")
-    assert [info.value for info in page.info] == [NO_MATCH]
+    assert [info.value for info in page.tabs[0].info] == [NO_MATCH]
     assert len(figures(page)) == 2
 
 
@@ -214,7 +216,7 @@ def test_a_file_with_only_the_header_says_there_is_nothing_to_chart(app):
     app = upload(app, HEADER)
     assert not app.exception
     assert figures(app) == []
-    assert [info.value for info in app.info] == [NO_MATCH] * 3
+    assert [info.value for info in app.tabs[0].info] == [NO_MATCH] * 3
 
 
 def test_a_file_without_any_date_still_draws_the_other_charts(app):

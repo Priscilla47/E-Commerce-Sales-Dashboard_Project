@@ -6,13 +6,16 @@ no calculation of its own.
 
 import re
 
+import pandas as pd
 import streamlit as st
 
+from sales_insights.ai.forecast import forecast_with_error
 from sales_insights.analytics.filters import available_values, filter_orders
 from sales_insights.analytics.products import unique_products
 from sales_insights.analytics.revenue import order_count
 from sales_insights.dashboard.charts import (
     NOTHING_TO_DRAW,
+    forecast_chart,
     revenue_by_chart,
     revenue_over_time_chart,
     top_products_chart,
@@ -26,6 +29,7 @@ from sales_insights.dashboard.data_source import (
     load_from_path,
     sample_is_available,
 )
+from sales_insights.dashboard.forecast_view import format_forecast
 from sales_insights.dashboard.kpis import compute_kpis, format_kpis
 from sales_insights.dashboard.selection import as_filter, period_bounds
 from sales_insights.data.schema import SchemaError
@@ -156,6 +160,42 @@ def _show_charts(orders) -> None:
         _draw(top_products_chart(orders, shown))
 
 
+MONTHS = list(range(1, 13))
+
+
+def _show_forecast(orders) -> None:
+    """The forecast tab: a number of months, the chart, the error and what to keep in mind."""
+    months = st.selectbox("Months to forecast", MONTHS, index=2)
+    try:
+        report = forecast_with_error(orders, months)
+    except ValueError as error:  # not enough months of history
+        st.info(str(error))
+        return
+    labels = format_forecast(report)
+    st.caption(
+        f"This is an estimate, not a promise. It was made with the {labels.method} method "
+        f"from {report.forecast.history_months} complete months of history."
+    )
+    if labels.warnings:
+        st.warning(_bullets(labels.warnings))
+    _draw(forecast_chart(report.history, report.forecast.table))
+    if labels.mae is None:
+        st.info(labels.note)
+    else:
+        st.caption(
+            f"Error of the {labels.method} method on {labels.holdout}, "
+            "trained on the months before them. MAE is in the unit of the revenue; "
+            "MAPE is the same error in percent."
+        )
+        columns = st.columns(4)
+        columns[0].metric("MAE", labels.mae)
+        columns[1].metric("MAPE", labels.mape)
+        columns[2].metric("Baseline MAE", labels.baseline_mae)
+        columns[3].metric("Baseline MAPE", labels.baseline_mape)
+    table = pd.DataFrame(labels.rows, columns=["Month", "Forecast", "Lower", "Upper"])
+    st.dataframe(table, hide_index=True)
+
+
 def main() -> None:
     st.set_page_config(page_title="Sales insights", layout="wide")
     st.title("Sales insights")
@@ -167,7 +207,11 @@ def main() -> None:
     _show_findings(loaded.report)
     orders = _filtered(loaded.orders)
     _show_cards(orders)
-    _show_charts(orders)
+    overview, forecast = st.tabs(["Overview", "Forecast"])
+    with overview:
+        _show_charts(orders)
+    with forecast:
+        _show_forecast(orders)
 
 
 main()

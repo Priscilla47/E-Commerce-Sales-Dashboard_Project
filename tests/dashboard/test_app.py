@@ -120,7 +120,8 @@ SAMPLE["Revenue"] = SAMPLE["UnitPrice"] * SAMPLE["Quantity"]
 
 
 def cards(at: AppTest) -> dict[str, str]:
-    return {metric.label: metric.value for metric in at.metric}
+    """The four cards, which come first on the page (the forecast tab has metrics of its own)."""
+    return {metric.label: metric.value for metric in at.metric[:4]}
 
 
 def expected_cards(rows: pd.DataFrame) -> dict[str, str]:
@@ -311,11 +312,13 @@ def test_errors_and_warnings_show_both_boxes(app):
     assert len(app.expander) == 1
 
 
-def test_the_sample_data_has_no_box_at_all(app):
+def test_the_sample_data_has_no_box_about_the_data(app):
     app.run()
-    assert not app.warning
     assert not app.error
     assert not app.expander
+    # The only warning is the one of the forecast tab, which is about the forecast.
+    assert [box.value for box in app.warning] == [box.value for box in app.tabs[1].warning]
+    assert not any("found in the data" in box.value for box in app.warning)
 
 
 @pytest.mark.parametrize(
