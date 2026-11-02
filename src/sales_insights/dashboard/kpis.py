@@ -6,7 +6,7 @@ turns them into the texts shown on the page. Rounding happens only there, for di
 
 import math
 from dataclasses import dataclass
-from decimal import ROUND_HALF_UP, Decimal
+from decimal import ROUND_HALF_UP, Context, Decimal
 
 import pandas as pd
 
@@ -26,6 +26,10 @@ class Kpis:
     orders: int
     average_order_value: float
     customers: int
+
+
+# The default precision of 28 digits refuses amounts above 1e26; 400 holds any float (309 digits).
+_WIDE = Context(prec=400)
 
 
 @dataclass(frozen=True)
@@ -62,7 +66,7 @@ def _money(value: float) -> str:
     if not math.isfinite(value):
         return "n/a"
     # Round the decimal text of the number, so that 2.675 gives 2.68 as written on paper.
-    amount = Decimal(repr(value)).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+    amount = Decimal(repr(value)).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP, context=_WIDE)
     if amount == 0:
         amount = abs(amount)  # never "-0.00"
     return f"{amount:,.2f}"

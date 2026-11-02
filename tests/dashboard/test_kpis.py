@@ -83,3 +83,30 @@ def test_formatting_never_changes_the_computed_value(loaded_orders):
     kpis = compute_kpis(loaded_orders)
     format_kpis(kpis)
     assert kpis.average_order_value == 1660 / 6
+
+
+# --- very large amounts -----------------------------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    ("value", "expected"),
+    [
+        (1e15, "1,000,000,000,000,000.00"),
+        (1e27, "1,000,000,000,000,000,000,000,000,000.00"),
+        (1.2345678901234568e29, "123,456,789,012,345,680,000,000,000,000.00"),
+        (-1e30, "-1,000,000,000,000,000,000,000,000,000,000.00"),
+    ],
+)
+def test_an_amount_with_more_than_28_digits_is_written_in_full_not_refused(value, expected):
+    assert format_kpis(Kpis(value, 1, value, 1)).revenue == expected
+
+
+def test_the_largest_float_does_not_raise_and_has_two_decimals():
+    text = format_kpis(Kpis(1.7976931348623157e308, 1, 1.0, 1)).revenue
+    assert text.endswith(".00") and text.startswith("179,769,313,486,231,570")
+    assert len(text.replace(",", "")) == 312  # 309 digits, a point and two decimals
+
+
+def test_rounding_half_up_still_holds_for_ordinary_amounts():
+    assert format_kpis(Kpis(2.675, 1, 0.005, 1)).revenue == "2.68"
+    assert format_kpis(Kpis(2.675, 1, 0.005, 1)).average_order_value == "0.01"
