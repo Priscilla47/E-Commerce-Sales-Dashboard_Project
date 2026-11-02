@@ -18,6 +18,7 @@ import pandas as pd
 from sales_insights.analytics.timeseries import revenue_over_time
 
 METHODS = ("naive", "holt_winters")
+METHOD_LABELS = {"naive": "naive", "holt_winters": "Holt-Winters"}  # how a reader sees them
 MIN_MONTHS = 3  # the least history a forecast needs
 SEASON = 12  # months in a season
 MIN_MONTHS_HOLT_WINTERS = 24  # two seasons
@@ -63,6 +64,20 @@ class Evaluation:
     model: Metrics
     baseline: Metrics
     warnings: tuple[str, ...]
+
+
+@dataclass(frozen=True)
+class ForecastReport:
+    """A forecast with its error and its history: everything an interface shows.
+
+    ``evaluation`` is None when there are too few months to measure the error (``note`` says
+    why). ``history`` has the columns ``period`` and ``revenue`` of the complete months used.
+    """
+
+    forecast: Forecast
+    evaluation: Evaluation | None
+    history: pd.DataFrame
+    note: str | None
 
 
 def mean_absolute_error(actual: Sequence[float], predicted: Sequence[float]) -> float:
@@ -283,3 +298,30 @@ def evaluate(df: pd.DataFrame, method: str = "holt_winters", holdout: int = 3) -
         baseline=_metrics(actual, baseline),
         warnings=tuple(warnings + more),
     )
+
+
+def forecast_with_error(
+    df: pd.DataFrame, months: int, method: str = "holt_winters", holdout: int = 3
+) -> ForecastReport:
+    """Forecast ``months`` ahead and measure the error of the method, for an interface to show.
+
+    The error is measured on the last ``holdout`` months, or fewer when the history is short, so
+    that 3 months are always left to train on; with exactly 3 months of history there is a
+    forecast and no error, and ``note`` says so.
+
+    Raises:
+        TypeError: ``months`` or ``holdout`` is not a whole number.
+        ValueError: as ``forecast_revenue``.
+    """
+    forecast = forecast_revenue(df, months, method)
+    _check_range(_whole(holdout, "holdout"), "holdout")
+    periods, values, _ = _monthly(df)
+    history = pd.DataFrame({"period": periods, "revenue": values})
+    measurable = min(holdout, len(values) - MIN_MONTHS)
+    if measurable < 1:
+        note = (
+            f"The error of the forecast cannot be measured with {len(values)} months of "
+            f"history; it needs {MIN_MONTHS + 1} months."
+        )
+        return ForecastReport(forecast, None, history, note)
+    return ForecastReport(forecast, evaluate(df, method, measurable), history, None)

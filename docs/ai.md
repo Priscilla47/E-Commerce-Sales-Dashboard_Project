@@ -92,4 +92,6 @@ print(quality.model.mae, quality.baseline.mae)
 - **At least 3 months.** With fewer, `forecast_revenue` raises `ValueError` and says how many are needed.
 - `evaluate(df, method, holdout=3)` trains on all but the last `holdout` months, forecasts those months and returns the **MAE** (mean absolute error, in the unit of the revenue) and the **MAPE** (the same error in percent of the real value, `None` when a real value is 0), for the method and for the naive baseline. A forecast is worth showing when its error is below the baseline's; on the sample file both are the same method, because the history is short.
 
+`forecast_with_error(df, months)` returns the forecast, its error and its history in one report; it is what both interfaces use. The command line prints it with `--forecast N` (see [the command-line reference](cli.md)) and the dashboard shows it in its Forecast tab (see [the dashboard guide](dashboard.md)); a test checks that the two show the same numbers.
+
 The result is plain data: a table and small frozen objects. The forecast code does not read a file, print or round.

@@ -16,7 +16,7 @@ from tests.conftest import ORDER_COLUMNS
 
 ROOT = Path(__file__).resolve().parents[2]
 SAMPLE_DATA = ROOT / "data" / "sample_orders.csv"
-OPTIONS = ["-T", "-c", "-u", "-p", "-t", "--by", "--validate"]
+OPTIONS = ["-T", "-c", "-u", "-p", "-t", "--by", "--forecast", "--validate"]
 HEADER = ",".join(ORDER_COLUMNS)
 
 

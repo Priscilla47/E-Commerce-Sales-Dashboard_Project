@@ -51,3 +51,14 @@ def test_the_development_install_also_installs_the_dashboard_so_that_no_test_is_
     ]
     assert "sales-insights[dashboard]" in extras["dev"]
     assert 'pip install -e ".[dev]"' in section("Development")
+
+
+def test_the_readme_lists_the_forecast_option_and_the_forecast_tab():
+    assert "`--forecast N`" in README
+    assert "**Forecast** tab" in section("Dashboard")
+
+
+def test_the_readme_no_longer_says_the_dashboard_is_on_the_roadmap():
+    assert "- [x] Interactive dashboard" in section("Roadmap")
+    assert "The dashboard and AI features are on the roadmap" not in README
+    assert "(soon) an interactive dashboard" not in README

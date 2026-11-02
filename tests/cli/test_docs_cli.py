@@ -48,7 +48,22 @@ def test_the_options_of_the_help_are_exactly_the_options_of_the_page(monkeypatch
     for row in table_rows("Options"):
         in_doc |= names_in(row[0].replace("`", ""))
 
-    assert in_help == in_doc == {"-h", "--help", "-T", "-c", "-u", "-p", "-t", "--by", "--validate"}
+    assert (
+        in_help
+        == in_doc
+        == {
+            "-h",
+            "--help",
+            "-T",
+            "-c",
+            "-u",
+            "-p",
+            "-t",
+            "--by",
+            "--forecast",
+            "--validate",
+        }
+    )
 
 
 def test_every_option_has_an_example():
@@ -67,6 +82,16 @@ def examples() -> list[tuple[str, str]]:
     return re.findall(r"```console\n\$ (sales-insights [^\n]*)\n(.*?)\n```", DOC, re.DOTALL)
 
 
+STDERR_OF = dict(
+    re.findall(
+        r"```console\n\$ (sales-insights [^\n]*)\n[^`]*?\n```\n+[^\n`][^\n]*\n+"
+        r"```stderr\n(.*?)\n```",
+        DOC,
+        re.DOTALL,
+    )
+)
+
+
 def test_the_page_has_examples():
     assert len(examples()) >= 10
 
@@ -77,7 +102,7 @@ def test_every_example_prints_exactly_what_the_page_shows(monkeypatch, capsys, c
     code = main(shlex.split(command)[1:])
     captured = capsys.readouterr()
     assert code == 0
-    assert captured.err == ""
+    assert captured.err.rstrip("\n") == STDERR_OF.get(command, "")
     assert captured.out.rstrip("\n") == expected
 
 
@@ -89,6 +114,8 @@ ERROR_SCENARIOS = {
     "unrecognized arguments: -x": ["-x", "data/sample_orders.csv"],
     "argument -t: invalid int value: 'abc'": ["-t", "abc", "data/sample_orders.csv"],
     "argument --by: invalid choice: 'colour'": ["--by", "colour", "data/sample_orders.csv"],
+    "months must be from 1 to 12, not 13": ["--forecast", "13", "data/sample_orders.csv"],
+    "The forecast needs at least 3 months of history, found 2": ["--forecast", "3", "{two_months}"],
     "Wrong number of products": ["-t", "99", "data/sample_orders.csv"],
 }
 
@@ -99,8 +126,16 @@ def test_every_documented_error_has_a_scenario():
 
 
 @pytest.mark.parametrize(("message", "argv"), ERROR_SCENARIOS.items())
-def test_every_documented_error_is_what_the_command_prints(monkeypatch, capsys, message, argv):
+def test_every_documented_error_is_what_the_command_prints(
+    monkeypatch, capsys, tmp_path, message, argv
+):
     monkeypatch.chdir(ROOT)
+    short = tmp_path / "two_months.csv"
+    short.write_text(
+        "OrderID,Date,Product,Category,UnitPrice,Quantity,CustomerID,Country\n"
+        "1,2025-01-31,Book,Books,10,1,C1,France\n2,2025-02-28,Book,Books,10,1,C2,France\n"
+    )
+    argv = [argument.replace("{two_months}", str(short)) for argument in argv]
     assert main(argv) == 84
     captured = capsys.readouterr()
     assert captured.out == ""

@@ -7,8 +7,10 @@ import pytest
 from sales_insights.ai.forecast import (
     Evaluation,
     Forecast,
+    ForecastReport,
     evaluate,
     forecast_revenue,
+    forecast_with_error,
     mean_absolute_error,
     mean_absolute_percentage_error,
 )
@@ -332,6 +334,55 @@ def test_evaluate_refuses_an_unknown_method():
 def test_the_baseline_is_always_the_naive_method():
     evaluation = evaluate(orders_from(linear(36)), "naive", holdout=3)
     assert evaluation.model.mae == pytest.approx(evaluation.baseline.mae)
+
+
+# --- forecast_with_error: what the command line and the dashboard show -----------------------
+
+
+def test_the_report_holds_the_forecast_the_evaluation_and_the_history():
+    values = orders_from(linear(30))
+    report = forecast_with_error(values, 4)
+    assert isinstance(report, ForecastReport)
+    pd.testing.assert_frame_equal(report.forecast.table, forecast_revenue(values, 4).table)
+    assert report.evaluation == evaluate(values, "holt_winters", holdout=3)
+    assert list(report.history.columns) == ["period", "revenue"]
+    assert report.history["revenue"].tolist() == [float(v) for v in linear(30)]
+    assert report.note is None
+
+
+@pytest.mark.parametrize(("months_of_history", "holdout"), [(30, 3), (6, 3), (5, 2), (4, 1)])
+def test_the_error_is_measured_on_up_to_three_months_and_leaves_three_to_train_on(
+    months_of_history, holdout
+):
+    report = forecast_with_error(orders_from(linear(months_of_history)), 2)
+    assert report.evaluation.holdout == holdout
+    assert report.evaluation.history_months == months_of_history - holdout
+
+
+def test_with_exactly_three_months_there_is_a_forecast_and_no_error_and_a_note_that_says_why():
+    report = forecast_with_error(orders_from(linear(3)), 2)
+    assert len(report.forecast.table) == 2
+    assert report.evaluation is None
+    assert "4 months" in report.note
+
+
+def test_the_history_is_the_complete_months_the_forecast_learned_from():
+    complete = orders_from(linear(6), start="2025-01")
+    partial = pd.concat(
+        [
+            complete,
+            pd.DataFrame({"OrderID": [99], "Date": [pd.Timestamp("2025-07-01")], "Revenue": [1.0]}),
+        ]
+    )
+    report = forecast_with_error(partial, 1)
+    assert len(report.history) == report.forecast.history_months == 6
+
+
+def test_the_report_refuses_what_the_forecast_refuses():
+    with pytest.raises(ValueError, match="1 to 12"):
+        forecast_with_error(orders_from(linear(30)), 13)
+    with pytest.raises(ValueError, match="at least 3 months"):
+        forecast_with_error(orders_from(linear(2)), 3)
 
 
 # --- what the module is allowed to do ---------------------------------------------------------

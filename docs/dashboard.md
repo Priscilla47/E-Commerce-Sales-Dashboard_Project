@@ -1,6 +1,6 @@
 # Dashboard
 
-The dashboard shows the key figures and three charts of a file of orders, and lets you narrow them by period, country and category. It uses the same calculations as the [command line](cli.md); for how the pieces fit together, see the [architecture](architecture.md), and for the columns of a file, see [Data format](data-schema.md).
+The dashboard shows the key figures, three charts and a forecast of a file of orders, and lets you narrow them by period, country and category. It uses the same calculations as the [command line](cli.md); for how the pieces fit together, see the [architecture](architecture.md), and for the columns of a file, see [Data format](data-schema.md).
 
 ## Start it
 
@@ -51,6 +51,24 @@ If the filters keep no order, for example when no country is selected, each char
 Choosing a country again, or any filter that keeps orders, brings the charts back.
 
 ![The page with only France selected: the cards and the three charts show the orders of France only](images/dashboard-filtered.png)
+
+## The forecast tab
+
+The page has two tabs under the cards: **Overview**, with the charts above, and **Forecast**. Both follow the filters.
+
+- **Months to forecast** goes from 1 to 12 and starts at 3.
+- The chart shows the monthly revenue so far, the forecast (dashed) and the band of the **95% interval** around it: the revenue is expected to fall in the band 19 times out of 20 if the past is a good guide to the future.
+- Beside it, the error of the method, measured on the last months (up to 3) of the history, as **MAE** (the mean absolute error, in the unit of the revenue) and **MAPE** (the same error in percent of the real value), and the same two measures for the **Baseline MAE** and **Baseline MAPE** of the naive method. A forecast is worth trusting when its error is below the baseline's.
+- A table gives the numbers of the chart, the same ones that `sales-insights --forecast N` prints (see [the command-line reference](cli.md)).
+- The tab says that the forecast is an **estimate**, which method made it and from how many complete months of history. The naive method repeats the last known month, or the same month of the year before; Holt-Winters follows a trend and the seasons of the year and needs 24 months. The methods are explained in [the AI guide](ai.md#forecasting-revenue), and no language model is involved.
+
+![The Forecast tab on the sample data: the history of four months, a flat forecast with a wide band, the warnings above the chart and the errors below](images/dashboard-forecast-sample.png)
+
+The sample file has only four complete months, so its forecast is the naive one and its band is wide; the warnings above the chart say why (the last month holds a single day, so it is left out, and there is less than a year of history). The next screenshot uses a made-up file of 30 months (not in the repository), where Holt-Winters follows the trend and the seasons and its error is much lower than the baseline's.
+
+![The Forecast tab on a made-up file of 30 months: a rising history with seasons, a three-month forecast with a narrow band, and an error far below the baseline](images/dashboard-forecast-long.png)
+
+When there are fewer than 3 complete months, for example because the filters keep too little, the tab shows the same reason as the command, for example `The forecast needs at least 3 months of history, found 2`, and no chart. With exactly 3 months there is a forecast but no error, and the tab says that the error cannot be measured with fewer than 4 months.
 
 ## What the page says about your data
 
