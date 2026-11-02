@@ -244,3 +244,69 @@ def test_a_header_with_a_byte_order_mark_and_windows_line_endings_loads(tmp_path
     orders = load_orders(path)
     assert list(orders.columns[:2]) == ["OrderID", "Date"]
     assert orders["Revenue"].tolist() == [20.0]
+
+
+# --- text encoding and time zones ---------------------------------------------------------
+
+
+@pytest.mark.parametrize("encoding", ["latin-1", "utf-16", "cp1252"])
+def test_a_file_that_is_not_utf8_text_raises_schema_error(tmp_path, encoding):
+    path = tmp_path / "excel.csv"
+    path.write_bytes(
+        (HEADER + "\n1,2025-01-01,Café,Books,10.0,2,C1,France\n").encode(encoding)
+    )
+    with pytest.raises(SchemaError, match="UTF-8"):
+        load_orders(path)
+
+
+def test_a_binary_file_raises_schema_error(tmp_path):
+    path = tmp_path / "binary.csv"
+    path.write_bytes(b"\x00\x01\x02binary\xff\xfe")
+    with pytest.raises(SchemaError, match="UTF-8"):
+        load_orders(path)
+
+
+def test_accented_utf8_text_loads(tmp_path):
+    path = write_csv(tmp_path, "1,2025-01-01,Café,Livres,10.0,2,C1,Côte d'Ivoire")
+    orders = load_orders(path)
+    assert orders["Product"].tolist() == ["Café"]
+    assert orders["Country"].tolist() == ["Côte d'Ivoire"]
+
+
+def test_dates_with_the_same_offset_keep_it(tmp_path):
+    path = write_csv(
+        tmp_path,
+        "1,2025-01-01T10:00:00+01:00,Book,Books,10.0,2,C1,France",
+        "2,2025-01-02T10:00:00+01:00,Book,Books,10.0,2,C1,France",
+    )
+    dates = load_orders(path)["Date"]
+    assert pdt.is_datetime64_any_dtype(dates)
+    assert str(dates.dt.tz) == "UTC+01:00"
+
+
+@pytest.mark.parametrize(
+    "second_date",
+    ["2025-01-02T10:00:00+02:00", "2025-01-02T10:00:00Z", "2025-01-02"],
+    ids=["other offset", "utc", "no offset"],
+)
+def test_dates_that_mix_time_zones_raise_schema_error(tmp_path, second_date):
+    path = write_csv(
+        tmp_path,
+        "1,2025-01-01T10:00:00+01:00,Book,Books,10.0,2,C1,France",
+        f"2,{second_date},Book,Books,10.0,2,C1,France",
+    )
+    with pytest.raises(SchemaError, match="'Date'.*time zone"):
+        load_orders(path)
+
+
+def test_an_unrelated_error_while_reading_dates_is_not_reported_as_a_time_zone_problem(
+    tmp_path, monkeypatch
+):
+    def broken(*args, **kwargs):
+        raise ValueError("something else went wrong")
+
+    monkeypatch.setattr(pd, "to_datetime", broken)
+    path = write_csv(tmp_path, "1,2025-01-01,Book,Books,10.0,2,C1,France")
+    with pytest.raises(ValueError, match="something else") as caught:
+        load_orders(path)
+    assert not isinstance(caught.value, SchemaError)

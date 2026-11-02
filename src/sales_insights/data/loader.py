@@ -2,6 +2,7 @@
 
 import io
 import re
+import warnings
 from pathlib import Path
 
 import numpy as np
@@ -15,6 +16,10 @@ from sales_insights.data.schema import (
     require_columns,
 )
 from sales_insights.data.storage import Storage
+
+_MIXED_ZONES = (
+    "Column '{column}' mixes time zones; write every date with the same offset, or none"
+)
 
 
 def load_orders(source: str | Path | Storage, name: str | None = None) -> pd.DataFrame:
@@ -51,6 +56,10 @@ def _read_csv(source: Path | io.BytesIO) -> pd.DataFrame:
         raw = pd.read_csv(source, dtype=str, keep_default_na=False, na_values=[""])
     except pd.errors.EmptyDataError as error:
         raise SchemaError("The orders file is empty: it has no header row") from error
+    except UnicodeDecodeError as error:
+        raise SchemaError(
+            "The orders file is not UTF-8 text; in a spreadsheet, save it as 'CSV UTF-8'"
+        ) from error
     except pd.errors.ParserError as error:
         detail = str(error).removeprefix("Error tokenizing data. C error: ").strip()
         raise SchemaError(f"The orders file is not valid CSV: {detail}") from error
@@ -92,7 +101,17 @@ def _reject_duplicate_columns(columns: pd.Index) -> None:
 
 
 def _to_date(values: pd.Series, column: str) -> pd.Series:
-    parsed = pd.to_datetime(values, format="ISO8601", errors="coerce")
+    try:
+        with warnings.catch_warnings():
+            # pandas 2 only warns about mixed time zones and returns an object column.
+            warnings.simplefilter("ignore", FutureWarning)
+            parsed = pd.to_datetime(values, format="ISO8601", errors="coerce")
+    except ValueError as error:
+        if "zone" not in str(error).lower():
+            raise
+        raise SchemaError(_MIXED_ZONES.format(column=column)) from error
+    if not pd.api.types.is_datetime64_any_dtype(parsed):
+        raise SchemaError(_MIXED_ZONES.format(column=column))
     _raise_on_invalid(values, values.notna() & parsed.isna(), column, "a date (YYYY-MM-DD)")
     return parsed
 
