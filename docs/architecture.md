@@ -43,7 +43,7 @@ The code is in `src/sales_insights/`. The table is also the **dependency rule**:
 | `analytics` | Calculations on a loaded table | `data` | `cli`, `dashboard`, `ai` |
 | `cli` | The `sales-insights` command | `analytics`, `data`, `ai` | `dashboard` |
 | `dashboard` | The interactive dashboard | `analytics`, `data`, `ai` | `cli` |
-| `ai` | The AI-assisted features (planned) | `analytics`, `data` | `cli`, `dashboard` |
+| `ai` | The AI-assisted features | `analytics`, `data` | `cli`, `dashboard` |
 
 ### `data`
 
@@ -61,9 +61,9 @@ The command line. `main.py` builds the `argparse` parser, loads the file, valida
 
 The interactive dashboard, built with Streamlit (an optional extra). It follows the same pattern as the command line: load, call analytics, draw. `app.py` is the page and the only module that imports Streamlit; it asks for a data source, shows the filters, the cards and the charts, and the problems found in the data. `data_source.py` loads the sample file or an upload and describes the problems of the validation report in words, `kpis.py` turns the four key figures into labels, `selection.py` turns the choices of the filters into arguments of `analytics`, `charts.py` builds the Plotly figures (each one the plain result of an analytics function, drawn) and `theme.py` holds the colours. Everything but `app.py` can be used and tested without Streamlit. It does not import `cli`. The page is described, with screenshots, in [the dashboard guide](dashboard.md).
 
-### `ai` (planned)
+### `ai`
 
-The AI-assisted features: questions in plain language, written insights and revenue forecasting. The package exists and is empty. The rule that matters here is the third principle: it receives figures computed by `analytics` and turns them into words; it does not calculate. It must not import an interface.
+The AI-assisted features: questions in plain language, written insights and revenue forecasting. So far it holds the interface to a language model, the settings and a fake client for tests, described in [the AI guide](ai.md). The rule that matters here is the third principle: it receives figures computed by `analytics` and turns them into words; it does not calculate. It must not import an interface.
 
 ## Data flow of a request
 
