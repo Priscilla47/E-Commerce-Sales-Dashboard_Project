@@ -218,3 +218,12 @@ def test_text_from_the_file_cannot_break_the_forecast_tab(app):
     app = upload(app, months_file(4).replace("Book", hostile))
     assert not app.exception
     assert len(cells(forecast_tab(app))) == 3
+
+
+def test_a_revenue_too_large_to_forecast_is_explained_in_the_tab_and_does_not_raise(app):
+    content = months_file(30).replace(",100,", ",1e308,", 1)
+    app = upload(app, content)
+    assert not app.exception
+    assert any("too large to forecast" in box.value for box in forecast_tab(app).info)
+    assert not forecast_tab(app).get("plotly_chart")
+    assert len(app.metric[0].value.replace(",", "")) > 300  # the card shows the full amount
