@@ -34,3 +34,16 @@ def contrast_ratio(first: str, second: str) -> float:
     """
     lighter, darker = sorted((_luminance(first), _luminance(second)), reverse=True)
     return (lighter + 0.05) / (darker + 0.05)
+
+
+def with_alpha(colour: str, alpha: float) -> str:
+    """The colour as a CSS ``rgba(...)`` text with the given opacity (0 to 1), for a band.
+
+    Raises:
+        ValueError: ``colour`` is not a six-digit hex code, or ``alpha`` is not from 0 to 1.
+    """
+    _luminance(colour)  # checks the colour
+    if isinstance(alpha, bool) or not isinstance(alpha, int | float) or not 0 <= alpha <= 1:
+        raise ValueError(f"alpha must be a number from 0 to 1, not {alpha!r}")
+    red, green, blue = (int(colour[i : i + 2], 16) for i in (1, 3, 5))
+    return f"rgba({red}, {green}, {blue}, {alpha})"

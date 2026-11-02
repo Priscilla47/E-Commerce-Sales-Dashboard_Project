@@ -7,6 +7,7 @@ from sales_insights.dashboard.theme import (
     LIGHT_BACKGROUND,
     PALETTE,
     contrast_ratio,
+    with_alpha,
 )
 
 # --- contrast_ratio ---------------------------------------------------------------------------
@@ -63,3 +64,26 @@ def test_every_series_colour_has_a_contrast_of_at_least_3_to_1_with_both_backgro
 def test_the_two_backgrounds_are_the_light_and_the_dark_one():
     assert LIGHT_BACKGROUND.upper() == "#FFFFFF"
     assert contrast_ratio(LIGHT_BACKGROUND, DARK_BACKGROUND) > 10
+
+
+# --- with_alpha -------------------------------------------------------------------------------
+
+
+def test_a_colour_with_an_alpha_is_written_as_rgba():
+    assert with_alpha("#2E7BC4", 0.2) == "rgba(46, 123, 196, 0.2)"
+
+
+def test_alpha_0_and_1_are_accepted():
+    assert with_alpha("#000000", 0) == "rgba(0, 0, 0, 0)"
+    assert with_alpha("#FFFFFF", 1) == "rgba(255, 255, 255, 1)"
+
+
+@pytest.mark.parametrize("alpha", [-0.1, 1.1, "0.5", None])
+def test_an_alpha_outside_0_to_1_is_refused(alpha):
+    with pytest.raises(ValueError, match="alpha"):
+        with_alpha("#2E7BC4", alpha)
+
+
+def test_with_alpha_refuses_a_bad_colour():
+    with pytest.raises(ValueError, match="colour"):
+        with_alpha("blue", 0.5)
