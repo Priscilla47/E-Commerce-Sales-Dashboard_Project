@@ -280,3 +280,53 @@ def test_the_figures_claim_no_currency(loaded_orders):
     for figure in _all_figures(loaded_orders):
         texts = [figure.layout.title.text, figure.layout.yaxis.title.text]
         assert not any(symbol in text for text in texts for symbol in "€$£")
+
+
+# --- names that look like HTML ----------------------------------------------------------------
+
+HTML_NAMES = ["<b>Bold</b>", "R&D <Kit 5kg>", "Line<br>break", "&amp; <i>x</i>"]
+
+
+def _html_orders():
+    return pd.DataFrame(
+        {
+            "OrderID": range(8),
+            "Product": HTML_NAMES * 2,
+            "Quantity": [5, 4, 3, 2] * 2,
+            "Country": HTML_NAMES * 2,
+            "Revenue": [50.0, 40.0, 30.0, 20.0] * 2,
+        }
+    )
+
+
+def _shown(name):
+    """What Plotly displays for a label: it decodes entities and reads a few HTML tags."""
+    import html
+
+    return html.unescape(name)
+
+
+def test_a_product_name_that_looks_like_html_is_shown_as_written():
+    figure = top_products_chart(_html_orders(), 4)
+    assert [_shown(label) for label in _x(figure)] == HTML_NAMES
+
+
+def test_a_country_name_that_looks_like_html_is_shown_as_written():
+    figure = revenue_by_chart(_html_orders(), "Country")
+    assert sorted(_shown(label) for label in _x(figure)) == sorted(HTML_NAMES)
+
+
+def test_no_label_keeps_a_raw_angle_bracket_or_ampersand_for_plotly_to_read():
+    for figure in (
+        top_products_chart(_html_orders(), 4),
+        revenue_by_chart(_html_orders(), "Country"),
+    ):
+        for label in _x(figure):
+            assert "<" not in label and ">" not in label
+            assert "&" not in label.replace("&amp;", "").replace("&lt;", "").replace("&gt;", "")
+
+
+def test_ordinary_names_are_not_changed():
+    names = ["Book", "T-shirt", "Coffee Maker", "Phone Case (blue)", "Café"]
+    orders = pd.DataFrame({"Product": names, "Quantity": [5, 4, 3, 2, 1]})
+    assert _x(top_products_chart(orders, 5)) == names
