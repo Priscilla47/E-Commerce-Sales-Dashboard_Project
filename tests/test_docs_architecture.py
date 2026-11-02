@@ -334,12 +334,27 @@ def test_every_package_appears_in_the_diagram():
     assert drawn >= set(documented_rules())
 
 
-def test_the_planned_packages_are_drawn_as_planned():
+def test_only_the_ai_package_is_drawn_as_planned():
     text = diagram()
-    for package in ("dashboard", "ai"):
-        node = re.search(rf'\w+\["{package}<br/>planned"\](:::\w+)?', text)
-        assert node and node.group(1) == ":::planned", package
+    node = re.search(r'\w+\["ai<br/>planned"\](:::\w+)?', text)
+    assert node and node.group(1) == ":::planned"
     assert "classDef planned" in text
+    assert not re.search(r'\["dashboard<br/>[^"]*planned', text)
+
+
+def test_the_dashboard_is_drawn_with_solid_arrows_from_what_it_uses():
+    text = diagram()
+    assert re.search(r"\bANALYTICS --> DASHBOARD\b", text)
+    assert re.search(r"\bVALIDATION --> DASHBOARD\b", text)
+    assert not re.search(r"-\.-> DASHBOARD\[", text)
+
+
+def test_the_dashboard_is_no_longer_called_planned_in_the_text():
+    row = re.search(r"^\| `dashboard` \|.*$", DOC, re.M).group(0)
+    assert "planned" not in row
+    assert "### `dashboard`" in DOC and "### `dashboard` (planned)" not in DOC
+    assert "a dashboard (planned)" not in DOC
+    assert "(dashboard.md)" in DOC, "the page links to the description of the dashboard"
 
 
 def test_the_arrows_of_the_diagram_follow_the_dependency_rule():
