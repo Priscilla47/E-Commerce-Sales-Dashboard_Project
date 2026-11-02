@@ -354,3 +354,23 @@ def test_text_from_the_file_is_shown_as_text_not_as_markdown(app):
     assert "Inconsistent casing" in note
     assert "[click](" not in note
     assert "\\[click\\]\\(" in note
+
+
+def test_every_cached_loader_keeps_only_a_few_entries():
+    """Without max_entries every file ever uploaded stays in memory until the server stops."""
+    import ast
+
+    tree = ast.parse(APP.read_text())
+    cached = [
+        node
+        for node in ast.walk(tree)
+        if isinstance(node, ast.FunctionDef)
+        for decorator in node.decorator_list
+        if isinstance(decorator, ast.Call) and ast.unparse(decorator.func) == "st.cache_data"
+    ]
+    assert len(cached) >= 2
+    for node in cached:
+        call = next(d for d in node.decorator_list if isinstance(d, ast.Call))
+        limits = {k.arg: k.value for k in call.keywords}
+        assert "max_entries" in limits, node.name
+        assert 1 <= ast.literal_eval(limits["max_entries"]) <= 5, node.name
