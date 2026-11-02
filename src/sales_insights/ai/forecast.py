@@ -18,6 +18,7 @@ import pandas as pd
 from sales_insights.analytics.timeseries import revenue_over_time
 
 METHODS = ("naive", "holt_winters")
+METHOD_LABELS = {"naive": "naive", "holt_winters": "Holt-Winters"}  # how a reader sees them
 MIN_MONTHS = 3  # the least history a forecast needs
 SEASON = 12  # months in a season
 MIN_MONTHS_HOLT_WINTERS = 24  # two seasons

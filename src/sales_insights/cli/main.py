@@ -12,7 +12,7 @@ from typing import NoReturn
 
 import pandas as pd
 
-from sales_insights.ai.forecast import forecast_with_error
+from sales_insights.ai.forecast import METHOD_LABELS, forecast_with_error
 from sales_insights.analytics import breakdowns, products, revenue, timeseries
 from sales_insights.data.loader import load_orders
 from sales_insights.data.schema import SchemaError
@@ -178,9 +178,6 @@ def _print_table(title: str, headers: tuple[str, ...], rows: list[tuple[str, ...
         print("  ".join(aligned).rstrip())
 
 
-METHOD_NAMES = {"naive": "naive", "holt_winters": "Holt-Winters"}
-
-
 def _percent(value: float | None) -> str:
     return "n/a" if value is None else f"{value:.1f}%"
 
@@ -188,7 +185,7 @@ def _percent(value: float | None) -> str:
 def _forecast(orders: pd.DataFrame, months: int) -> None:
     report = forecast_with_error(orders, months)
     forecast = report.forecast
-    method = METHOD_NAMES[forecast.method_used]
+    method = METHOD_LABELS[forecast.method_used]
     rows = [
         (f"{period:%Y-%m}", f"{value:.2f}", f"{low:.2f}", f"{high:.2f}")
         for period, value, low, high in zip(
