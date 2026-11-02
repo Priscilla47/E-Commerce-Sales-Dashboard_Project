@@ -43,3 +43,11 @@ def test_the_section_names_the_cards_and_the_filters_of_the_page():
     text = section("Dashboard")
     for name in ("Revenue", "Orders", "Average order value", "Customers", "Period", "Countries"):
         assert name in text
+
+
+def test_the_development_install_also_installs_the_dashboard_so_that_no_test_is_skipped():
+    extras = tomllib.loads((REPOSITORY / "pyproject.toml").read_text())["project"][
+        "optional-dependencies"
+    ]
+    assert "sales-insights[dashboard]" in extras["dev"]
+    assert 'pip install -e ".[dev]"' in section("Development")
