@@ -1,6 +1,6 @@
 # Command-line reference
 
-`sales-insights` reads a CSV file of orders and prints answers about it: revenue, best sellers, customers, breakdowns and data checks. This page lists every option, with real output from the sample dataset (`data/sample_orders.csv`). The file format is described in [Data format](data-schema.md).
+`sales-insights` reads a CSV file of orders and prints answers about it: revenue, best sellers, customers, breakdowns, a revenue forecast and data checks. This page lists every option, with real output from the sample dataset (`data/sample_orders.csv`). The file format is described in [Data format](data-schema.md).
 
 ## Install and run
 
@@ -33,6 +33,7 @@ sales-insights [options] FILE
 | `-c` | `PRODUCT` | The number of different customers who bought the product. A customer who bought it several times counts once. | 0 |
 | `-t` | `N` | The N best-selling products by units sold (products that sold the same quantity are ordered by name), then the list of their names. | 0, or 84 if N is negative, not a whole number or larger than the number of products |
 | `--by` | `country`, `category` or `month` | A table of revenue, number of orders and share of the total revenue for each value, highest revenue first. For `month` the table runs in time order, without the share, and a month without orders shows 0. | 0 |
+| `--forecast` | `N` | A forecast of the revenue of the next N months (1 to 12): a table with the month, the forecast and the lower and upper limits of a 95% interval, then the error of the method on the last months, next to the error of the naive baseline. The method and the warnings are explained in [the AI guide](ai.md#forecasting-revenue). | 0, or 84 if N is not from 1 to 12 or the data has fewer than 3 complete months |
 | `--validate` | none | The result of the data checks described in [Data format](data-schema.md). | 0, or 84 if the data has errors (warnings alone exit with 0) |
 
 ## Examples
@@ -121,6 +122,28 @@ Month     Revenue  Orders
 2025-05    515.84       4
 ```
 
+**Revenue forecast** (`--forecast`). The sample file ends on 1 May, so the forecast learns from January to April and starts in May. Only four months of history is little, so the naive method is used and the command says so on stderr, which is separate from the answer:
+
+```console
+$ sales-insights --forecast 3 data/sample_orders.csv
+Revenue forecast (naive method)
+Month    Forecast     Lower      Upper
+2025-05  78313.71  57861.09   98766.33
+2025-06  78313.71  49389.34  107238.08
+2025-07  78313.71  42888.74  113738.68
+Error on the last 1 month, naive method: MAE 16448.62, MAPE 21.0%; baseline: MAE 16448.62, MAPE 21.0%
+```
+
+and on stderr:
+
+```stderr
+sales-insights: warning: The last month (2025-05) was left out because the data stops on day 1 of 31.
+sales-insights: warning: Only 4 months of history: the naive method was used instead of holt_winters, which needs 24.
+sales-insights: warning: With less than a year of history the forecast repeats the last month and cannot see the seasons of the year.
+```
+
+The last line of the answer is the error the method makes when it forecasts the most recent month it knows (here April), trained on the months before. With a longer history it is measured on the last 3 months. MAE is the mean absolute error, in the unit of the revenue; MAPE is the same error in percent of the real value (`n/a` when a real value is 0).
+
 **Data checks** (`--validate`). The sample dataset is clean.
 
 ```console
@@ -150,6 +173,8 @@ The exit code is **0** when the command worked and **84** for a usage error or a
 | `unrecognized arguments: -x` | An option that does not exist. Option names cannot be shortened (`--val` is not accepted). | Check the spelling with `-h`. |
 | `argument -t: invalid int value: 'abc'` | `-t` needs a whole number. | Write the number, for example `-t 3`. |
 | `argument --by: invalid choice: 'colour'` | `--by` accepts `country`, `category` or `month`. | Use one of the three. |
+| `months must be from 1 to 12, not 13` | `--forecast` with a number outside 1 to 12. | Choose a whole number from 1 to 12. |
+| `The forecast needs at least 3 months of history, found 2` | `--forecast` on a file with fewer than 3 complete months. | Use a file with more months (a last month that the data does not finish does not count). |
 | `Wrong number of products` | `-t N` with an N below 0 or above the number of products. | Choose N between 0 and the number of products (`-u` lists them). |
 
 Problems with the file itself (not found, wrong columns, a value that cannot be read, a file that is not UTF-8) use the same exit code and are listed in [Data format](data-schema.md#errors-you-may-see).

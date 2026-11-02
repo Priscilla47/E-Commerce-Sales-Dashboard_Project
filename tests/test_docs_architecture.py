@@ -261,7 +261,7 @@ def test_the_scanner_finds_the_project_modules_correctly():
     scanned = scan(SRC)
     assert "analytics/products.py" in scanned["analytics"]
     assert scanned["analytics"]["analytics/breakdowns.py"] == {"data"}
-    assert scanned["cli"]["cli/main.py"] == {"analytics", "data"}
+    assert scanned["cli"]["cli/main.py"] == {"ai", "analytics", "data"}
 
 
 # --- the diagram ------------------------------------------------------------------------
@@ -334,12 +334,12 @@ def test_every_package_appears_in_the_diagram():
     assert drawn >= set(documented_rules())
 
 
-def test_only_the_ai_package_is_drawn_as_planned():
+def test_no_package_is_drawn_as_planned_and_both_interfaces_use_the_ai_package():
     text = diagram()
-    node = re.search(r'\w+\["ai<br/>planned"\](:::\w+)?', text)
-    assert node and node.group(1) == ":::planned"
-    assert "classDef planned" in text
-    assert not re.search(r'\["dashboard<br/>[^"]*planned', text)
+    assert "planned" not in text
+    assert re.search(r"\bANALYTICS --> AI\[", text)
+    assert re.search(r"\bAI --> CLI\b", text)
+    assert re.search(r"\bAI --> DASHBOARD\b", text)
 
 
 def test_the_dashboard_is_drawn_with_solid_arrows_from_what_it_uses():
