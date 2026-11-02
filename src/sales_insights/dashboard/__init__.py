@@ -1,1 +1,1 @@
-"""Interactive dashboard (planned)."""
+"""The interactive Streamlit dashboard."""

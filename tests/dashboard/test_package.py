@@ -32,3 +32,11 @@ def test_streamlit_is_declared_as_an_optional_dependency_only():
     extras = text.split("[project.optional-dependencies]", 1)[1].split("\n[", 1)[0]
     assert "dashboard = [" in extras
     assert "streamlit" in extras.split("dashboard = [", 1)[1].split("]", 1)[0]
+
+
+def test_no_package_docstring_calls_a_built_package_planned():
+    import importlib
+
+    for name in ("dashboard", "ai", "analytics", "cli", "data"):
+        doc = importlib.import_module(f"sales_insights.{name}").__doc__ or ""
+        assert "planned" not in doc.lower(), f"sales_insights.{name}: {doc!r}"

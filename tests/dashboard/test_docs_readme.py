@@ -62,3 +62,11 @@ def test_the_readme_no_longer_says_the_dashboard_is_on_the_roadmap():
     assert "- [x] Interactive dashboard" in section("Roadmap")
     assert "The dashboard and AI features are on the roadmap" not in README
     assert "(soon) an interactive dashboard" not in README
+
+
+def test_the_project_layout_of_the_readme_does_not_call_a_built_package_planned():
+    layout = section("Project layout")
+    for line in layout.splitlines():
+        if "dashboard/" in line or "ai/" in line:
+            assert "planned" not in line, line
+    assert "forecast" in layout
