@@ -23,6 +23,7 @@ MIN_MONTHS = 3  # the least history a forecast needs
 SEASON = 12  # months in a season
 MIN_MONTHS_HOLT_WINTERS = 24  # two seasons
 MAX_HORIZON = 12
+LARGEST_REVENUE = 1e100  # beyond this the squares of the errors would overflow a float
 Z = 1.96  # half-width of a 95% interval, in standard deviations of the errors
 
 _ALPHAS = (0.05, 0.1, 0.2, 0.3, 0.5, 0.7)
@@ -151,6 +152,13 @@ def _monthly(df: pd.DataFrame) -> tuple[pd.DatetimeIndex, np.ndarray, list[str]]
     return pd.DatetimeIndex(series["period"]), series["revenue"].to_numpy("float64"), warnings
 
 
+def _check_scale(values: np.ndarray) -> None:
+    if values.size and not np.abs(values).max() <= LARGEST_REVENUE:
+        raise ValueError(
+            f"The revenue is too large to forecast: a month holds more than {LARGEST_REVENUE:.0e}"
+        )
+
+
 def _need_history(count: int, what: str = "history") -> None:
     if count < MIN_MONTHS:
         raise ValueError(
@@ -252,6 +260,7 @@ def forecast_revenue(df: pd.DataFrame, months: int, method: str = "holt_winters"
     _check_method(method)
     periods, values, warnings = _monthly(df)
     _need_history(len(values))
+    _check_scale(values)
     centre, lower, upper, used, fell_back, more = _predict(values, months, method)
     table = pd.DataFrame(
         {
@@ -286,6 +295,7 @@ def evaluate(df: pd.DataFrame, method: str = "holt_winters", holdout: int = 3) -
     holdout = _check_range(_whole(holdout, "holdout"), "holdout")
     _check_method(method)
     _, values, warnings = _monthly(df)
+    _check_scale(values)
     train, actual = values[:-holdout], values[-holdout:]
     _need_history(len(train), "history to train on")
     centre, _, _, used, _, more = _predict(train, holdout, method)
