@@ -76,3 +76,58 @@ def test_the_links_of_the_page_work():
 
 def test_the_readme_links_to_the_page():
     assert "docs/dashboard.md" in (REPOSITORY / "README.md").read_text()
+
+
+# --- the charts, the empty state and the screenshots -------------------------------------------
+
+IMAGES = re.findall(r"!\[([^\]]*)\]\(([^)]+)\)", TEXT)
+IMAGE_FOLDER = PAGE.parent / "images"
+
+
+def test_the_page_has_at_least_four_screenshots():
+    assert len(IMAGES) >= 4
+
+
+def test_every_screenshot_has_an_alt_text_that_says_something():
+    for alt, path in IMAGES:
+        assert len(alt.split()) >= 4, f"alt text of {path} is too short: {alt!r}"
+
+
+def test_every_screenshot_is_a_png_file_in_the_images_folder():
+    for _, path in IMAGES:
+        file = (PAGE.parent / path).resolve()
+        assert file.parent == IMAGE_FOLDER.resolve(), path
+        assert file.is_file(), path
+        assert file.read_bytes()[:8] == b"\x89PNG\r\n\x1a\n", f"{path} is not a PNG"
+        assert 5_000 < file.stat().st_size < 400_000, f"{path} has a strange size"
+
+
+def test_no_image_of_the_folder_is_left_unused():
+    used = {Path(path).name for _, path in IMAGES}
+    assert {file.name for file in IMAGE_FOLDER.iterdir()} == used
+
+
+def test_the_screenshots_are_all_different():
+    contents = [(PAGE.parent / path).read_bytes() for _, path in IMAGES]
+    assert len(set(contents)) == len(contents)
+
+
+def test_the_run_command_is_the_one_of_the_readme():
+    readme = (REPOSITORY / "README.md").read_text()
+    assert re.findall(r"streamlit run (\S+)", TEXT) == re.findall(r"streamlit run (\S+)", readme)
+
+
+def test_the_page_describes_each_chart_and_its_controls():
+    for name in ("Revenue by month", "Revenue by country", "Top 5 products by units sold"):
+        assert name in TEXT, name
+    for control in ("Revenue over time, by", "Break the revenue down by", "Number of products"):
+        assert f"**{control}**" in TEXT, control
+    for word in ("Day", "Month", "Country", "Category"):
+        assert f"**{word}**" in TEXT, word
+
+
+def test_the_page_quotes_the_message_of_the_app_for_an_empty_chart():
+    pytest.importorskip("plotly")
+    from sales_insights.dashboard.charts import NOTHING_TO_DRAW
+
+    assert NOTHING_TO_DRAW in TEXT
