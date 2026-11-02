@@ -50,7 +50,7 @@ Everything between a file and a trustworthy table. `schema.py` defines the eight
 
 ### `analytics`
 
-The calculations, as pure functions on the table that `load_orders` returns: `revenue.py` (total, order count, average order value, units), `products.py` (unique products, units, orders and customers for a product, the best sellers), `breakdowns.py` (revenue, orders and share by country, category or another text column) and `timeseries.py` (revenue and orders by day, month or year, with empty periods filled). A function returns a plain number or a table, never prints, never reads a file and rounds nothing: rounding is a matter of display. `analytics` may use `data` (for example the schema, to know which columns are text) but it must not know about any interface, because the same functions serve the command line, the dashboard and the AI layer.
+The calculations, as pure functions on the table that `load_orders` returns: `revenue.py` (total, order count, average order value, units), `products.py` (unique products, units, orders and customers for a product, the best sellers), `breakdowns.py` (revenue, orders and share by country, category or another text column), `timeseries.py` (revenue and orders by day, month or year, with empty periods filled) and `filters.py` (keep the orders of a period, of some countries or of some categories, so that every interface filters the same way). A function returns a plain number or a table, never prints, never reads a file and rounds nothing: rounding is a matter of display. `analytics` may use `data` (for example the schema, to know which columns are text) but it must not know about any interface, because the same functions serve the command line, the dashboard and the AI layer.
 
 ### `cli`
 
