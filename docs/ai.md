@@ -68,3 +68,28 @@ fake.calls[0].messages  # what the first call received
 ```
 
 A third call raises `LLMError` that says how many answers were scripted. An item of the script can also be an exception, raised in its turn, to test a failing provider.
+
+## Forecasting revenue
+
+The forecast is a statistical model, not a language model: it needs no key and works with the AI switched off. It lives in `sales_insights.ai.forecast` and starts from the monthly revenue that `analytics` returns.
+
+```python
+from sales_insights.ai.forecast import evaluate, forecast_revenue
+from sales_insights.data.loader import load_orders
+
+orders = load_orders("data/sample_orders.csv")
+result = forecast_revenue(orders, 3)
+print(result.table)  # period, forecast, lower, upper
+print(result.method_used)  # naive
+print(result.warnings)  # what the reader should know
+quality = evaluate(orders, "holt_winters", holdout=1)
+print(quality.model.mae, quality.baseline.mae)
+```
+
+- `forecast_revenue(df, months, method="holt_winters")` forecasts 1 to 12 months, with a 95% interval (`lower` and `upper`). Values are never below 0 and never rounded.
+- **Methods.** `naive` repeats the same month of the previous year, or the last value when there is less than a year of history. `holt_winters` follows a trend and the seasons of the year and needs 24 months. With fewer, the result falls back to `naive` and says so (`fell_back` and a warning); asking for `naive` is not a fallback.
+- **Complete months only.** A month counts when the data reaches its last day. A last month that stops earlier, such as one that holds the first day of the month only, is left out and a warning says so, because its small revenue would be read as a fall. The sample file ends on 1 May, so its forecast learns from January to April and starts in May.
+- **At least 3 months.** With fewer, `forecast_revenue` raises `ValueError` and says how many are needed.
+- `evaluate(df, method, holdout=3)` trains on all but the last `holdout` months, forecasts those months and returns the **MAE** (mean absolute error, in the unit of the revenue) and the **MAPE** (the same error in percent of the real value, `None` when a real value is 0), for the method and for the naive baseline. A forecast is worth showing when its error is below the baseline's; on the sample file both are the same method, because the history is short.
+
+The result is plain data: a table and small frozen objects. The forecast code does not read a file, print or round.
