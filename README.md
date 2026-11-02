@@ -1,8 +1,8 @@
 # E-Commerce Sales Dashboard
 
-A Python tool to explore e-commerce order data: revenue, best-selling products, customers, and (soon) an interactive dashboard with AI-assisted insights.
+A Python tool to explore e-commerce order data: revenue, best-selling products, customers, a revenue forecast and an interactive dashboard, with AI-assisted insights to come.
 
-> **Status: early stage, being restructured.** The command-line tool works today. The dashboard and AI features are on the roadmap below.
+> **Status: early stage, being restructured.** The command-line tool, the dashboard and the revenue forecast work today. The questions and insights written by a language model are on the roadmap below.
 
 ## Goals
 
@@ -24,6 +24,7 @@ A CLI that reads an orders CSV and answers questions about it.
 | `-c NAME`                  | Number of unique customers who bought a product              |
 | `-t N`                     | The N best-selling products                                  |
 | `--by country\|category\|month` | Revenue, orders and share of the total for each value  |
+| `--forecast N`             | Forecast the revenue of the next N months (1 to 12), with its error |
 | `--validate`               | Check the data and print what is wrong with it               |
 
 Put the CSV path last. Options can be combined and are answered in the order given. The exit code is 0 on success and 84 for a usage or data error (the message goes to stderr).
@@ -105,7 +106,7 @@ pip install -e ".[dashboard]"
 streamlit run src/sales_insights/dashboard/app.py
 ```
 
-Streamlit prints a link, usually `http://localhost:8501`. In the sidebar, choose **Sample data** (the file in `data/`) or **Upload a CSV** to load your own orders file (the columns are in [Data format](docs/data-schema.md)). Four cards show **Revenue**, **Orders**, **Average order value** and **Customers**, and three charts show the revenue over time, the revenue by country or category and the best-selling products; the **Period**, **Countries** and **Categories** filters in the sidebar change them all. A file that cannot be loaded shows what to change instead of a figure. The page is described, with screenshots, in [docs/dashboard.md](docs/dashboard.md).
+Streamlit prints a link, usually `http://localhost:8501`. In the sidebar, choose **Sample data** (the file in `data/`) or **Upload a CSV** to load your own orders file (the columns are in [Data format](docs/data-schema.md)). Four cards show **Revenue**, **Orders**, **Average order value** and **Customers**, three charts show the revenue over time, the revenue by country or category and the best-selling products, and a **Forecast** tab estimates the revenue of the next months, with its error; the **Period**, **Countries** and **Categories** filters in the sidebar change them all. A file that cannot be loaded shows what to change instead of a figure. The page is described, with screenshots, in [docs/dashboard.md](docs/dashboard.md).
 
 ![The dashboard on the sample data](docs/images/dashboard-overview.png)
 
@@ -135,8 +136,9 @@ pre-commit run --all-files
 - [ ] Restructure into a proper Python package with tests and CI
 - [x] Data loading with validation and clear error messages
 - [x] More analytics: revenue by country, category and time period
-- [ ] Interactive dashboard
-- [ ] AI features: natural-language questions, automatic insights, revenue forecasting
+- [x] Interactive dashboard
+- [x] Revenue forecasting, with its error
+- [ ] AI features: natural-language questions and automatic insights
 - [ ] Docker image and deployment guide
 
 ## Contributing
