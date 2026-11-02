@@ -39,13 +39,13 @@ SAMPLE = "Sample data"
 UPLOAD = "Upload a CSV"
 
 
-@st.cache_data(show_spinner=False)
+@st.cache_data(show_spinner=False, max_entries=2)
 def _load_sample(path: str, modified: int) -> LoadedData:
     # ``modified`` is only part of the cache key: a changed file is read again.
     return load_from_path(path)
 
 
-@st.cache_data(show_spinner=False)
+@st.cache_data(show_spinner=False, max_entries=2)
 def _load_upload(content: bytes) -> LoadedData:
     return load_from_bytes(content)
 

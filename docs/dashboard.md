@@ -16,6 +16,7 @@ Streamlit prints a link, usually `http://localhost:8501`. Streamlit is an option
 ## The sidebar
 
 - **Data source**: **Sample data** is the file `data/sample_orders.csv` of the repository. **Upload a CSV** lets you choose your own file, with the columns described in [Data format](data-schema.md).
+- An uploaded file may be up to 50 MB (about a million orders); the page keeps only the last two files it loaded in memory.
 - **Period**: the first and the last day to keep, both included. It starts on the first and the last day of the data and is not shown when the data has no date.
 - **Countries** and **Categories**: the values to keep. Everything is selected at first, which filters nothing (an order without a country is still counted). Unselect everything and no order matches, so every figure is zero.
 

@@ -2,3 +2,8 @@
 # The accent colour is the first colour of sales_insights/dashboard/theme.py (a test checks it).
 [theme]
 primaryColor = "#2E7BC4"
+
+[server]
+# A file of a million orders is about 45 MB and takes about 0.5 GB to load, so the 200 MB
+# default of Streamlit would let one upload use several gigabytes.
+maxUploadSize = 50
