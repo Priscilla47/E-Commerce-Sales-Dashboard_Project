@@ -1,8 +1,8 @@
 name: CI
 
+# Switched off: it only runs when started by hand, from the Actions tab.
 on:
-  push:
-  pull_request:
+  workflow_dispatch:
 
 permissions:
   contents: read
