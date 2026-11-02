@@ -6,6 +6,8 @@ them displays anything; the page does that with one call. A table with nothing t
 column, so no title or axis names one.
 """
 
+import html
+
 import pandas as pd
 import plotly.graph_objects as go
 
@@ -31,6 +33,12 @@ def month_dtick(months: int) -> str:
 
 BREAKDOWN_COLUMNS = ("Country", "Category")
 FORECAST_COLUMNS = ("period", "forecast", "lower", "upper")
+
+
+def _label(name: object) -> str:
+    """A name from the data as Plotly must receive it: Plotly reads a few HTML tags and entities
+    in labels, so ``<b>x</b>`` or ``&amp;`` in a product name would be shown changed."""
+    return html.escape(str(name), quote=False)
 
 
 def _layout(figure: go.Figure, title: str, x_title: str, y_title: str) -> go.Figure:
@@ -88,7 +96,7 @@ def revenue_by_chart(df: pd.DataFrame, column: str) -> go.Figure | None:
     breakdown = revenue_by(df, column)
     if breakdown.empty:
         return None
-    names = [str(name) for name in breakdown[column]]
+    names = [_label(name) for name in breakdown[column]]
     figure = go.Figure(go.Bar(x=names, y=breakdown["revenue"], marker={"color": PALETTE[0]}))
     figure.update_xaxes(categoryorder="array", categoryarray=names)
     return _layout(figure, f"Revenue by {column.lower()}", column, "Revenue")
@@ -107,7 +115,7 @@ def top_products_chart(df: pd.DataFrame, n: int) -> go.Figure | None:
     if isinstance(n, int) and not isinstance(n, bool):
         n = min(n, len(unique_products(df)))
     best = top_products(df, n)
-    names = [str(name) for name in best["Product"]]
+    names = [_label(name) for name in best["Product"]]
     shown = len(names)
     if not shown:
         return None
