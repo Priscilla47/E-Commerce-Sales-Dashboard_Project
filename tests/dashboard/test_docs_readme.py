@@ -37,3 +37,9 @@ def test_the_section_says_what_the_user_sees_and_the_data_choices():
     assert "Sample data" in text
     assert "Upload a CSV" in text
     assert "localhost:8501" in text
+
+
+def test_the_section_names_the_cards_and_the_filters_of_the_page():
+    text = section("Dashboard")
+    for name in ("Revenue", "Orders", "Average order value", "Customers", "Period", "Countries"):
+        assert name in text
