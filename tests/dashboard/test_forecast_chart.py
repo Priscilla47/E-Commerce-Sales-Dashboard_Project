@@ -80,6 +80,21 @@ def test_the_lines_use_the_palette_and_the_forecast_is_dashed(report):
         assert colour is None or colour.upper() in {c.upper() for c in PALETTE}
 
 
+def test_the_month_labels_do_not_crowd_on_a_long_history():
+    history = pd.DataFrame(
+        {"period": pd.date_range("2023-01-01", periods=30, freq="MS"), "revenue": [1.0] * 30}
+    )
+    table = pd.DataFrame(
+        {
+            "period": pd.date_range("2025-07-01", periods=3, freq="MS"),
+            "forecast": [1.0] * 3,
+            "lower": [0.5] * 3,
+            "upper": [1.5] * 3,
+        }
+    )
+    assert forecast_chart(history, table).layout.xaxis.dtick == "M3"  # 33 months in view
+
+
 def test_the_legend_is_shown(report):
     assert forecast_chart(report.history, report.forecast.table).layout.showlegend is True
 

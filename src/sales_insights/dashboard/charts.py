@@ -17,8 +17,18 @@ from sales_insights.dashboard.theme import PALETTE, with_alpha
 # What the page says in place of a chart that has nothing to draw.
 NOTHING_TO_DRAW = "No orders match these filters"
 PERIOD_NAMES = {"D": "day", "M": "month", "Y": "year"}
-# How to label the time axis: one tick for each month or year, not for arbitrary dates.
-TICKS = {"M": {"tickformat": "%b %Y", "dtick": "M1"}, "Y": {"tickformat": "%Y", "dtick": "M12"}}
+# How to label the time axis: one tick for a month or a year, not for arbitrary dates.
+TICKS = {"M": {"tickformat": "%b %Y"}, "Y": {"tickformat": "%Y", "dtick": "M12"}}
+
+
+def month_dtick(months: int) -> str:
+    """The distance between two labels of a month axis, so that the labels never crowd."""
+    for limit, step in ((12, 1), (36, 3), (72, 6)):
+        if months <= limit:
+            return f"M{step}"
+    return "M12"
+
+
 BREAKDOWN_COLUMNS = ("Country", "Category")
 FORECAST_COLUMNS = ("period", "forecast", "lower", "upper")
 
@@ -59,6 +69,8 @@ def revenue_over_time_chart(df: pd.DataFrame, freq: str = "M") -> go.Figure | No
         )
     )
     figure.update_xaxes(**TICKS.get(freq, {}))
+    if freq == "M":
+        figure.update_xaxes(dtick=month_dtick(len(series)))
     return _layout(figure, f"Revenue by {name}", name.capitalize(), "Revenue")
 
 
@@ -160,7 +172,7 @@ def forecast_chart(history: pd.DataFrame, forecast: pd.DataFrame) -> go.Figure |
             ),
         ]
     )
-    figure.update_xaxes(**TICKS["M"])
+    figure.update_xaxes(**TICKS["M"], dtick=month_dtick(len(history) + len(forecast)))
     _layout(figure, "Revenue forecast", "Month", "Revenue")
     figure.update_layout(showlegend=True, legend={"orientation": "h", "y": -0.2})
     return figure

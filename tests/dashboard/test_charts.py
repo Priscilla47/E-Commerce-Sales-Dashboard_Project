@@ -81,6 +81,27 @@ def test_the_axis_ticks_match_the_period(loaded_orders, freq, tickformat, dtick)
     assert (axis.tickformat, axis.dtick) == (tickformat, dtick)
 
 
+@pytest.mark.parametrize(
+    ("months", "dtick"),
+    [(1, "M1"), (12, "M1"), (13, "M3"), (36, "M3"), (37, "M6"), (72, "M6"), (73, "M12")],
+)
+def test_a_long_history_is_labelled_every_few_months_so_the_labels_do_not_crowd(months, dtick):
+    from sales_insights.dashboard.charts import month_dtick
+
+    assert month_dtick(months) == dtick
+
+
+def test_the_month_chart_of_three_years_has_a_label_every_three_months():
+    table = pd.DataFrame(
+        {
+            "OrderID": range(30),
+            "Date": pd.date_range("2023-01-15", periods=30, freq="MS") + pd.Timedelta(days=14),
+            "Revenue": [100.0] * 30,
+        }
+    )
+    assert revenue_over_time_chart(table, "M").layout.xaxis.dtick == "M3"
+
+
 def test_the_time_chart_shows_the_number_of_orders_when_hovering(loaded_orders):
     figure = revenue_over_time_chart(loaded_orders, "M")
     assert list(figure.data[0].customdata[:, 0]) == [2, 3, 1]
