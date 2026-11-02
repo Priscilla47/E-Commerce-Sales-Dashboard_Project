@@ -4,13 +4,13 @@ This page explains how the project is organised, so that you can find your way i
 
 ## Goal and design principles
 
-The project turns a CSV file of e-commerce orders into answers: how much was sold, what sells best, who buys what and where. It has two interfaces, a command line and a dashboard, and is meant to have an AI layer (planned) that explains the figures in plain language.
+The project turns a CSV file of e-commerce orders into answers: how much was sold, what sells best, who buys what and where. It has two interfaces, a command line and a dashboard, and an AI layer: the forecast is built, and the answers and insights written in plain language are planned.
 
 Four principles shape the code:
 
 1. **A pure analytics core.** Analytics functions receive a table and return numbers or tables. They do not print, read files, round their results or know who calls them.
 2. **Thin interfaces.** The command line and the dashboard only parse what the user asked for, call the core and format the result. They hold no calculation of their own.
-3. **Numbers are computed by code.** Every figure comes from pandas. The planned AI layer may read these figures and put them into words, but it never calculates or invents one.
+3. **Numbers are computed by code.** Every figure comes from pandas. The AI layer may read these figures and put them into words, but it never calculates or invents one.
 4. **Bad data is reported, not hidden.** Loading is strict about types and clear about what is wrong; validation is a separate step that lists every problem with its line number; the command line warns when the data has errors.
 
 ## Layers
@@ -25,13 +25,12 @@ flowchart TD
     VALIDATION --> CLI
     ANALYTICS --> DASHBOARD["dashboard<br/>Streamlit page"]
     VALIDATION --> DASHBOARD
-    ANALYTICS -.-> AI["ai<br/>planned"]:::planned
-    AI -.-> DASHBOARD
-    AI -.-> CLI
-    classDef planned stroke-dasharray: 5 5
+    ANALYTICS --> AI["ai<br/>forecast, model<br/>interface"]
+    AI --> DASHBOARD
+    AI --> CLI
 ```
 
-Solid arrows exist today. Dashed arrows are planned, or optional: the command line reads a file by its path, while the storage interface exists so that a file can later come from somewhere else, such as a cloud bucket, without touching the rest of the code.
+Solid arrows exist today. The dashed arrow is optional: the command line reads a file by its path, while the storage interface exists so that a file can later come from somewhere else, such as a cloud bucket, without touching the rest of the code.
 
 ## Packages
 
@@ -55,7 +54,7 @@ The calculations, as pure functions on the table that `load_orders` returns: `re
 
 ### `cli`
 
-The command line. `main.py` builds the `argparse` parser, loads the file, validates it, calls one analytics function per option and formats the answers; it is the only place that prints and the only place that decides an exit code (0, or 84 for a usage or data error). It holds no calculation: a figure the command line prints is a figure an analytics function returns.
+The command line. `main.py` builds the `argparse` parser, loads the file, validates it, calls one analytics function per option (for `--forecast`, the forecast report of the `ai` package) and formats the answers; it is the only place that prints and the only place that decides an exit code (0, or 84 for a usage or data error). It holds no calculation: a figure the command line prints is a figure an analytics function returns.
 
 ### `dashboard`
 
@@ -63,7 +62,7 @@ The interactive dashboard, built with Streamlit (an optional extra). It follows 
 
 ### `ai`
 
-The AI-assisted features: questions in plain language, written insights and revenue forecasting. So far it holds the interface to a language model, the settings and a fake client for tests, described in [the AI guide](ai.md). The rule that matters here is the third principle: it receives figures computed by `analytics` and turns them into words; it does not calculate. It must not import an interface.
+The AI-assisted features: questions in plain language, written insights and revenue forecasting. So far it holds the revenue forecast (a statistical model, which both interfaces use), the interface to a language model, the settings and a fake client for tests, described in [the AI guide](ai.md); the written answers and insights are planned. The rule that matters here is the third principle: it receives figures computed by `analytics` and turns them into words; it does not calculate. It must not import an interface.
 
 ## Data flow of a request
 

@@ -12,6 +12,7 @@ from typing import NoReturn
 
 import pandas as pd
 
+from sales_insights.ai.forecast import forecast_with_error
 from sales_insights.analytics import breakdowns, products, revenue, timeseries
 from sales_insights.data.loader import load_orders
 from sales_insights.data.schema import SchemaError
@@ -96,6 +97,14 @@ def build_parser() -> argparse.ArgumentParser:
         help="revenue broken down by country, by category or by month",
     )
     parser.add_argument(
+        "--forecast",
+        dest="forecast",
+        action=_Request,
+        type=int,
+        metavar="N",
+        help="forecast the revenue of the next N months (1 to 12), with its error",
+    )
+    parser.add_argument(
         "--validate",
         dest="validate",
         action=_Request,
@@ -169,6 +178,46 @@ def _print_table(title: str, headers: tuple[str, ...], rows: list[tuple[str, ...
         print("  ".join(aligned).rstrip())
 
 
+METHOD_NAMES = {"naive": "naive", "holt_winters": "Holt-Winters"}
+
+
+def _percent(value: float | None) -> str:
+    return "n/a" if value is None else f"{value:.1f}%"
+
+
+def _forecast(orders: pd.DataFrame, months: int) -> None:
+    report = forecast_with_error(orders, months)
+    forecast = report.forecast
+    method = METHOD_NAMES[forecast.method_used]
+    rows = [
+        (f"{period:%Y-%m}", f"{value:.2f}", f"{low:.2f}", f"{high:.2f}")
+        for period, value, low, high in zip(
+            forecast.table["period"],
+            forecast.table["forecast"],
+            forecast.table["lower"],
+            forecast.table["upper"],
+            strict=True,
+        )
+    ]
+    _print_table(
+        f"Revenue forecast ({method} method)", ("Month", "Forecast", "Lower", "Upper"), rows
+    )
+    warnings = list(forecast.warnings)
+    if report.evaluation is None:
+        warnings.append(report.note)
+    else:
+        evaluation = report.evaluation
+        last = f"{evaluation.holdout} month{'' if evaluation.holdout == 1 else 's'}"
+        model, baseline = evaluation.model, evaluation.baseline
+        print(
+            f"Error on the last {last}, {method} method: "
+            f"MAE {model.mae:.2f}, MAPE {_percent(model.mape)}; "
+            f"baseline: MAE {baseline.mae:.2f}, MAPE {_percent(baseline.mape)}"
+        )
+    for warning in dict.fromkeys(warnings):
+        print(f"{PROG}: warning: {warning}", file=sys.stderr)
+
+
 def _validate(_orders: pd.DataFrame, _value: None, report: ValidationReport) -> None:
     print(report.summary())
 
@@ -180,6 +229,7 @@ _ANSWERS: dict[str, Callable[[pd.DataFrame, object], None]] = {
     "units": _units,
     "top": _top,
     "by": _by,
+    "forecast": _forecast,
 }
 
 
