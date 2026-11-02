@@ -93,10 +93,20 @@ def test_a_wrong_frequency_is_refused(loaded_orders, freq):
         revenue_over_time_chart(loaded_orders, freq)
 
 
-def test_the_time_chart_of_an_empty_table_is_an_empty_figure(loaded_orders):
-    figure = revenue_over_time_chart(loaded_orders.iloc[0:0], "M")
+def test_the_time_chart_of_an_empty_table_is_none(loaded_orders):
+    assert revenue_over_time_chart(loaded_orders.iloc[0:0], "M") is None
+
+
+def test_the_time_chart_of_a_table_without_any_date_is_none(loaded_orders):
+    undated = loaded_orders.copy()
+    undated["Date"] = pd.NaT
+    assert revenue_over_time_chart(undated, "M") is None
+
+
+def test_the_time_chart_of_one_row_is_a_figure_with_one_point(loaded_orders):
+    figure = revenue_over_time_chart(loaded_orders.iloc[[1]], "M")
     assert isinstance(figure, go.Figure)
-    assert len(_x(figure)) == 0
+    assert _y(figure) == [500.0]
 
 
 # --- revenue_by_chart -------------------------------------------------------------------------
@@ -135,9 +145,19 @@ def test_only_country_and_category_are_accepted(loaded_orders, column):
         revenue_by_chart(loaded_orders, column)
 
 
-def test_the_breakdown_chart_of_an_empty_table_is_an_empty_figure(loaded_orders):
-    figure = revenue_by_chart(loaded_orders.iloc[0:0], "Country")
-    assert len(_x(figure)) == 0
+def test_the_breakdown_chart_of_an_empty_table_is_none(loaded_orders):
+    assert revenue_by_chart(loaded_orders.iloc[0:0], "Country") is None
+
+
+def test_a_wrong_column_is_refused_even_for_an_empty_table(loaded_orders):
+    with pytest.raises(ValueError, match="Country"):
+        revenue_by_chart(loaded_orders.iloc[0:0], "Product")
+
+
+def test_the_breakdown_chart_of_one_row_is_a_figure_with_one_bar(loaded_orders):
+    figure = revenue_by_chart(loaded_orders.iloc[[1]], "Country")
+    assert isinstance(figure, go.Figure)
+    assert (_x(figure), _y(figure)) == (["UK"], [500.0])
 
 
 # --- top_products_chart -----------------------------------------------------------------------
@@ -173,8 +193,8 @@ def test_the_products_chart_says_what_it_shows(loaded_orders):
     assert list(figure.layout.xaxis.categoryarray) == ["Book", "Laptop"]
 
 
-def test_zero_products_is_an_empty_figure(loaded_orders):
-    assert len(_x(top_products_chart(loaded_orders, 0))) == 0
+def test_zero_products_is_none(loaded_orders):
+    assert top_products_chart(loaded_orders, 0) is None
 
 
 def test_a_numpy_integer_is_accepted(loaded_orders):
@@ -192,8 +212,14 @@ def test_n_must_be_a_whole_number(loaded_orders, n):
         top_products_chart(loaded_orders, n)
 
 
-def test_the_products_chart_of_an_empty_table_is_an_empty_figure(loaded_orders):
-    assert len(_x(top_products_chart(loaded_orders.iloc[0:0], 5))) == 0
+def test_the_products_chart_of_an_empty_table_is_none(loaded_orders):
+    assert top_products_chart(loaded_orders.iloc[0:0], 5) is None
+
+
+def test_the_products_chart_of_one_row_is_a_figure_with_one_bar(loaded_orders):
+    figure = top_products_chart(loaded_orders.iloc[[1]], 5)
+    assert isinstance(figure, go.Figure)
+    assert (_x(figure), _y(figure)) == (["Laptop"], [1])
 
 
 # --- all the builders -------------------------------------------------------------------------

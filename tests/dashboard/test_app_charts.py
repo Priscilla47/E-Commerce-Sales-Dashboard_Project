@@ -151,12 +151,42 @@ def test_the_charts_are_drawn_for_the_filtered_orders(app):
     assert list(values(country_chart, "x")) == [country]
 
 
-def test_a_filter_that_matches_nothing_gives_empty_charts_and_no_error(app):
+NO_MATCH = "No orders match these filters"
+
+
+def test_a_filter_that_matches_nothing_says_so_in_place_of_each_chart(app):
     app.run()
     by_label(app.sidebar.multiselect, "Countries").set_value([]).run()
     assert not app.exception
     assert not app.error
-    assert [len(values(figure, "x")) for figure in figures(app)] == [0, 0, 0]
+    assert figures(app) == []
+    assert [info.value for info in app.info] == [NO_MATCH] * 3
+
+
+def test_the_cards_stay_on_screen_with_zeros_when_nothing_matches(app):
+    app.run()
+    by_label(app.sidebar.multiselect, "Countries").set_value([]).run()
+    assert [(metric.label, metric.value) for metric in app.metric] == [
+        ("Revenue", "0.00"),
+        ("Orders", "0"),
+        ("Average order value", "0.00"),
+        ("Customers", "0"),
+    ]
+
+
+def test_the_message_goes_away_when_the_filter_matches_again(app):
+    app.run()
+    by_label(app.sidebar.multiselect, "Countries").set_value([]).run()
+    by_label(app.sidebar.multiselect, "Countries").set_value(["France"]).run()
+    assert len(figures(app)) == 3
+    assert [info.value for info in app.info] == []
+
+
+def test_the_message_is_only_shown_for_a_chart_that_has_nothing(app):
+    # Orders without a date: the time chart has nothing to draw, the other two do.
+    page = upload(app, HEADER + "1,,Book,Books,10,2,C1,France\n")
+    assert [info.value for info in page.info] == [NO_MATCH]
+    assert len(figures(page)) == 2
 
 
 # --- uploads ----------------------------------------------------------------------------------
@@ -180,17 +210,17 @@ def test_an_upload_with_two_products_has_a_slider_from_one_to_two(app):
     assert list(values(figures(app)[2], "x")) == ["Pen", "Book"]
 
 
-def test_a_file_with_only_the_header_draws_empty_charts_without_error(app):
+def test_a_file_with_only_the_header_says_there_is_nothing_to_chart(app):
     app = upload(app, HEADER)
     assert not app.exception
-    assert [len(values(figure, "x")) for figure in figures(app)] == [0, 0, 0]
+    assert figures(app) == []
+    assert [info.value for info in app.info] == [NO_MATCH] * 3
 
 
 def test_a_file_without_any_date_still_draws_the_other_charts(app):
     app = upload(app, HEADER + "1,,Book,Books,10,2,C1,France\n2,,Pen,Office,2,9,C2,UK\n")
     assert not app.exception
-    month_chart, country_chart, products_chart = figures(app)
-    assert len(values(month_chart, "x")) == 0
+    country_chart, products_chart = figures(app)
     assert sum(values(country_chart, "y")) == pytest.approx(38.0)
     assert len(values(products_chart, "x")) == 2
 
