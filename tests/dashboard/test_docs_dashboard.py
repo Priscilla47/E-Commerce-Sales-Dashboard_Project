@@ -131,3 +131,33 @@ def test_the_page_quotes_the_message_of_the_app_for_an_empty_chart():
     from sales_insights.dashboard.charts import NOTHING_TO_DRAW
 
     assert NOTHING_TO_DRAW in TEXT
+
+
+# --- the forecast tab -------------------------------------------------------------------------
+
+
+def test_the_page_describes_the_forecast_tab_and_its_controls():
+    for phrase in ("## The forecast tab", "**Months to forecast**", "**Forecast**", "**Overview**"):
+        assert phrase in TEXT, phrase
+    for measure in ("MAE", "MAPE", "Baseline MAE", "Baseline MAPE", "95% interval"):
+        assert measure in TEXT, measure
+
+
+def test_the_page_says_the_forecast_is_an_estimate_and_links_the_method_and_the_command():
+    assert "estimate" in TEXT
+    assert "(ai.md#forecasting-revenue)" in TEXT
+    assert "--forecast" in TEXT and "(cli.md)" in TEXT
+
+
+def test_the_page_names_the_two_screenshots_of_the_forecast():
+    names = {Path(path).name for _, path in IMAGES}
+    assert {"dashboard-forecast-sample.png", "dashboard-forecast-long.png"} <= names
+
+
+def test_the_page_says_the_long_example_is_made_up():
+    assert "made-up" in TEXT or "made up" in TEXT
+
+
+def test_the_reasons_quoted_on_the_page_are_the_ones_of_the_code():
+    for phrase in ("complete months of history", "at least 3 months"):
+        assert phrase in TEXT, phrase
