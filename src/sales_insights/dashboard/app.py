@@ -9,7 +9,13 @@ import re
 import streamlit as st
 
 from sales_insights.analytics.filters import available_values, filter_orders
+from sales_insights.analytics.products import unique_products
 from sales_insights.analytics.revenue import order_count
+from sales_insights.dashboard.charts import (
+    revenue_by_chart,
+    revenue_over_time_chart,
+    top_products_chart,
+)
 from sales_insights.dashboard.data_source import (
     SAMPLE_PATH,
     LoadedData,
@@ -120,6 +126,27 @@ def _show_cards(orders) -> None:
     columns[3].metric("Customers", labels.customers)
 
 
+TIME_SCALES = {"Day": "D", "Month": "M"}
+DEFAULT_PRODUCTS = 5
+
+
+def _show_charts(orders) -> None:
+    """Draw the three charts, each with the one control that changes it."""
+    scale = st.radio("Revenue over time, by", list(TIME_SCALES), index=1, horizontal=True)
+    st.plotly_chart(revenue_over_time_chart(orders, TIME_SCALES[scale]), width="stretch")
+
+    left, right = st.columns(2)
+    with left:
+        column = st.selectbox("Break the revenue down by", ["Country", "Category"])
+        st.plotly_chart(revenue_by_chart(orders, column), width="stretch")
+    with right:
+        products = len(unique_products(orders))
+        shown = products
+        if products > 1:
+            shown = st.slider("Number of products", 1, products, min(DEFAULT_PRODUCTS, products))
+        st.plotly_chart(top_products_chart(orders, shown), width="stretch")
+
+
 def main() -> None:
     st.set_page_config(page_title="Sales insights", layout="wide")
     st.title("Sales insights")
@@ -129,7 +156,9 @@ def main() -> None:
     loaded_count = order_count(loaded.orders)
     st.caption(f"{loaded_count} {'order' if loaded_count == 1 else 'orders'} loaded")
     _show_findings(loaded.report)
-    _show_cards(_filtered(loaded.orders))
+    orders = _filtered(loaded.orders)
+    _show_cards(orders)
+    _show_charts(orders)
 
 
 main()
