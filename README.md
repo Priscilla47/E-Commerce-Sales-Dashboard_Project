@@ -91,7 +91,7 @@ See [Data format](docs/data-schema.md) for the full description, the loading rul
 │   ├── cli/         command-line interface
 │   ├── data/        data loading, validation and storage
 │   ├── dashboard/   interactive dashboard
-│   └── ai/          AI-assisted features (planned)
+│   └── ai/          revenue forecast and the interface to a language model
 ├── tests/           unit tests
 └── data/
     └── sample_orders.csv
