@@ -19,6 +19,7 @@ dev = [
     "pytest>=8.0",
     "pytest-cov>=5.0",
     "ruff>=0.5",
+    "pre-commit>=3.7",
 ]
 
 [project.scripts]
@@ -29,6 +30,15 @@ version = { attr = "sales_insights.__version__" }
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.ruff]
+line-length = 100
+src = ["src", "."]
+
+[tool.ruff.lint]
+# E, W: pycodestyle errors and warnings; F: pyflakes (unused names, undefined names);
+# I: import sorting; B: bugbear (likely bugs); UP: use the syntax of the Python version.
+select = ["E", "W", "F", "I", "B", "UP"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

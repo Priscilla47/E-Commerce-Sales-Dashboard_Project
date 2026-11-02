@@ -252,9 +252,7 @@ def test_a_header_with_a_byte_order_mark_and_windows_line_endings_loads(tmp_path
 @pytest.mark.parametrize("encoding", ["latin-1", "utf-16", "cp1252"])
 def test_a_file_that_is_not_utf8_text_raises_schema_error(tmp_path, encoding):
     path = tmp_path / "excel.csv"
-    path.write_bytes(
-        (HEADER + "\n1,2025-01-01,Café,Books,10.0,2,C1,France\n").encode(encoding)
-    )
+    path.write_bytes((HEADER + "\n1,2025-01-01,Café,Books,10.0,2,C1,France\n").encode(encoding))
     with pytest.raises(SchemaError, match="UTF-8"):
         load_orders(path)
 

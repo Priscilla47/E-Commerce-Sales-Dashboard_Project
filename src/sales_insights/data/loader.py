@@ -17,9 +17,7 @@ from sales_insights.data.schema import (
 )
 from sales_insights.data.storage import Storage
 
-_MIXED_ZONES = (
-    "Column '{column}' mixes time zones; write every date with the same offset, or none"
-)
+_MIXED_ZONES = "Column '{column}' mixes time zones; write every date with the same offset, or none"
 
 
 def load_orders(source: str | Path | Storage, name: str | None = None) -> pd.DataFrame:
