@@ -1,5 +1,7 @@
 # E-Commerce Sales Dashboard
 
+[![CI](https://github.com/Priscilla47/E-Commerce-Sales-Dashboard_Project/actions/workflows/ci.yml/badge.svg)](https://github.com/Priscilla47/E-Commerce-Sales-Dashboard_Project/actions/workflows/ci.yml)
+
 A Python tool to explore e-commerce order data: revenue, best-selling products, customers, and (soon) an interactive dashboard with AI-assisted insights.
 
 > **Status: early stage, being restructured.** The command-line tool works today. The dashboard and AI features are on the roadmap below.
