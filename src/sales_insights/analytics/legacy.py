@@ -12,14 +12,18 @@ def sum_of_two_arr(arr1, arr2):
         raise ValueError("Wrong size of tables")
     return np.sum(arr1 * arr2)
 
-##number of clients who bought a certain product
-def n_number_clients(arr1, pdt):
-    count = 0
-    
-    for i in range(len(arr1)):
-        if arr1[i] == pdt:
-            count += 1
-    return count
+##number of orders (order lines) of a certain product
+def count_orders(arr1, pdt):
+    return int((pd.Series(arr1) == pdt).sum())
+
+##number of unique customers who bought a certain product
+def n_number_clients(arr1, pdt, customers):
+    products = pd.Series(arr1).reset_index(drop=True)
+    buyers = pd.Series(customers).reset_index(drop=True)
+
+    if len(products) != len(buyers):
+        raise ValueError("Wrong size of tables")
+    return int(buyers[products == pdt].nunique())
 
 ##comparing an elmt to an array
 def compare_it(elmt, items):
