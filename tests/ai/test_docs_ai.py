@@ -83,3 +83,24 @@ def test_the_fake_client_example_of_the_page_runs_and_says_the_truth():
     exec(example, namespace)  # noqa: S102 - the code of our own documentation page
     assert namespace["fake"].complete.__self__ is namespace["fake"]
     assert [call.messages[0].content for call in namespace["fake"].calls] == ["first", "second"]
+
+
+def test_the_forecast_example_of_the_page_runs_and_says_the_truth(monkeypatch):
+    blocks = re.findall(r"```python\n(.*?)```", PAGE.read_text(), re.S)
+    example = next(block for block in blocks if "forecast_revenue" in block)
+    namespace: dict = {}
+    monkeypatch.chdir(ROOT)
+    exec(example, namespace)  # noqa: S102 - the code of our own documentation page
+    result = namespace["result"]
+    text = PAGE.read_text()
+    assert len(result.table) == 3
+    assert result.method_used == "naive"  # the comment of the example
+    assert result.table["period"].iloc[0] == namespace["orders"]["Date"].max().replace(day=1)
+    assert "January to April" in text and str(result.history_months) == "4"
+    assert namespace["quality"].model.mae == namespace["quality"].baseline.mae
+
+
+def test_the_page_names_the_three_months_and_the_24_months_and_the_metrics():
+    text = PAGE.read_text()
+    for phrase in ("24 months", "At least 3 months", "MAE", "MAPE", "never rounded", "95%"):
+        assert phrase in text, phrase
