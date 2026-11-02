@@ -4,12 +4,12 @@ This page explains how the project is organised, so that you can find your way i
 
 ## Goal and design principles
 
-The project turns a CSV file of e-commerce orders into answers: how much was sold, what sells best, who buys what and where. It is meant to have two interfaces, a command line (working) and a dashboard (planned), and an AI layer (planned) that explains the figures in plain language.
+The project turns a CSV file of e-commerce orders into answers: how much was sold, what sells best, who buys what and where. It has two interfaces, a command line and a dashboard, and is meant to have an AI layer (planned) that explains the figures in plain language.
 
 Four principles shape the code:
 
 1. **A pure analytics core.** Analytics functions receive a table and return numbers or tables. They do not print, read files, round their results or know who calls them.
-2. **Thin interfaces.** The command line (and later the dashboard) only parses what the user asked for, calls the core and formats the result. It holds no calculation of its own.
+2. **Thin interfaces.** The command line and the dashboard only parse what the user asked for, call the core and format the result. They hold no calculation of their own.
 3. **Numbers are computed by code.** Every figure comes from pandas. The planned AI layer may read these figures and put them into words, but it never calculates or invents one.
 4. **Bad data is reported, not hidden.** Loading is strict about types and clear about what is wrong; validation is a separate step that lists every problem with its line number; the command line warns when the data has errors.
 
@@ -23,7 +23,8 @@ flowchart TD
     LOADER --> ANALYTICS["analytics<br/>revenue, products,<br/>breakdowns, time series"]
     ANALYTICS --> CLI["cli<br/>sales-insights command"]
     VALIDATION --> CLI
-    ANALYTICS -.-> DASHBOARD["dashboard<br/>planned"]:::planned
+    ANALYTICS --> DASHBOARD["dashboard<br/>Streamlit page"]
+    VALIDATION --> DASHBOARD
     ANALYTICS -.-> AI["ai<br/>planned"]:::planned
     AI -.-> DASHBOARD
     AI -.-> CLI
@@ -41,7 +42,7 @@ The code is in `src/sales_insights/`. The table is also the **dependency rule**:
 | `data` | Reading, typing and checking order files | nothing else of the project | `analytics`, `cli`, `dashboard`, `ai` |
 | `analytics` | Calculations on a loaded table | `data` | `cli`, `dashboard`, `ai` |
 | `cli` | The `sales-insights` command | `analytics`, `data`, `ai` | `dashboard` |
-| `dashboard` | The interactive dashboard (planned) | `analytics`, `data`, `ai` | `cli` |
+| `dashboard` | The interactive dashboard | `analytics`, `data`, `ai` | `cli` |
 | `ai` | The AI-assisted features (planned) | `analytics`, `data` | `cli`, `dashboard` |
 
 ### `data`
@@ -56,9 +57,9 @@ The calculations, as pure functions on the table that `load_orders` returns: `re
 
 The command line. `main.py` builds the `argparse` parser, loads the file, validates it, calls one analytics function per option and formats the answers; it is the only place that prints and the only place that decides an exit code (0, or 84 for a usage or data error). It holds no calculation: a figure the command line prints is a figure an analytics function returns.
 
-### `dashboard` (planned)
+### `dashboard`
 
-The interactive dashboard. The package exists and is empty. It will follow the same pattern as the command line: load, call analytics, draw. It will not import `cli`.
+The interactive dashboard, built with Streamlit (an optional extra). It follows the same pattern as the command line: load, call analytics, draw. `app.py` is the page and the only module that imports Streamlit; it asks for a data source, shows the filters, the cards and the charts, and the problems found in the data. `data_source.py` loads the sample file or an upload and describes the problems of the validation report in words, `kpis.py` turns the four key figures into labels, `selection.py` turns the choices of the filters into arguments of `analytics`, `charts.py` builds the Plotly figures (each one the plain result of an analytics function, drawn) and `theme.py` holds the colours. Everything but `app.py` can be used and tested without Streamlit. It does not import `cli`. The page is described, with screenshots, in [the dashboard guide](dashboard.md).
 
 ### `ai` (planned)
 

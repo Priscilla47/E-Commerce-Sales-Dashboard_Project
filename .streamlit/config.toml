@@ -1,0 +1,4 @@
+# Streamlit reads this file when it is started from the root of the project.
+# The accent colour is the first colour of sales_insights/dashboard/theme.py (a test checks it).
+[theme]
+primaryColor = "#2E7BC4"
