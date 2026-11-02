@@ -66,7 +66,3 @@ def top_n_product(n, arr1, pdts):
     for rank, (product, qty) in enumerate(top.items(), start=1):
         print(rank, "-", product, " sold ", qty, " times")
     return list(top.index)
-
-#sales at a given year
-def sales_over_time(yrs):
-    return yrs
