@@ -9,26 +9,7 @@ from sales_insights.analytics.breakdowns import revenue_by
 from sales_insights.analytics.products import top_products
 from sales_insights.analytics.revenue import order_count
 from sales_insights.analytics.timeseries import revenue_over_time
-
-
-def monthly_orders(values, start="2023-01", country="France", category="Books", product="Book"):
-    """One order a month, on the last day of the month, with the given revenue."""
-    months = pd.period_range(start, periods=len(values), freq="M")
-    return pd.DataFrame(
-        {
-            "OrderID": range(1, len(values) + 1),
-            "Date": [m.to_timestamp(how="end").normalize() for m in months],
-            "Product": product,
-            "Quantity": 1,
-            "Country": country,
-            "Category": category,
-            "Revenue": [float(v) for v in values],
-        }
-    )
-
-
-SPIKE = [100.0] * 7 + [1000.0]  # eight months, one spike
-
+from tests.ai.helpers import SPIKE, monthly_orders
 
 # --- the trend --------------------------------------------------------------------------------
 
