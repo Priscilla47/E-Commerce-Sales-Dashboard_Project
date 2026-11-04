@@ -304,6 +304,35 @@ def test_the_table_is_not_changed_and_nothing_is_printed(capsys):
     assert capsys.readouterr() == ("", "")
 
 
+# --- revenue too large ------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize("size", [1e101, 1e200, 1e308])
+def test_a_revenue_too_large_to_describe_is_refused_without_a_numpy_warning(size):
+    import warnings
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        with pytest.raises(ValueError, match="too large"):
+            compute_facts(monthly_orders([100.0, 200.0, size, 100.0, 100.0, 100.0]))
+
+
+def test_a_revenue_too_large_is_refused_also_without_any_date():
+    frame = monthly_orders([1e308, 1e308])
+    frame["Date"] = pd.NaT
+    with pytest.raises(ValueError, match="too large"):
+        compute_facts(frame)
+
+
+def test_a_large_but_sane_revenue_is_described_without_a_warning():
+    import warnings
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        facts = compute_facts(monthly_orders([1e12 + i * 1e11 for i in range(8)]))
+    assert facts.trend.direction == "up"
+
+
 # --- as_dict ----------------------------------------------------------------------------------
 
 
