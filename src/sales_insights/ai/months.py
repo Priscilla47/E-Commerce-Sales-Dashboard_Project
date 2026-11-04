@@ -5,6 +5,20 @@ import pandas as pd
 
 from sales_insights.analytics.timeseries import revenue_over_time
 
+LARGEST_REVENUE = 1e100  # beyond this the squares of the errors would overflow a float
+
+
+def check_scale(values: np.ndarray, doing: str = "forecast") -> None:
+    """Refuse revenue so large that squaring it would overflow.
+
+    Raises:
+        ValueError: a value is above 1e100 (the message says what could not be done).
+    """
+    if values.size and not np.abs(values).max() <= LARGEST_REVENUE:
+        raise ValueError(
+            f"The revenue is too large to {doing}: a value holds more than {LARGEST_REVENUE:.0e}"
+        )
+
 
 def complete_months(df: pd.DataFrame) -> tuple[pd.DatetimeIndex, np.ndarray, list[str]]:
     """The revenue of each complete month, and what was left out.

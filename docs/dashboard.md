@@ -71,6 +71,22 @@ The sample file has only four complete months, so its forecast is the naive one 
 
 When there are fewer than 3 complete months, for example because the filters keep too little, the tab shows the same reason as the command, for example `The forecast needs at least 3 months of history, found 2`, and no chart. With exactly 3 months there is a forecast but no error, and the tab says that the error cannot be measured with fewer than 4 months.
 
+## The insights tab
+
+The third tab, **Insights**, describes the sales in words. It follows the filters like the other tabs, and it works in two modes.
+
+- **Switched off** (the default, when no key is set). The tab says so, names the variable to set, and shows the **facts** as a list instead: the number of orders, the trend, the best and the worst month, the unusual months, the countries and categories whose share of the revenue moved, and the best-selling product. Every line is written by code from the data.
+
+  ```text
+  The AI features are switched off. Set SALES_AI_API_KEY to switch them on. These are the facts the text would be written from.
+  ```
+
+- **Switched on** (a key and a provider are set, see [the AI guide](ai.md)). The facts are shown with a button, **Write insights**. Pressing it asks a language model to word the facts in a few sentences, and the text is shown only when every number in it is one of the facts: it says "Every number in this text was checked against the facts below." and the facts are in an expander under it.
+
+If the text has a number that is not in the facts, the model is asked once more; if it fails again the tab shows `No text was written` and the reason, with the facts open. If the call fails (a timeout, a limit of calls reached), the tab explains it and the failure is not kept: pressing the button again tries again, and nothing is asked again by itself when you change a filter. The same facts are written once and kept, so a second press does not make a second call. The text of the model is shown as plain text, and a session cannot make more calls than `SALES_AI_MAX_CALLS` (20 by default).
+
+What the check proves, and what it does not, is explained in [the AI guide](ai.md#written-insights).
+
 ## What the page says about your data
 
 A file can be in one of three states.

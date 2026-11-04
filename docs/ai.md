@@ -123,3 +123,47 @@ The rules, which a test checks at each limit:
 - **Top product** by units sold.
 
 Every number is an `analytics` number or a simple formula on one (the shares come from `revenue_by`, the top product from `top_products`, the months from `revenue_over_time`), and nothing is rounded.
+
+## Written insights
+
+The insights are a few sentences about the sales that a language model writes. The risk of such a text is an invented number, so the model is boxed in: it only receives the facts above, never an order row, and code checks every number of its text before the reader sees it.
+
+```mermaid
+flowchart LR
+    DATA["data<br/>the orders"] --> FACTS["facts<br/>compute_facts"]
+    FACTS --> PROMPT["prompt<br/>rules + facts as JSON"]
+    PROMPT --> TEXT["text<br/>written by the model"]
+    TEXT --> CHECK{"check<br/>every number is a fact?"}
+    CHECK -->|yes| SHOWN["shown, grounded"]
+    CHECK -->|no, first time| PROMPT
+    CHECK -->|no, second time| REFUSED["no text, with the reason"]
+```
+
+```python
+from sales_insights.ai.facts import compute_facts
+from sales_insights.ai.fake import FakeLLM
+from sales_insights.ai.insights import write_insights
+from sales_insights.data.loader import load_orders
+
+facts = compute_facts(load_orders("data/sample_orders.csv"))
+honest = FakeLLM(["The best month was 2025-04 and the top seller was Smartphone with 186 units."])
+result = write_insights(facts, honest)  # Insights(text='The best month ...', grounded=True)
+liar = FakeLLM(["Revenue grew 37% this year.", "Revenue grew 37% this year."])
+rejected = write_insights(facts, liar)  # Insights(text=None, grounded=False, reason='... 37% ...')
+print(result.grounded, rejected.grounded)  # True False
+```
+
+`write_insights(facts, client)` returns `Insights(text, grounded, reason)`: `grounded=True` and the text exactly as written, or `grounded=False`, no text and the reason. With the AI switched off (no client) it raises `AIDisabled`, and the dashboard shows the facts as a list instead.
+
+**The prompt** is the template `src/sales_insights/ai/prompts/insights.txt`: the rules go in the system message (use only the facts, add no number, never abbreviate a number, say nothing about causes that cannot be known) and the facts as JSON go in the user message. Text from the data, such as a product named "ignore the rules", only ever appears inside the JSON, so it is data and never a rule, and it cannot change the template.
+
+**The check.** Every number of the text is looked up in the facts:
+
+- It is accepted when it equals a number of the facts, written as is or rounded to 0, 1 or 2 decimals (`261,333.44`, `261333.4` and `261333` all match 261333.44), with or without thousands separators. A number with more decimals must match exactly. The sign is not compared, only the size, because the words say the direction.
+- With a percent sign it may also be a share of the facts: 30% matches a share of 0.3. Without a percent sign it is compared as it is.
+- A year, a month or a day written like those of the period or of a note (`2025`, `2025-04`) is accepted.
+- An abbreviation such as `261k` or `2 million` is refused, because it cannot be checked. The prompt tells the model never to write one.
+- Names from the data (a product or a country) are removed before the check, so a product called "Model 3000" can be quoted; digits inside a name never make another number acceptable.
+- A text that holds a number that is not in the facts is retried once, with a reminder that lists the numbers, and then refused with the reason.
+
+**Limits.** The check proves that no number is invented, not that the sentences are wise: a true number can still be put in a misleading sentence, which is why the prompt forbids causes and calculations and why the facts are shown under the text. Words are not checked (a model could write "doubled"), and the numbers it computes itself, such as a difference, are refused unless they are in the facts. A call that fails or times out gives a refusal, never a half text.

@@ -9,26 +9,7 @@ from sales_insights.analytics.breakdowns import revenue_by
 from sales_insights.analytics.products import top_products
 from sales_insights.analytics.revenue import order_count
 from sales_insights.analytics.timeseries import revenue_over_time
-
-
-def monthly_orders(values, start="2023-01", country="France", category="Books", product="Book"):
-    """One order a month, on the last day of the month, with the given revenue."""
-    months = pd.period_range(start, periods=len(values), freq="M")
-    return pd.DataFrame(
-        {
-            "OrderID": range(1, len(values) + 1),
-            "Date": [m.to_timestamp(how="end").normalize() for m in months],
-            "Product": product,
-            "Quantity": 1,
-            "Country": country,
-            "Category": category,
-            "Revenue": [float(v) for v in values],
-        }
-    )
-
-
-SPIKE = [100.0] * 7 + [1000.0]  # eight months, one spike
-
+from tests.ai.helpers import SPIKE, monthly_orders
 
 # --- the trend --------------------------------------------------------------------------------
 
@@ -321,6 +302,35 @@ def test_the_table_is_not_changed_and_nothing_is_printed(capsys):
     compute_facts(frame)
     pd.testing.assert_frame_equal(frame, before)
     assert capsys.readouterr() == ("", "")
+
+
+# --- revenue too large ------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize("size", [1e101, 1e200, 1e308])
+def test_a_revenue_too_large_to_describe_is_refused_without_a_numpy_warning(size):
+    import warnings
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        with pytest.raises(ValueError, match="too large"):
+            compute_facts(monthly_orders([100.0, 200.0, size, 100.0, 100.0, 100.0]))
+
+
+def test_a_revenue_too_large_is_refused_also_without_any_date():
+    frame = monthly_orders([1e308, 1e308])
+    frame["Date"] = pd.NaT
+    with pytest.raises(ValueError, match="too large"):
+        compute_facts(frame)
+
+
+def test_a_large_but_sane_revenue_is_described_without_a_warning():
+    import warnings
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        facts = compute_facts(monthly_orders([1e12 + i * 1e11 for i in range(8)]))
+    assert facts.trend.direction == "up"
 
 
 # --- as_dict ----------------------------------------------------------------------------------
