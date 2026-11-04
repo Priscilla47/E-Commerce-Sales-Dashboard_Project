@@ -8,21 +8,16 @@ every number in it is a number of the facts, so an invented figure never reaches
 import json
 import re
 from dataclasses import dataclass
-from decimal import ROUND_HALF_UP, Decimal
+from decimal import Decimal
 from importlib.resources import files
 
 from sales_insights.ai.config import API_KEY
 from sales_insights.ai.factory import AIDisabled
 from sales_insights.ai.facts import Facts
 from sales_insights.ai.llm import LLMClient, LLMError, Message
+from sales_insights.ai.numbers import unknown_numbers
 
 _MARKER = "=== FACTS ==="
-_NUMBER = re.compile(
-    r"(?P<number>\d{1,3}(?:,\d{3})+(?:\.\d+)?|\d+(?:\.\d+)?)"
-    r"(?P<percent>%)?"
-    r"(?P<abbreviation>\s?(?:million|billion|thousand|bn|k|m|b)\b)?",
-    re.IGNORECASE,
-)
 # Text of the facts that is not typed by the data, so its digits (a year, a month) may be quoted.
 _SAFE_TEXT = {"start", "end", "period", "notes", "anomalies_note"}
 _DIGITS = re.compile(r"\d+(?:\.\d+)?")
@@ -68,18 +63,6 @@ def _names(facts: Facts) -> list[str]:
     return sorted({name for name in names if name}, key=len, reverse=True)
 
 
-def _matches(token: Decimal, decimals: int, percent: bool, allowed: list[Decimal]) -> bool:
-    for fact in allowed:
-        for candidate in (fact, fact * 100) if percent else (fact,):
-            if decimals <= 2:
-                step = Decimal(1).scaleb(-decimals)
-                if candidate.quantize(step, rounding=ROUND_HALF_UP) == token:
-                    return True
-            elif candidate == token:
-                return True
-    return False
-
-
 def check_numbers(text: str, facts: Facts) -> list[str]:
     """The numbers of ``text`` that are not in ``facts``, as written, in order (none: all fine).
 
@@ -88,22 +71,10 @@ def check_numbers(text: str, facts: Facts) -> list[str]:
     compared. With a percent sign it may also be a share of the facts (0.3 is 30%). The digits
     of a year, a month or a note of the facts are accepted. An abbreviation (261k, 2 million)
     is never accepted, because it cannot be checked. Names from the data are removed first, so a
-    product called "Model 3000" can be quoted.
+    product called "Model 3000" can be quoted (see ``unknown_numbers``).
     """
     allowed = list(_numeric_leaves(facts.as_dict()))
-    for name in _names(facts):
-        text = text.replace(name, " ")
-    unknown: list[str] = []
-    for found in _NUMBER.finditer(text):
-        written = found.group(0).strip()
-        digits = found.group("number").replace(",", "")
-        decimals = len(digits.split(".")[1]) if "." in digits else 0
-        accepted = not found.group("abbreviation") and _matches(
-            Decimal(digits), decimals, bool(found.group("percent")), allowed
-        )
-        if not accepted and written not in unknown:
-            unknown.append(written)
-    return unknown
+    return unknown_numbers(text, allowed, _names(facts))
 
 
 def _messages(facts: Facts) -> list[Message]:
