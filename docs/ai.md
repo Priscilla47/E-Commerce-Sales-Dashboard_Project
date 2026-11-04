@@ -95,3 +95,31 @@ print(quality.model.mae, quality.baseline.mae)
 `forecast_with_error(df, months)` returns the forecast, its error and its history in one report; it is what both interfaces use. The command line prints it with `--forecast N` (see [the command-line reference](cli.md)) and the dashboard shows it in its Forecast tab (see [the dashboard guide](dashboard.md)); a test checks that the two show the same numbers.
 
 The result is plain data: a table and small frozen objects. The forecast code does not read a file, print or round.
+
+## Statistical facts
+
+The written insights (see the next pages of this guide) start from facts that code computes, never from the raw table. `sales_insights.ai.facts` holds them; it needs no language model and no key.
+
+```python
+from sales_insights.ai.facts import compute_facts
+from sales_insights.data.loader import load_orders
+
+orders = load_orders("data/sample_orders.csv")
+facts = compute_facts(orders)
+print(facts.orders, facts.top_product.name)  # 500 Smartphone
+print(facts.trend.direction, facts.best_month.period)  # up 2025-04
+data = facts.as_dict()  # plain values, ready for json.dumps
+```
+
+`compute_facts(df)` returns a frozen `Facts` with: the number of `orders`, the period (first and last day), the `trend`, the `best_month` and `worst_month`, the `anomalies`, the `share_changes` and the `top_product`, plus `notes` that say what was left out and why. A field is `None` (or an empty tuple) when there is nothing to say, and an empty table gives an empty `Facts` without an error. There is no sentence in it, only values.
+
+The rules, which a test checks at each limit:
+
+- **Months** are the complete months of the revenue, as for the forecast. A last month that the data does not finish (the sample file stops on 1 May) is left out, and a note says so.
+- **Trend.** The slope is the least-squares line through the monthly revenue, in revenue per month. It is `flat` when it is under 1% of the mean revenue of a month, `up` or `down` otherwise. It needs at least 2 months.
+- **Best and worst month**, with their revenue; the earliest wins a tie.
+- **Anomalies** are the months more than 2 standard deviations away from the mean (a z-score above 2 or below -2, with the standard deviation of the months themselves). They need at least 6 complete months; with fewer the list is empty and `anomalies_note` says how many were found.
+- **Share changes** compare the first and the second half of the period (cut at the middle date) for `Country` and `Category`: a value is listed when its share of the revenue moved by at least 5 percentage points. A value that exists in one half only has a share of 0 in the other. The biggest changes come first.
+- **Top product** by units sold.
+
+Every number is an `analytics` number or a simple formula on one (the shares come from `revenue_by`, the top product from `top_products`, the months from `revenue_over_time`), and nothing is rounded.
