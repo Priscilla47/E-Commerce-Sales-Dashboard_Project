@@ -141,7 +141,8 @@ pre-commit run --all-files
 - [x] Interactive dashboard
 - [x] Revenue forecasting, with its error
 - [x] Written insights, with the numbers checked against the facts
-- [ ] AI features: natural-language questions
+- [x] Answers to questions in plain language (code, not yet a page)
+- [ ] A chat page and a command to ask a question
 - [ ] Docker image and deployment guide
 
 ## Contributing
