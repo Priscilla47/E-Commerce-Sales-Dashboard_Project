@@ -159,6 +159,13 @@ def test_a_client_error_is_a_refusal_not_an_exception(facts):
     assert "timed out" in result.reason
 
 
+def test_a_failed_call_is_marked_as_an_error_and_a_rejected_text_is_not(facts):
+    assert write_insights(facts, FakeLLM([LLMError("down")])).error is True
+    assert write_insights(facts, FakeLLM([BAD, LLMError("down")])).error is True
+    assert write_insights(facts, FakeLLM([BAD, BAD])).error is False
+    assert write_insights(facts, FakeLLM([GOOD])).error is False
+
+
 def test_a_client_error_on_the_retry_is_a_refusal_too(facts):
     result = write_insights(facts, FakeLLM([BAD, LLMError("The call timed out")]))
     assert result.grounded is False and "timed out" in result.reason

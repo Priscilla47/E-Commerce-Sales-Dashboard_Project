@@ -33,12 +33,14 @@ class Insights:
     """The written insights, or why there are none.
 
     ``text`` is None and ``grounded`` False when no text could be written or when the text had a
-    number that is not in the facts; ``reason`` says why.
+    number that is not in the facts; ``reason`` says why. ``error`` is True when the cause is a
+    failed call, which may work next time, and False when the model answered and was refused.
     """
 
     text: str | None
     grounded: bool
     reason: str | None = None
+    error: bool = False  # the model could not be reached: worth trying again later
 
 
 def _numeric_leaves(value, key=None):
@@ -137,7 +139,7 @@ def write_insights(facts: Facts, client: LLMClient | None) -> Insights:
         try:
             text = client.complete(messages).text
         except LLMError as error:
-            return Insights(None, False, f"The language model could not answer: {error}")
+            return Insights(None, False, f"The language model could not answer: {error}", True)
         if not text.strip():
             unknown, problem = [], "The model returned an empty text."
         else:
