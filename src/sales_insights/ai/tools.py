@@ -6,6 +6,7 @@ function and returns plain data. Nothing is evaluated: the functions are looked 
 table, never by a name built from the request.
 """
 
+import copy
 import math
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass
@@ -19,6 +20,7 @@ from sales_insights.analytics import breakdowns, products, revenue, timeseries
 MAX_ROWS = 50  # the longest table given back to a model
 MAX_PRODUCT_LENGTH = 100
 MAX_N = 50
+_ECHO = 40  # the most characters of a refused request that an error message repeats
 
 
 class ToolError(Exception):
@@ -121,7 +123,8 @@ def _tools() -> tuple[Tool, ...]:
         ),
         Tool(
             "top_products",
-            "The n best-selling products by units sold, best first.",
+            "The n best-selling products by units sold, best first (all of them when there "
+            "are fewer than n).",
             _schema(
                 {
                     "n": {
@@ -132,7 +135,7 @@ def _tools() -> tuple[Tool, ...]:
                     }
                 }
             ),
-            lambda df, a: products.top_products(df, a["n"]),
+            lambda df, a: products.top_products(df, min(a["n"], len(products.unique_products(df)))),
         ),
         Tool(
             "revenue_by",
@@ -143,7 +146,9 @@ def _tools() -> tuple[Tool, ...]:
         ),
         Tool(
             "revenue_over_time",
-            "Revenue and number of orders for each day (D), month (M) or year (Y), in time order.",
+            "Revenue and number of orders for each day (D), month (M) or year (Y), in time "
+            f"order. Only the first {MAX_ROWS} periods are given: ask for months or years to "
+            "cover a long time.",
             _schema({"freq": {"type": "string", "enum": ["D", "M", "Y"]}}),
             lambda df, a: timeseries.revenue_over_time(df, a["freq"]),
         ),
@@ -160,10 +165,21 @@ def registry() -> tuple[Tool, ...]:
 
 def tool_definitions() -> list[dict[str, Any]]:
     """The registry as the dictionaries (name, description, parameters) a client is given."""
+    # A deep copy: a client that changes what it is given must not change what is checked.
     return [
-        {"name": tool.name, "description": tool.description, "parameters": dict(tool.parameters)}
+        {
+            "name": tool.name,
+            "description": tool.description,
+            "parameters": copy.deepcopy(dict(tool.parameters)),
+        }
         for tool in _TOOLS.values()
     ]
+
+
+def _echo(value: object) -> str:
+    """A value of a refused request, cut, so that an error never repeats a long input."""
+    text = repr(value)
+    return text if len(text) <= _ECHO else text[: _ECHO - 3] + "..."
 
 
 def _check_arguments(tool: Tool, arguments: object) -> dict[str, Any]:
@@ -172,7 +188,7 @@ def _check_arguments(tool: Tool, arguments: object) -> dict[str, Any]:
     properties = tool.parameters["properties"]
     for name in arguments:
         if name not in properties:
-            raise ToolError(f"Unknown argument '{name}' for {tool.name}")
+            raise ToolError(f"Unknown argument {_echo(name)} for {tool.name}")
     for name in tool.parameters["required"]:
         if name not in arguments:
             raise ToolError(f"Missing argument '{name}' for {tool.name}")
@@ -180,14 +196,14 @@ def _check_arguments(tool: Tool, arguments: object) -> dict[str, Any]:
         value = arguments[name]
         if rule["type"] == "integer":
             if type(value) is not int:  # a boolean or a float is not a whole number here
-                raise ToolError(f"Argument '{name}' must be a whole number, not {value!r}")
+                raise ToolError(f"Argument '{name}' must be a whole number, not {_echo(value)}")
             if not rule["minimum"] <= value <= rule["maximum"]:
                 raise ToolError(
                     f"Argument '{name}' must be from {rule['minimum']} to {rule['maximum']}"
                 )
         else:
             if type(value) is not str:
-                raise ToolError(f"Argument '{name}' must be text, not {value!r}")
+                raise ToolError(f"Argument '{name}' must be text, not {_echo(value)}")
             if "enum" in rule and value not in rule["enum"]:
                 raise ToolError(f"Argument '{name}' must be one of {', '.join(rule['enum'])}")
             if len(value) > rule.get("maxLength", len(value)):
@@ -197,12 +213,10 @@ def _check_arguments(tool: Tool, arguments: object) -> dict[str, Any]:
 
 def _plain(value: Any) -> Any:
     """A value of a table as a plain JSON value: no numpy, no NaN, dates as ISO text."""
-    if value is None or value is pd.NaT:
+    if value is None or value is pd.NaT or value is pd.NA:
         return None
     if isinstance(value, pd.Timestamp):
         return f"{value:%Y-%m-%d}"
-    if isinstance(value, bool):
-        return bool(value)
     if hasattr(value, "item"):  # a numpy scalar
         value = value.item()
     if isinstance(value, float):
@@ -215,9 +229,11 @@ def _plain(value: Any) -> Any:
 def _data(raw: Any) -> dict[str, Any]:
     if isinstance(raw, pd.DataFrame):
         total = len(raw)
+        # Row by row through records, not iterrows: iterrows gives a row one common type, so
+        # on pandas 2 a whole number next to a float would come back as a float.
         rows = [
             {str(column): _plain(value) for column, value in row.items()}
-            for _, row in raw.head(MAX_ROWS).iterrows()
+            for row in raw.head(MAX_ROWS).to_dict("records")
         ]
         return _cut({"rows": rows}, total)
     if isinstance(raw, list):
@@ -241,10 +257,10 @@ def run_tool(call: ToolCall, orders: pd.DataFrame) -> ToolResult:
     """
     tool = _TOOLS.get(call.name) if isinstance(call.name, str) else None
     if tool is None:
-        raise ToolError(f"Unknown function {call.name!r}")
+        raise ToolError(f"Unknown function {_echo(call.name)}")
     arguments = _check_arguments(tool, call.arguments)
     try:
         raw = tool.run(orders, arguments)
-    except ValueError as error:
+    except (ValueError, KeyError, TypeError) as error:  # a table without a needed column too
         raise ToolError(str(error)) from error
     return ToolResult(tool.name, arguments, _data(raw))
