@@ -2,7 +2,6 @@ import json
 import re
 from pathlib import Path
 
-import numpy as np
 import pandas as pd
 import pytest
 
@@ -17,7 +16,12 @@ from sales_insights.ai.tools import (
     tool_definitions,
 )
 from sales_insights.analytics.breakdowns import revenue_by
-from sales_insights.analytics.products import top_products
+from sales_insights.analytics.products import (
+    customers_for,
+    orders_for,
+    top_products,
+    units_sold_for,
+)
 from sales_insights.analytics.revenue import (
     average_order_value,
     order_count,
@@ -92,6 +96,17 @@ def test_the_scalar_tools_return_the_analytics_number(loaded_orders):
     assert value(run_tool(call("average_order_value"), loaded_orders)) == pytest.approx(
         average_order_value(loaded_orders)
     )
+
+
+def test_the_product_tools_equal_their_analytics_function(loaded_orders):
+    for product in ("Book", "Laptop", "Nothing"):
+        for name, function in (
+            ("units_sold_for", units_sold_for),
+            ("orders_for", orders_for),
+            ("customers_for", customers_for),
+        ):
+            result = value(run_tool(call(name, product=product), loaded_orders))
+            assert result == function(loaded_orders, product), (name, product)
 
 
 def test_the_product_tools_return_the_analytics_numbers(loaded_orders):
@@ -175,7 +190,16 @@ def test_an_empty_table_gives_zero_or_empty_values(loaded_orders):
     empty = loaded_orders.iloc[0:0]
     assert value(run_tool(call("total_revenue"), empty)) == 0.0
     assert value(run_tool(call("order_count"), empty)) == 0
+    assert value(run_tool(call("average_order_value"), empty)) == 0.0
+    assert value(run_tool(call("unique_customers"), empty)) == 0
+    assert value(run_tool(call("units_sold"), empty)) == 0
+    assert run_tool(call("unique_products"), empty).data["values"] == []
+    assert value(run_tool(call("units_sold_for", product="Book"), empty)) == 0
+    assert value(run_tool(call("orders_for", product="Book"), empty)) == 0
+    assert value(run_tool(call("customers_for", product="Book"), empty)) == 0
+    assert run_tool(call("top_products", n=1), empty).data["rows"] == []
     assert run_tool(call("revenue_by", column="Country"), empty).data["rows"] == []
+    assert run_tool(call("revenue_over_time", freq="M"), empty).data["rows"] == []
 
 
 def test_the_orders_are_not_changed(loaded_orders):
@@ -229,25 +253,31 @@ def test_an_extra_argument_is_refused_and_named(loaded_orders):
 
 
 def test_a_missing_argument_is_refused_and_named(loaded_orders):
-    with pytest.raises(ToolError, match="n"):
+    with pytest.raises(ToolError, match="Missing argument 'n'"):
         run_tool(call("top_products"), loaded_orders)
 
 
-@pytest.mark.parametrize("n", ["2", 2.0, 2.5, True, None, [2], -1, 51, 10**9])
-def test_a_bad_n_is_refused(loaded_orders, n):
-    with pytest.raises(ToolError, match="n"):
+@pytest.mark.parametrize("n", ["2", 2.0, 2.5, True, None, [2]])
+def test_an_n_that_is_not_a_whole_number_is_refused(loaded_orders, n):
+    with pytest.raises(ToolError, match="Argument 'n' must be a whole number"):
         run_tool(call("top_products", n=n), loaded_orders)
+
+
+@pytest.mark.parametrize("n", [-1, 51, 10**9])
+def test_an_n_outside_0_to_50_is_refused_by_the_schema_even_with_enough_products(n):
+    with pytest.raises(ToolError, match="Argument 'n' must be from 0 to 50"):
+        run_tool(call("top_products", n=n), many_products(60))
 
 
 @pytest.mark.parametrize("n", [0, 1, 3, 50])
-def test_the_limits_of_n_are_accepted_or_refused_by_the_analytics_not_by_the_schema(
-    loaded_orders, n
-):
-    if n <= 3:
-        run_tool(call("top_products", n=n), loaded_orders)
-    else:
-        with pytest.raises(ToolError, match="products"):  # analytics: more than the products
-            run_tool(call("top_products", n=n), loaded_orders)
+def test_an_n_from_0_to_50_gives_at_most_the_products_there_are(loaded_orders, n):
+    rows = run_tool(call("top_products", n=n), loaded_orders).data["rows"]
+    assert len(rows) == min(n, 3)
+
+
+def test_an_n_of_50_on_60_products_gives_50_rows_not_truncated():
+    data = run_tool(call("top_products", n=50), many_products(60)).data
+    assert len(data["rows"]) == 50 and data["truncated"] is False
 
 
 @pytest.mark.parametrize("product", [5, None, ["Book"], {"a": 1}, True])
@@ -280,8 +310,38 @@ def test_arguments_must_be_a_mapping(loaded_orders):
 
 
 def test_an_analytics_error_becomes_a_tool_error_with_its_message(loaded_orders):
-    with pytest.raises(ToolError, match="Wrong number of products"):
-        run_tool(call("top_products", n=4), loaded_orders)
+    with pytest.raises(ToolError, match="column"):
+        run_tool(call("revenue_by", column="Country"), loaded_orders.drop(columns=["Country"]))
+
+
+def test_a_table_without_a_needed_column_is_a_tool_error_not_a_crash(loaded_orders):
+    with pytest.raises(ToolError):
+        run_tool(call("total_revenue"), loaded_orders.drop(columns=["Revenue"]))
+
+
+@pytest.mark.parametrize(
+    "request_",
+    [
+        ToolCall("x" * 100_000, {}),
+        ToolCall("total_revenue", {"y" * 100_000: 1}),
+        ToolCall("units_sold_for", {"product": ["x" * 100_000]}),
+        ToolCall("top_products", {"n": "9" * 100_000}),
+    ],
+)
+def test_a_refusal_never_repeats_a_long_request(loaded_orders, request_):
+    with pytest.raises(ToolError) as refused:
+        run_tool(request_, loaded_orders)
+    assert len(str(refused.value)) < 200
+
+
+def test_the_definitions_are_copies_so_changing_them_does_not_loosen_the_checks():
+    definitions = tool_definitions()
+    top = next(d for d in definitions if d["name"] == "top_products")
+    top["parameters"]["properties"]["n"]["maximum"] = 60
+    with pytest.raises(ToolError, match="from 0 to 50"):
+        run_tool(call("top_products", n=60), many_products(60))
+    fresh = next(d for d in tool_definitions() if d["name"] == "top_products")
+    assert fresh["parameters"]["properties"]["n"]["maximum"] == 50
 
 
 # --- hostile text is data ---------------------------------------------------------------------
@@ -371,4 +431,19 @@ def test_a_nan_in_the_data_becomes_null_not_nan():
     frame["Country"] = [None, "France", "France"]
     text = json.dumps(run_tool(call("revenue_by", column="Country"), frame).data, allow_nan=False)
     assert "NaN" not in text
-    assert np.isfinite(total_revenue(frame))
+    rows = json.loads(text)["rows"]
+    assert any(row["Country"] is None for row in rows)
+
+
+def test_a_missing_value_of_a_string_column_becomes_null_not_its_name():
+    frame = many_products(3)
+    frame["Country"] = pd.array([pd.NA, "France", "France"], dtype="string")
+    rows = run_tool(call("revenue_by", column="Country"), frame).data["rows"]
+    assert "<NA>" not in json.dumps(rows)
+
+
+def test_whole_numbers_stay_whole_next_to_a_float_column():
+    frame = many_products(2)
+    frame["Country"] = None
+    rows = run_tool(call("revenue_by", column="Country"), frame).data["rows"]
+    assert all(type(row["orders"]) is int for row in rows)

@@ -73,7 +73,7 @@ def test_a_year_is_accepted_when_it_is_in_the_period(facts):
 
 def test_a_month_label_of_the_facts_is_accepted_as_written(facts):
     assert unknown("The peak was in 2023-08.", facts) == []
-    assert unknown("The dip was in 2023-11.", facts) == ["11"]
+    assert unknown("The dip was in 2023-11.", facts) == ["2023-11"]
 
 
 def test_an_unknown_number_is_returned_with_every_other_unknown_one(facts):
@@ -114,6 +114,47 @@ def test_a_product_name_with_digits_is_read_as_a_name_not_as_a_number():
 
 def test_a_text_that_repeats_a_known_number_many_times_is_fine(facts):
     assert unknown("8 orders, 8 units, 8 months: 8.", facts) == []
+
+
+def test_every_year_of_the_period_is_accepted_not_only_the_first_and_the_last():
+    facts = compute_facts(monthly_orders([100.0] * 36))  # 2023-01-31 to 2025-12-31
+    assert unknown("Sales were steady in 2024.", facts) == []
+    assert unknown("Sales were steady in 2026.", facts) == ["2026"]
+
+
+def test_a_count_of_the_facts_written_as_a_percent_is_refused(facts):
+    # 8 orders and the digits of the notes are numbers of the facts, not shares.
+    assert unknown("Orders rose 800% and 8%.", facts) == ["800%", "8%"]
+
+
+def test_a_change_in_points_may_be_written_with_a_percent_sign():
+    frame = monthly_orders([100.0] * 12)
+    frame["Country"] = ["France"] * 6 + ["UK"] * 6
+    facts = compute_facts(frame)
+    assert unknown("France lost 100% of its share.", facts) == []
+
+
+def test_a_date_that_is_not_in_the_facts_is_refused_whole(facts):
+    assert unknown("The best month was 2023-01.", facts) == []  # the worst month, a fact
+    assert unknown("The best month was 2023-09.", facts) == ["2023-09"]
+    assert unknown("It peaked on 2023-08-15.", facts) == ["2023-08-15"]
+
+
+@pytest.mark.parametrize("text", ["Revenue grew 1e3.", "It was 1,0,0,0.", "It grew 4\u200b5%."])
+def test_a_number_hidden_from_a_simple_reading_is_still_refused(text, facts):
+    assert unknown(text, facts) != []
+
+
+def test_a_product_named_with_digits_only_does_not_hide_digits_of_the_text():
+    facts = compute_facts(monthly_orders(SPIKE, product="1"))
+    assert unknown("Revenue grew 17%.", facts) == ["17%"]
+
+
+def test_a_revenue_above_1e26_is_checked_without_an_error():
+    facts = compute_facts(monthly_orders([1e27, 1e27, 1e27, 1e27]))
+    assert unknown("Revenue grew 37.5%.", facts) == ["37.5%"]
+    result = write_insights(facts, FakeLLM(["Revenue grew 37.5%.", "Revenue was flat."]))
+    assert result.grounded and result.text == "Revenue was flat."
 
 
 # --- write_insights ---------------------------------------------------------------------------

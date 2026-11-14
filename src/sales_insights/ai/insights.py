@@ -6,7 +6,6 @@ every number in it is a number of the facts, so an invented figure never reaches
 """
 
 import json
-import re
 from dataclasses import dataclass
 from decimal import Decimal
 from importlib.resources import files
@@ -15,12 +14,13 @@ from sales_insights.ai.config import API_KEY
 from sales_insights.ai.factory import AIDisabled
 from sales_insights.ai.facts import Facts
 from sales_insights.ai.llm import LLMClient, LLMError, Message
-from sales_insights.ai.numbers import unknown_numbers
+from sales_insights.ai.numbers import Allowed, dates_in, digits_in, number, unknown_numbers
 
 _MARKER = "=== FACTS ==="
 # Text of the facts that is not typed by the data, so its digits (a year, a month) may be quoted.
 _SAFE_TEXT = {"start", "end", "period", "notes", "anomalies_note"}
-_DIGITS = re.compile(r"\d+(?:\.\d+)?")
+_SHARES = {"first_share", "second_share"}  # fractions, written as percents (0.3 is 30%)
+_POINTS = {"change_points"}  # percentage points, which a text may write with a percent sign
 
 
 @dataclass(frozen=True)
@@ -38,29 +38,46 @@ class Insights:
     error: bool = False  # the model could not be reached: worth trying again later
 
 
-def _numeric_leaves(value, key=None):
-    """Every number of the facts, and the digits of the texts that are safe to quote."""
-    if isinstance(value, bool):
+def _collect(value, key, found: dict[str, list]) -> None:
+    """Sort the leaves of the facts into numbers, percents and dates."""
+    if isinstance(value, bool) or value is None:
         return
     if isinstance(value, int | float):
-        yield Decimal(repr(abs(value)))
+        found["numbers"].append(number(value))
+        if key in _SHARES:
+            found["percents"].append(number(value) * 100)
+        elif key in _POINTS:
+            found["percents"].append(number(value))
     elif isinstance(value, dict):
         for name, item in value.items():
-            yield from _numeric_leaves(item, name)
+            _collect(item, name, found)
     elif isinstance(value, list):
         for item in value:
-            yield from _numeric_leaves(item, key)
+            _collect(item, key, found)
     elif isinstance(value, str) and key in _SAFE_TEXT:
-        for digits in _DIGITS.findall(value):
-            yield Decimal(digits)
+        found["numbers"].extend(digits_in(value))
+        found["dates"].extend(dates_in(value))
 
 
-def _names(facts: Facts) -> list[str]:
-    """Names from the data, longest first: they are quoted as names, digits and all."""
+def _names(facts: Facts) -> tuple[str, ...]:
+    """Names from the data: they are quoted as names, digits and all."""
     names = [change.value for change in facts.share_changes]
     if facts.top_product is not None:
         names.append(facts.top_product.name)
-    return sorted({name for name in names if name}, key=len, reverse=True)
+    return tuple(name for name in names if name)
+
+
+def allowed_numbers(facts: Facts) -> Allowed:
+    """What a text about ``facts`` may say: their numbers, their shares as percents, their
+    dates, every year of their period, and the names of the data."""
+    found: dict[str, list] = {"numbers": [], "percents": [], "dates": []}
+    _collect(facts.as_dict(), None, found)
+    if facts.period_start is not None:
+        first, last = int(facts.period_start[:4]), int(facts.period_end[:4])
+        found["numbers"].extend(Decimal(year) for year in range(first, last + 1))
+    return Allowed(
+        tuple(found["numbers"]), tuple(found["percents"]), tuple(found["dates"]), _names(facts)
+    )
 
 
 def check_numbers(text: str, facts: Facts) -> list[str]:
@@ -68,13 +85,13 @@ def check_numbers(text: str, facts: Facts) -> list[str]:
 
     A number is accepted when it equals a number of the facts rounded to 0, 1 or 2 decimals
     (more decimals must match exactly), with or without thousands separators; the sign is not
-    compared. With a percent sign it may also be a share of the facts (0.3 is 30%). The digits
-    of a year, a month or a note of the facts are accepted. An abbreviation (261k, 2 million)
-    is never accepted, because it cannot be checked. Names from the data are removed first, so a
-    product called "Model 3000" can be quoted (see ``unknown_numbers``).
+    compared. A percent must be a share of the facts (0.3 is 30%) or a change in points. A date
+    must be one of the facts, a year must be in the period, and the digits of a note may be
+    quoted. Everything that cannot be checked (2 million, 1e5, 2,0,2,5) is refused, and names
+    from the data are skipped as words, so a product called "Model 3000" can be quoted. The
+    rules are those of ``numbers.unknown_numbers``.
     """
-    allowed = list(_numeric_leaves(facts.as_dict()))
-    return unknown_numbers(text, allowed, _names(facts))
+    return unknown_numbers(text, allowed_numbers(facts))
 
 
 def _messages(facts: Facts) -> list[Message]:

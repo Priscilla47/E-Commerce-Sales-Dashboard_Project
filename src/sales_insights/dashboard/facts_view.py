@@ -9,10 +9,27 @@ import re
 from sales_insights.ai.facts import Facts
 from sales_insights.dashboard.kpis import format_money
 
+# ":" only before a character, as in an icon code (:material/home:), not in "line 2: ..."
+_ANYWHERE = re.compile(r"([\\`*_\[\]()<>#|~$!]|:(?=\S))")
+_LINE_START = re.compile(r"^(\s*)([-+=]|\d+[.)])", re.MULTILINE)
+_ADDRESS = re.compile(r"(?i)\bwww\.|//")  # the start of a web address, which is made a link
 
-def _plain(text: str) -> str:
-    """Escape the characters of ``text`` that Markdown would interpret (it comes from a file)."""
-    return re.sub(r"([\\`*_\[\]()<>#|~$])", r"\\\1", text)
+
+def plain(text: str) -> str:
+    """``text`` (from a file or a model) escaped so that Markdown shows it as written.
+
+    Emphasis, links, images, HTML, tables, maths and icon codes (``:material/x:``) are escaped
+    everywhere; lists, rules and headings where a line starts; and a bare address is broken so
+    that it is not turned into a link.
+    """
+    text = _ANYWHERE.sub(r"\\\1", text)
+    text = _LINE_START.sub(lambda m: m.group(1) + _escape_marks(m.group(2)), text)
+    return _ADDRESS.sub(lambda m: m.group(0)[:-1] + "\\" + m.group(0)[-1], text)
+
+
+def _escape_marks(start: str) -> str:
+    """``1.`` becomes ``1\\.``: a backslash before a digit would be shown, so only marks."""
+    return "".join(c if c.isdigit() else "\\" + c for c in start)
 
 
 def _share(value: float) -> str:
@@ -52,13 +69,13 @@ def facts_bullets(facts: Facts) -> list[str]:
         lines.append(facts.anomalies_note)
     for change in facts.share_changes:
         lines.append(
-            f"{change.column} {_plain(change.value)}: its share of the revenue went from "
+            f"{change.column} {plain(change.value)}: its share of the revenue went from "
             f"{_share(change.first_share)} to {_share(change.second_share)} "
             f"({change.change_points:+.1f} points) between the first and the second half."
         )
     if facts.top_product is not None:
         lines.append(
-            f"The best-selling product is {_plain(facts.top_product.name)} with "
+            f"The best-selling product is {plain(facts.top_product.name)} with "
             f"{facts.top_product.units:,} units."
         )
     lines.extend(facts.notes)
