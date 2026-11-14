@@ -21,6 +21,7 @@ MIN_MONTHS_FOR_ANOMALIES = 6
 SHARE_CHANGE_POINTS = 5.0  # a share that moved by at least 5 points
 SHARE_COLUMNS = ("Country", "Category")
 _EDGE = 9  # decimals kept when comparing with a limit, so that 2.0000000001 is 2
+_NOISE = 1e-9  # a spread under this share of the largest month is rounding, not a difference
 
 
 @dataclass(frozen=True)
@@ -122,7 +123,9 @@ def _trend(values: np.ndarray) -> Trend:
 
 def _anomalies(periods: pd.DatetimeIndex, values: np.ndarray) -> tuple[Anomaly, ...]:
     std = float(np.std(values))
-    if std == 0:
+    # Months equal to the cent can differ by a rounding error once summed (4907.85 against
+    # 4907.849999999999); such a spread is no spread, or every flat series would have anomalies.
+    if std <= _NOISE * max(float(np.max(np.abs(values))), 1.0):
         return ()
     z = (values - values.mean()) / std
     return tuple(
@@ -132,15 +135,15 @@ def _anomalies(periods: pd.DatetimeIndex, values: np.ndarray) -> tuple[Anomaly, 
     )
 
 
-def _share_changes(df: pd.DataFrame, notes: list[str]) -> tuple[ShareChange, ...]:
+def _share_changes(df: pd.DataFrame) -> tuple[tuple[ShareChange, ...], str | None]:
+    """The share changes, and a note when there are no two halves to compare."""
     dates = df["Date"].dropna()
     if dates.empty or dates.min() == dates.max():
-        notes.append("Share changes need orders on at least two different days.")
-        return ()
+        return (), "Share changes need orders on at least two different days."
     middle = dates.min() + (dates.max() - dates.min()) / 2
     first, second = df[df["Date"] < middle], df[df["Date"] >= middle]
     found: list[ShareChange] = []
-    for column in SHARE_COLUMNS:
+    for column in (c for c in SHARE_COLUMNS if c in df.columns):
         before = revenue_by(first, column).set_index(column)["share"]
         after = revenue_by(second, column).set_index(column)["share"]
         for value in before.index.union(after.index):
@@ -150,34 +153,41 @@ def _share_changes(df: pd.DataFrame, notes: list[str]) -> tuple[ShareChange, ...
             points = (b - a) * 100
             if round(abs(points), _EDGE) >= SHARE_CHANGE_POINTS:
                 found.append(ShareChange(column, str(value), a, b, points))
-    return tuple(sorted(found, key=lambda c: (-abs(c.change_points), c.column, c.value)))
+    ordered = sorted(found, key=lambda c: (-abs(c.change_points), c.column, c.value))
+    return tuple(ordered), None
 
 
 def compute_facts(df: pd.DataFrame) -> Facts:
     """The facts about a loaded orders table (what ``load_orders`` returns).
 
     Months are the complete months (a last month that the data does not finish is left out and
-    a note says so). Anomalies are months more than 2 standard deviations (of the population of
-    months) from the mean, and need 6 months. Share changes compare the first and the second
-    half of the period, by date.
+    a note says so; a first month that starts after its day 1 is kept, with a note). Anomalies
+    are months more than 2 standard deviations (of the population of months) from the mean, and
+    need 6 months. Share changes compare the first and the second half of the period, by date,
+    for the columns of ``SHARE_COLUMNS`` that the table has.
     """
     periods, values, notes = complete_months(df)
-    notes = list(notes)
     dates = df["Date"].dropna()
     best = worst = trend = None
     if len(values):
         best = Month(f"{periods[int(np.argmax(values))]:%Y-%m}", float(values.max()))
         worst = Month(f"{periods[int(np.argmin(values))]:%Y-%m}", float(values.min()))
+        first = dates.min()
+        if first.day > 1:
+            notes.append(
+                f"The first month ({first:%Y-%m}) starts on day {first.day}: the data may "
+                "not hold all of it, so its revenue can be low for that reason only."
+            )
     if len(values) >= 2:
         trend = _trend(values)
-    elif len(values) == 1:
-        notes.append("A trend needs at least 2 complete months, found 1.")
+    elif not dates.empty:
+        notes.append(f"A trend needs at least 2 complete months, found {len(values)}.")
 
     anomalies: tuple[Anomaly, ...] = ()
     anomalies_note = None
     if len(values) >= MIN_MONTHS_FOR_ANOMALIES:
         anomalies = _anomalies(periods, values)
-    elif len(values):
+    elif not dates.empty:
         anomalies_note = (
             f"Anomalies need at least {MIN_MONTHS_FOR_ANOMALIES} complete months, "
             f"found {len(values)}."
@@ -185,7 +195,9 @@ def compute_facts(df: pd.DataFrame) -> Facts:
 
     share_changes: tuple[ShareChange, ...] = ()
     if not df.empty:
-        share_changes = _share_changes(df, notes)
+        share_changes, share_note = _share_changes(df)
+        if share_note:
+            notes.append(share_note)
 
     top = None
     if "Product" in df.columns and df["Product"].notna().any():
