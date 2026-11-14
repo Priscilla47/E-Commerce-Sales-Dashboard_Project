@@ -109,3 +109,55 @@ def test_the_helpers_read_dates_digits_and_numbers():
 
 def test_unknown_numbers_are_listed_once_in_order():
     assert unknown_numbers("37, 12, 37 and 8.", FACTS) == ["37", "12"]
+
+
+# --- the rules shared by the insights and the answers -------------------------------------------
+
+
+def only(*values, percents=(), names=()):
+    return Allowed(
+        tuple(number(v) for v in values), tuple(Decimal(str(p)) for p in percents), (), names
+    )
+
+
+def test_a_text_without_numbers_has_no_unknown_number():
+    assert unknown_numbers("Sales rose.", only(1)) == []
+
+
+def test_an_exact_or_rounded_number_is_accepted():
+    for text in ("261333.44", "261333.4", "261333", "261,333.44", "261,333"):
+        assert unknown_numbers(f"It was {text}.", only(261333.44)) == [], text
+
+
+def test_a_number_with_more_than_two_decimals_must_match_exactly():
+    assert unknown_numbers("It was 2.645.", only(2.6457513)) == ["2.645"]
+    assert unknown_numbers("It was 2.6457513.", only(2.6457513)) == []
+
+
+def test_a_percent_must_be_given_as_a_percent_and_a_plain_number_may_not_be_a_share():
+    assert unknown_numbers("30% of sales", only(0.3, percents=[30])) == []
+    assert unknown_numbers("30 of sales", only(0.3, percents=[30])) == ["30"]
+
+
+def test_the_sign_is_not_compared():
+    assert unknown_numbers("down 12.5", only(-12.5)) == []
+
+
+@pytest.mark.parametrize("text", ["1k", "1.2M", "3 million", "2bn", "5 thousand"])
+def test_an_abbreviation_is_never_accepted_even_when_the_value_is_allowed(text):
+    assert len(unknown_numbers(f"about {text}", only(1, 1.2, 3, 2, 5, 1000, 3e6))) == 1
+
+
+def test_a_word_that_starts_like_an_abbreviation_is_not_one():
+    assert unknown_numbers("8 months and 3 books and 2 bars", only(8, 3, 2)) == []
+
+
+def test_the_longest_name_is_skipped_first():
+    names = ("Model 3", "Model 3000")
+    assert unknown_numbers("Model 3000 and Model 3", only(names=names)) == []
+
+
+def test_half_up_rounding_not_banker_rounding():
+    assert unknown_numbers("0.5 and 1.5 and 2.5", only(0.5, 1.5, 2.5)) == []
+    assert unknown_numbers("It was 3.", only(2.5)) == []
+    assert unknown_numbers("It was 2.", only(2.5)) == ["2"]

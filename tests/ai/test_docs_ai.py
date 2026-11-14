@@ -149,3 +149,27 @@ def test_the_page_lists_every_function_a_model_may_ask_for_and_the_safety_rules(
         "never an instruction",
     ):
         assert phrase in section, phrase
+
+
+def test_the_questions_section_runs_its_example_and_states_the_limits(monkeypatch):
+    text = PAGE.read_text()
+    start = text.index("## Questions in plain language")
+    end = text.find("\n## ", start + 1)
+    section = text[start : end if end != -1 else len(text)]
+    code = re.search(r"```python\n(.*?)```", section, re.S).group(1)
+    monkeypatch.chdir(ROOT)
+    namespace: dict = {}
+    exec(code, namespace)  # noqa: S102 - the code of our own documentation page
+    assert namespace["answer"].answered is True
+    assert namespace["refused"].answered is False
+    assert namespace["refused"].reason in section
+    for phrase in (
+        "at most 3 functions",
+        "2 rounds",
+        "500 characters",
+        "CANNOT_ANSWER",
+        "Data, not instructions:",
+        "not in the results",
+        "never an order row",
+    ):
+        assert phrase in section, phrase
