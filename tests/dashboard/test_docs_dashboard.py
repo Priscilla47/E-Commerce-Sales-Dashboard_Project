@@ -161,3 +161,27 @@ def test_the_page_says_the_long_example_is_made_up():
 def test_the_reasons_quoted_on_the_page_are_the_ones_of_the_code():
     for phrase in ("complete months of history", "at least 3 months"):
         assert phrase in TEXT, phrase
+
+
+# --- the insights tab -------------------------------------------------------------------------
+
+
+def test_the_page_describes_the_insights_tab_its_button_and_its_two_modes():
+    for phrase in ("## The insights tab", "**Insights**", "**Write insights**"):
+        assert phrase in TEXT, phrase
+    for word in ("switched off", "SALES_AI_API_KEY", "checked against the facts", "ai.md"):
+        assert word in TEXT, word
+
+
+def test_the_page_says_what_happens_on_a_refusal_and_on_a_failed_call():
+    assert "No text was written" in TEXT
+    assert "not kept" in TEXT or "is not kept" in TEXT
+
+
+def test_the_texts_quoted_for_the_insights_tab_are_the_ones_of_the_page():
+    from sales_insights.ai.config import load_config
+    from sales_insights.ai.factory import AIDisabled, build_client
+
+    with pytest.raises(AIDisabled) as error:
+        build_client(load_config({}))
+    assert str(error.value) in TEXT

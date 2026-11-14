@@ -15,7 +15,7 @@ from dataclasses import dataclass
 import numpy as np
 import pandas as pd
 
-from sales_insights.ai.months import complete_months
+from sales_insights.ai.months import check_scale, complete_months
 
 METHODS = ("naive", "holt_winters")
 METHOD_LABELS = {"naive": "naive", "holt_winters": "Holt-Winters"}  # how a reader sees them
@@ -23,7 +23,6 @@ MIN_MONTHS = 3  # the least history a forecast needs
 SEASON = 12  # months in a season
 MIN_MONTHS_HOLT_WINTERS = 24  # two seasons
 MAX_HORIZON = 12
-LARGEST_REVENUE = 1e100  # beyond this the squares of the errors would overflow a float
 Z = 1.96  # half-width of a 95% interval, in standard deviations of the errors
 
 _ALPHAS = (0.05, 0.1, 0.2, 0.3, 0.5, 0.7)
@@ -133,13 +132,6 @@ def _check_method(method: str) -> None:
         raise ValueError(f"method must be one of {', '.join(METHODS)}, not {method!r}")
 
 
-def _check_scale(values: np.ndarray) -> None:
-    if values.size and not np.abs(values).max() <= LARGEST_REVENUE:
-        raise ValueError(
-            f"The revenue is too large to forecast: a month holds more than {LARGEST_REVENUE:.0e}"
-        )
-
-
 def _need_history(count: int, what: str = "history") -> None:
     if count < MIN_MONTHS:
         raise ValueError(
@@ -241,7 +233,7 @@ def forecast_revenue(df: pd.DataFrame, months: int, method: str = "holt_winters"
     _check_method(method)
     periods, values, warnings = complete_months(df)
     _need_history(len(values))
-    _check_scale(values)
+    check_scale(values)
     centre, lower, upper, used, fell_back, more = _predict(values, months, method)
     table = pd.DataFrame(
         {
@@ -276,7 +268,7 @@ def evaluate(df: pd.DataFrame, method: str = "holt_winters", holdout: int = 3) -
     holdout = _check_range(_whole(holdout, "holdout"), "holdout")
     _check_method(method)
     _, values, warnings = complete_months(df)
-    _check_scale(values)
+    check_scale(values)
     train, actual = values[:-holdout], values[-holdout:]
     _need_history(len(train), "history to train on")
     centre, _, _, used, _, more = _predict(train, holdout, method)

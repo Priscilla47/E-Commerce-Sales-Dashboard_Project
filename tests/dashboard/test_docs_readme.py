@@ -53,6 +53,12 @@ def test_the_development_install_also_installs_the_dashboard_so_that_no_test_is_
     assert 'pip install -e ".[dev]"' in section("Development")
 
 
+def test_the_readme_names_the_insights_tab_and_that_the_ai_is_optional():
+    text = section("Dashboard")
+    assert "**Insights** tab" in text
+    assert "SALES_AI_API_KEY" in text and "docs/ai.md" in text
+
+
 def test_the_readme_lists_the_forecast_option_and_the_forecast_tab():
     assert "`--forecast N`" in README
     assert "**Forecast** tab" in section("Dashboard")

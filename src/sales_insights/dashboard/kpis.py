@@ -55,14 +55,15 @@ def compute_kpis(df: pd.DataFrame) -> Kpis:
 def format_kpis(kpis: Kpis) -> KpiLabels:
     """The texts to display: thousands separators, and two decimals for money (half up)."""
     return KpiLabels(
-        revenue=_money(kpis.revenue),
+        revenue=format_money(kpis.revenue),
         orders=f"{kpis.orders:,}",
-        average_order_value=_money(kpis.average_order_value),
+        average_order_value=format_money(kpis.average_order_value),
         customers=f"{kpis.customers:,}",
     )
 
 
-def _money(value: float) -> str:
+def format_money(value: float) -> str:
+    """Money as shown on the cards: two decimals (half up), thousands separators, never -0.00."""
     if not math.isfinite(value):
         return "n/a"
     # Round the decimal text of the number, so that 2.675 gives 2.68 as written on paper.

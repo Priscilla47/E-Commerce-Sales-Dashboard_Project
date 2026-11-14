@@ -10,7 +10,7 @@ from dataclasses import dataclass
 import numpy as np
 import pandas as pd
 
-from sales_insights.ai.months import complete_months
+from sales_insights.ai.months import check_scale, complete_months
 from sales_insights.analytics.breakdowns import revenue_by
 from sales_insights.analytics.products import top_products
 from sales_insights.analytics.revenue import order_count
@@ -165,7 +165,11 @@ def compute_facts(df: pd.DataFrame) -> Facts:
     are months more than 2 standard deviations (of the population of months) from the mean, and
     need 6 months. Share changes compare the first and the second half of the period, by date,
     for the columns of ``SHARE_COLUMNS`` that the table has.
+
+    Raises:
+        ValueError: a line has a revenue above 1e100, which cannot be described without overflow.
     """
+    check_scale(df["Revenue"].dropna().to_numpy("float64"), "describe")
     periods, values, notes = complete_months(df)
     dates = df["Date"].dropna()
     best = worst = trend = None

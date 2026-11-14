@@ -36,6 +36,9 @@ version = { attr = "sales_insights.__version__" }
 [tool.setuptools.packages.find]
 where = ["src"]
 
+[tool.setuptools.package-data]
+sales_insights = ["ai/prompts/*.txt"]
+
 [tool.ruff]
 line-length = 100
 src = ["src", "."]
