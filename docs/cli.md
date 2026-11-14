@@ -34,6 +34,7 @@ sales-insights [options] FILE
 | `-t` | `N` | The N best-selling products by units sold (products that sold the same quantity are ordered by name), then the list of their names. | 0, or 84 if N is negative, not a whole number or larger than the number of products |
 | `--by` | `country`, `category` or `month` | A table of revenue, number of orders and share of the total revenue for each value, highest revenue first. For `month` the table runs in time order, without the share, and a month without orders shows 0. | 0 |
 | `--forecast` | `N` | A forecast of the revenue of the next N months (1 to 12): a table with the month, the forecast and the lower and upper limits of a 95% interval, then the error of the method on the last months, next to the error of the naive baseline. The method and the warnings are explained in [the AI guide](ai.md#forecasting-revenue). | 0, or 84 if N is not from 1 to 12 or the data has fewer than 3 complete months |
+| `--ask` | `QUESTION` | The answer to a question in plain language, then the functions that were run to get it. It needs the AI settings of [the AI guide](ai.md); without them it exits with 84 and names the variable to set. | 0, or 84 if the AI is switched off or misconfigured, the question is empty or over 500 characters, or no answer could be given |
 | `--validate` | none | The result of the data checks described in [Data format](data-schema.md). | 0, or 84 if the data has errors (warnings alone exit with 0) |
 
 ## Examples
@@ -144,6 +145,22 @@ sales-insights: warning: With less than a year of history the forecast repeats t
 
 The last line of the answer is the error the method makes when it forecasts the most recent month it knows (here April), trained on the months before. With a longer history it is measured on the last 3 months. MAE is the mean absolute error, in the unit of the revenue; MAPE is the same error in percent of the real value (`n/a` when a real value is 0).
 
+**A question in plain language** (`--ask`). It needs a model: set `SALES_AI_PROVIDER` and `SALES_AI_API_KEY` first (see [the AI guide](ai.md)). The model only chooses which functions to call; every number of the answer was returned by one of them, and the functions are listed so that you can see where it came from. This example is not run by the page tests with a real model: they run it with a scripted one.
+
+```text
+$ sales-insights --ask "What sells best?" data/sample_orders.csv
+The best seller is Smartphone with 186 units.
+Functions used:
+  top_products(n=1)
+```
+
+Without the settings the command does not guess; it says what to set and exits with 84:
+
+```text
+$ sales-insights --ask "What sells best?" data/sample_orders.csv
+sales-insights: error: The AI features are switched off. Set SALES_AI_API_KEY to switch them on.
+```
+
 **Data checks** (`--validate`). The sample dataset is clean.
 
 ```console
@@ -175,6 +192,9 @@ The exit code is **0** when the command worked and **84** for a usage error or a
 | `argument --by: invalid choice: 'colour'` | `--by` accepts `country`, `category` or `month`. | Use one of the three. |
 | `months must be from 1 to 12, not 13` | `--forecast` with a number outside 1 to 12. | Choose a whole number from 1 to 12. |
 | `The forecast needs at least 3 months of history, found 2` | `--forecast` on a file with fewer than 3 complete months. | Use a file with more months (a last month that the data does not finish does not count). |
+| `The AI features are switched off. Set SALES_AI_API_KEY to switch them on.` | `--ask` without a key. | Set the variables of [the AI guide](ai.md). |
+| `The text contained numbers that are not in the results: 37%` | `--ask`: the model wrote a number that no function returned, twice, so no text is shown. | Ask again, or in other words. |
+| `I can't answer that with the data and functions I have.` | `--ask` with a question that the functions cannot answer (the weather, a cause, a forecast). | Ask about revenue, products, customers, countries, categories or months. |
 | `Wrong number of products` | `-t N` with an N below 0 or above the number of products. | Choose N between 0 and the number of products (`-u` lists them). |
 
 Problems with the file itself (not found, wrong columns, a value that cannot be read, a file that is not UTF-8) use the same exit code and are listed in [Data format](data-schema.md#errors-you-may-see).

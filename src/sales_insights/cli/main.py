@@ -6,13 +6,18 @@ error (the code the first version of the tool already used). Errors go to stderr
 """
 
 import argparse
+import os
 import sys
 from collections.abc import Callable, Sequence
 from typing import NoReturn
 
 import pandas as pd
 
+from sales_insights.ai.config import load_config
+from sales_insights.ai.factory import AIDisabled, build_client
 from sales_insights.ai.forecast import METHOD_LABELS, forecast_with_error
+from sales_insights.ai.llm import LLMError
+from sales_insights.ai.nlq import ask
 from sales_insights.analytics import breakdowns, products, revenue, timeseries
 from sales_insights.data.loader import load_orders
 from sales_insights.data.schema import SchemaError
@@ -103,6 +108,13 @@ def build_parser() -> argparse.ArgumentParser:
         type=int,
         metavar="N",
         help="forecast the revenue of the next N months (1 to 12), with its error",
+    )
+    parser.add_argument(
+        "--ask",
+        dest="ask",
+        action=_Request,
+        metavar="QUESTION",
+        help="answer a question in plain language (needs the AI settings, see docs/ai.md)",
     )
     parser.add_argument(
         "--validate",
@@ -215,6 +227,27 @@ def _forecast(orders: pd.DataFrame, months: int) -> None:
         print(f"{PROG}: warning: {warning}", file=sys.stderr)
 
 
+def _show_call(call) -> str:
+    arguments = ", ".join(f"{name}={value!r}" for name, value in call.arguments.items())
+    return f"  {call.name}({arguments})"
+
+
+def _ask(orders: pd.DataFrame, question: str) -> None:
+    """Answer a question with the configured model; every failure is a ValueError (exit 84)."""
+    try:
+        client = build_client(load_config(os.environ))
+        answer = ask(question, orders, client)
+    except (AIDisabled, LLMError) as error:
+        raise ValueError(str(error)) from None
+    if not answer.answered:
+        raise ValueError(answer.reason)
+    print(answer.text)
+    if answer.calls:
+        print("Functions used:")
+        for call in answer.calls:
+            print(_show_call(call))
+
+
 def _validate(_orders: pd.DataFrame, _value: None, report: ValidationReport) -> None:
     print(report.summary())
 
@@ -227,6 +260,7 @@ _ANSWERS: dict[str, Callable[[pd.DataFrame, object], None]] = {
     "top": _top,
     "by": _by,
     "forecast": _forecast,
+    "ask": _ask,
 }
 
 
