@@ -59,6 +59,58 @@ def digits_in(text: str) -> list[Decimal]:
     return [Decimal(found) for found in re.findall(r"\d+(?:\.\d+)?", text)]
 
 
+@dataclass(frozen=True)
+class Leaves:
+    """The values of a JSON-ready result, sorted for the check (see ``leaves``)."""
+
+    numbers: tuple[Decimal, ...]
+    percents: tuple[Decimal, ...]
+    dates: tuple[str, ...]
+    texts: tuple[str, ...]  # every other text: names from the data
+
+
+def leaves(
+    data: object,
+    *,
+    shares: frozenset[str] = frozenset(),
+    points: frozenset[str] = frozenset(),
+    dated: frozenset[str] = frozenset(),
+) -> Leaves:
+    """Walk ``data`` (dicts, lists, text, numbers) and sort what it holds.
+
+    Every number may be quoted. A number under a key of ``shares`` (a fraction) may also be
+    written as a percent (0.3 as 30%), and one under ``points`` with a percent sign as it is. A
+    text under a key of ``dated`` (a period, a note) gives its dates and its digits; every other
+    text is a name from the data. Booleans and ``None`` say nothing.
+    """
+    found: dict[str, list] = {"numbers": [], "percents": [], "dates": [], "texts": []}
+
+    def walk(value: object, key: object) -> None:
+        if isinstance(value, bool) or value is None:
+            return
+        if isinstance(value, int | float):
+            found["numbers"].append(number(value))
+            if key in shares:
+                found["percents"].append(number(value) * 100)
+            elif key in points:
+                found["percents"].append(number(value))
+        elif isinstance(value, dict):
+            for name, item in value.items():
+                walk(item, name)
+        elif isinstance(value, list | tuple):
+            for item in value:
+                walk(item, key)
+        elif isinstance(value, str):
+            if key in dated:
+                found["numbers"].extend(digits_in(value))
+                found["dates"].extend(dates_in(value))
+            else:
+                found["texts"].append(value)
+
+    walk(data, None)
+    return Leaves(*(tuple(found[k]) for k in ("numbers", "percents", "dates", "texts")))
+
+
 def _normalise(text: str) -> tuple[str, list[str]]:
     """The text with invisible characters removed and every digit written 0 to 9, and the
     characters that are numbers but no digit (``½``, roman numerals), which cannot be checked."""
