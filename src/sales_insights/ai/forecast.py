@@ -15,7 +15,7 @@ from dataclasses import dataclass
 import numpy as np
 import pandas as pd
 
-from sales_insights.analytics.timeseries import revenue_over_time
+from sales_insights.ai.months import complete_months
 
 METHODS = ("naive", "holt_winters")
 METHOD_LABELS = {"naive": "naive", "holt_winters": "Holt-Winters"}  # how a reader sees them
@@ -133,25 +133,6 @@ def _check_method(method: str) -> None:
         raise ValueError(f"method must be one of {', '.join(METHODS)}, not {method!r}")
 
 
-def _monthly(df: pd.DataFrame) -> tuple[pd.DatetimeIndex, np.ndarray, list[str]]:
-    """The revenue of each complete month, and what was left out.
-
-    A month counts when the data reaches its last day; a last month that stops earlier is left
-    out, because its small revenue would be read as a fall.
-    """
-    series = revenue_over_time(df, "M")
-    warnings: list[str] = []
-    if not series.empty:
-        last = df["Date"].dropna().max()
-        if last.day < last.days_in_month:
-            series = series.iloc[:-1]
-            warnings.append(
-                f"The last month ({last:%Y-%m}) was left out because the data stops on day "
-                f"{last.day} of {last.days_in_month}."
-            )
-    return pd.DatetimeIndex(series["period"]), series["revenue"].to_numpy("float64"), warnings
-
-
 def _check_scale(values: np.ndarray) -> None:
     if values.size and not np.abs(values).max() <= LARGEST_REVENUE:
         raise ValueError(
@@ -258,7 +239,7 @@ def forecast_revenue(df: pd.DataFrame, months: int, method: str = "holt_winters"
     """
     months = _check_range(_whole(months, "months"), "months")
     _check_method(method)
-    periods, values, warnings = _monthly(df)
+    periods, values, warnings = complete_months(df)
     _need_history(len(values))
     _check_scale(values)
     centre, lower, upper, used, fell_back, more = _predict(values, months, method)
@@ -294,7 +275,7 @@ def evaluate(df: pd.DataFrame, method: str = "holt_winters", holdout: int = 3) -
     """
     holdout = _check_range(_whole(holdout, "holdout"), "holdout")
     _check_method(method)
-    _, values, warnings = _monthly(df)
+    _, values, warnings = complete_months(df)
     _check_scale(values)
     train, actual = values[:-holdout], values[-holdout:]
     _need_history(len(train), "history to train on")
@@ -325,7 +306,7 @@ def forecast_with_error(
     """
     forecast = forecast_revenue(df, months, method)
     _check_range(_whole(holdout, "holdout"), "holdout")
-    periods, values, _ = _monthly(df)
+    periods, values, _ = complete_months(df)
     history = pd.DataFrame({"period": periods, "revenue": values})
     measurable = min(holdout, len(values) - MIN_MONTHS)
     if measurable < 1:

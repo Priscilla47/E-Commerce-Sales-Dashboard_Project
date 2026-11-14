@@ -104,3 +104,28 @@ def test_the_page_names_the_three_months_and_the_24_months_and_the_metrics():
     text = PAGE.read_text()
     for phrase in ("24 months", "At least 3 months", "MAE", "MAPE", "never rounded", "95%"):
         assert phrase in text, phrase
+
+
+def test_the_facts_example_of_the_page_runs_and_says_the_truth(monkeypatch):
+    blocks = re.findall(r"```python\n(.*?)```", PAGE.read_text(), re.S)
+    example = next(block for block in blocks if "compute_facts" in block)
+    monkeypatch.chdir(ROOT)
+    namespace: dict = {}
+    exec(example, namespace)  # noqa: S102 - the code of our own documentation page
+    facts = namespace["facts"]
+    assert (facts.orders, facts.top_product.name) == (500, "Smartphone")
+    assert facts.trend.direction == "up" and facts.best_month.period == "2025-04"
+    text = PAGE.read_text()
+    assert "Smartphone" in text and "2025-04" in text and "500" in text
+
+
+def test_the_page_states_the_rules_of_the_facts():
+    text = PAGE.read_text()
+    for phrase in (
+        "1% of the mean",
+        "more than 2 standard deviations",
+        "at least 6 complete months",
+        "5 percentage points",
+        "first and the second half",
+    ):
+        assert phrase in text, phrase
