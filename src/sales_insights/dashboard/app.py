@@ -6,7 +6,6 @@ no calculation of its own.
 
 import json
 import os
-import re
 
 import pandas as pd
 import streamlit as st
@@ -36,7 +35,7 @@ from sales_insights.dashboard.data_source import (
     load_from_path,
     sample_is_available,
 )
-from sales_insights.dashboard.facts_view import facts_bullets
+from sales_insights.dashboard.facts_view import facts_bullets, plain
 from sales_insights.dashboard.forecast_view import format_forecast
 from sales_insights.dashboard.kpis import compute_kpis, format_kpis
 from sales_insights.dashboard.selection import as_filter, period_bounds
@@ -77,13 +76,8 @@ def _choose_data() -> LoadedData | None:
         return None
 
 
-def _plain(text: str) -> str:
-    """Escape the characters of ``text`` that Markdown would interpret (it comes from a file)."""
-    return re.sub(r"([\\`*_\[\]()<>#|~$])", r"\\\1", text)
-
-
 def _bullets(lines: list[str]) -> str:
-    return "\n".join(f"- {_plain(line)}" for line in lines)
+    return "\n".join(f"- {plain(line)}" for line in lines)
 
 
 def _plural(count: int, word: str) -> str:
@@ -204,17 +198,26 @@ def _show_forecast(orders) -> None:
     st.dataframe(table, hide_index=True)
 
 
-class _ModelUnavailable(Exception):
-    """The model could not be reached: raised so that the failure is not kept in the cache."""
+_KEPT_TEXTS = 8  # written insights kept in a session, one for each set of facts and settings
 
 
-@st.cache_data(show_spinner="Writing the insights...", max_entries=4)
-def _write(facts: Facts, settings: str, _client) -> Insights:
-    # ``settings`` is only part of the cache key: other settings write the text again.
-    result = write_insights(facts, _client)
-    if result.error:
-        raise _ModelUnavailable(result.reason)
-    return result
+def _write(facts: Facts, key: str, client) -> Insights:
+    """The insights of ``facts``, written once for each key in this session.
+
+    They are kept in the session, not in a cache shared by every visitor, so that a text is
+    only ever written after a press of the button in this session, and counts against its
+    limit of calls. A failed call is not kept, so that the next press tries again.
+    """
+    kept: dict[str, Insights] = st.session_state.setdefault("insights", {})
+    if key not in kept:
+        with st.spinner("Writing the insights..."):
+            result = write_insights(facts, client)
+        if result.error:
+            return result
+        if len(kept) >= _KEPT_TEXTS:
+            kept.pop(next(iter(kept)))
+        kept[key] = result
+    return kept[key]
 
 
 def _session_client(config):
@@ -264,16 +267,18 @@ def _show_insights(orders) -> None:
         )
         st.markdown(_facts_list(facts))
         return
-    settings = f"{config.provider}|{config.model}|{config.max_calls}"
+    key = f"{facts_json}|{config.provider}|{config.model}|{config.max_calls}"
     try:
-        result = _write(facts, settings, _session_client(config))
-    except (LLMError, _ModelUnavailable) as error:
+        result = _write(facts, key, _session_client(config))
+    except LLMError as error:
+        result = Insights(None, False, str(error), error=True)
+    if result.error:
         st.session_state.pop("insights_for", None)  # a failure is tried again only when asked
-        st.warning(str(error))
+        st.warning(str(result.reason))
         st.markdown(_facts_list(facts))
         return
     if result.grounded:
-        st.markdown(_plain(result.text))
+        st.markdown(plain(result.text))
         st.caption("Every number in this text was checked against the facts below.")
     else:
         st.warning(f"No text was written: {result.reason}")

@@ -157,16 +157,16 @@ print(result.grounded, rejected.grounded)  # True False
 
 **The prompt** is the template `src/sales_insights/ai/prompts/insights.txt`: the rules go in the system message (use only the facts, add no number, never abbreviate a number, say nothing about causes that cannot be known) and the facts as JSON go in the user message. Text from the data, such as a product named "ignore the rules", only ever appears inside the JSON, so it is data and never a rule, and it cannot change the template.
 
-**The check.** Every number of the text is looked up in the facts:
+**The check.** Every number of the text is looked up in the facts. The text is read the way a reader sees it: invisible characters are removed, digits of other scripts (`٣٧`, superscripts, full-width digits) are read as the digits they show, and a number is the whole run of digits and separators, so `2,0,2,5` is one token and not four small numbers. The check lives in `sales_insights.ai.numbers` and is shared with the answers to questions.
 
 - It is accepted when it equals a number of the facts, written as is or rounded to 0, 1 or 2 decimals (`261,333.44`, `261333.4` and `261333` all match 261333.44), with or without thousands separators. A number with more decimals must match exactly. The sign is not compared, only the size, because the words say the direction.
-- With a percent sign it may also be a share of the facts: 30% matches a share of 0.3. Without a percent sign it is compared as it is.
-- A year, a month or a day written like those of the period or of a note (`2025`, `2025-04`) is accepted.
-- An abbreviation such as `261k` or `2 million` is refused, because it cannot be checked. The prompt tells the model never to write one.
-- Names from the data (a product or a country) are removed before the check, so a product called "Model 3000" can be quoted; digits inside a name never make another number acceptable.
+- With a percent sign (`30%`, `30 percent`), a number must be a share of the facts (30% matches a share of 0.3) or a change of share in points. A count written as a percent, such as 8 orders as `800%`, is refused.
+- A year, a month or a day: a date (`2025-04`, `2025-04-30`) must be a date of the facts, or the month of one; any year of the period is accepted (a period from 2023 to 2025 accepts `2024`), and so are the digits of a note (`day 1 of 31`).
+- What cannot be checked is refused whatever its digits: an abbreviation (`261k`, `2 million`, `3 thousands`), scientific notation (`1e5`), a run of digits that is not a well-formed number (`2,0,2,5`, `1/2`) and a number that is not written with digits (`½`). The prompt tells the model never to write one.
+- Names from the data (a product or a country) are skipped where they stand as words, so a product called "Model 3000" can be quoted. A name is never skipped inside another word or number, and a name without a letter (a product called "1") is never skipped at all, so digits inside a name never make another number acceptable.
 - A text that holds a number that is not in the facts is retried once, with a reminder that lists the numbers, and then refused with the reason.
 
-**Limits.** The check proves that no number is invented, not that the sentences are wise: a true number can still be put in a misleading sentence, which is why the prompt forbids causes and calculations and why the facts are shown under the text. Words are not checked (a model could write "doubled"), and the numbers it computes itself, such as a difference, are refused unless they are in the facts. A call that fails or times out gives a refusal, never a half text.
+**Limits.** The check proves that no number is invented, not that the sentences are wise: a true number can still be put in a misleading sentence, which is why the prompt forbids causes and calculations and why the facts are shown under the text. Words are not checked (a model could write "doubled" or "thirty-seven"), and the numbers it computes itself, such as a difference, are refused unless they are in the facts. A call that fails or times out gives a refusal, never a half text.
 
 ## Functions a model may ask for
 
