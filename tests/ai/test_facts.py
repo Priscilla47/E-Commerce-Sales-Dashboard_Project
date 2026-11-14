@@ -75,6 +75,11 @@ def test_a_tie_for_the_best_month_is_given_to_the_earliest():
     assert facts.best_month.period == "2023-02"
 
 
+def test_a_tie_for_the_worst_month_is_given_to_the_earliest():
+    facts = compute_facts(monthly_orders([500, 100, 900, 100]))
+    assert facts.worst_month.period == "2023-02"
+
+
 def test_with_one_month_the_best_and_the_worst_are_the_same():
     facts = compute_facts(monthly_orders([420]))
     assert facts.best_month == facts.worst_month
@@ -157,6 +162,29 @@ def changes(facts, column):
     return {c.value: c for c in facts.share_changes if c.column == column}
 
 
+def test_months_equal_to_the_cent_are_no_anomaly_when_their_sums_differ_by_rounding():
+    frame = monthly_orders([4907.85] * 8)
+    # July is two orders: 78.49 + 4829.36 is 4907.849999999999 in floating point.
+    july = frame.index[6]
+    frame.loc[july, "Revenue"] = 78.49
+    extra = frame.loc[[july]].assign(OrderID=99, Revenue=4829.36)
+    frame = pd.concat([frame, extra], ignore_index=True)
+    assert revenue_over_time(frame, "M")["revenue"].nunique() == 2  # the rounding is there
+    assert compute_facts(frame).anomalies == ()
+
+
+def test_a_real_small_spread_still_gives_its_anomaly():
+    facts = compute_facts(monthly_orders([1.0] * 9 + [1.01]))
+    assert [a.period for a in facts.anomalies] == ["2023-10"]
+
+
+def test_steady_growth_can_make_the_last_month_an_anomaly_next_to_an_up_trend():
+    # The documented limit: the z-score is measured on the revenue, not around the trend.
+    facts = compute_facts(monthly_orders([100 * 1.5**i for i in range(10)]))
+    assert facts.trend.direction == "up"
+    assert [a.period for a in facts.anomalies] == ["2023-10"]
+
+
 def test_a_share_that_moves_by_exactly_5_points_is_reported_and_just_below_is_not():
     # France 50 -> 55 (5 points); UK 50 -> 45.
     frame = split_orders(
@@ -230,6 +258,43 @@ def test_all_orders_on_one_day_have_no_halves_and_a_note():
 # --- the product, the period and the orders ---------------------------------------------------
 
 
+def test_a_category_that_appears_in_the_second_half_only_has_a_first_share_of_zero():
+    frame = split_orders(
+        [("France", "Books", 100.0)],
+        [("France", "Books", 60.0), ("France", "Toys", 40.0)],
+    )
+    toys = changes(compute_facts(frame), "Category")["Toys"]
+    assert toys.first_share == 0.0 and toys.second_share == pytest.approx(0.4)
+
+
+def test_the_share_changes_equal_revenue_by_on_each_half():
+    frame = split_orders(
+        [("France", "Books", 30.0), ("UK", "Toys", 70.0), ("Spain", "Books", 25.0)],
+        [("France", "Toys", 60.0), ("UK", "Books", 40.0)],
+    )
+    facts = compute_facts(frame)
+    dates = frame["Date"]
+    middle = dates.min() + (dates.max() - dates.min()) / 2
+    halves = frame[frame["Date"] < middle], frame[frame["Date"] >= middle]
+    assert facts.share_changes
+    for change in facts.share_changes:
+        first, second = (
+            revenue_by(half, change.column).set_index(change.column)["share"].get(change.value, 0.0)
+            for half in halves
+        )
+        assert (change.first_share, change.second_share) == pytest.approx((first, second))
+        assert change.change_points == pytest.approx((second - first) * 100)
+
+
+def test_a_table_without_a_share_column_skips_it_instead_of_raising():
+    frame = split_orders(
+        [("France", "Books", 50.0), ("UK", "Toys", 50.0)],
+        [("France", "Books", 80.0), ("UK", "Toys", 20.0)],
+    ).drop(columns=["Country"])
+    facts = compute_facts(frame)
+    assert {c.column for c in facts.share_changes} == {"Category"}
+
+
 def test_the_top_product_the_period_and_the_orders_come_from_the_data():
     frame = monthly_orders([100, 200, 300, 400])
     frame.loc[:1, "Product"] = "Pen"
@@ -250,9 +315,11 @@ def test_every_number_equals_the_analytics_number_it_comes_from():
     assert facts.worst_month.revenue == series["revenue"].min()
     top = top_products(frame, 1)
     assert (facts.top_product.name, facts.top_product.units) == (top["Product"][0], top["units"][0])
-    by_country = revenue_by(frame, "Country").set_index("Country")["share"]
-    # In the whole period the shares are those of analytics; the halves split it.
-    assert by_country.sum() == pytest.approx(1.0)
+    values = series["revenue"].to_numpy()
+    slope = np.polyfit(np.arange(len(values)), values, 1)[0]
+    assert facts.trend.slope_per_month == pytest.approx(slope)
+    z = (values - values.mean()) / values.std()
+    assert [a.z_score for a in facts.anomalies] == pytest.approx([z[-1]])
 
 
 # --- empty and tiny tables --------------------------------------------------------------------
@@ -278,6 +345,38 @@ def test_a_table_without_any_date_still_has_its_orders_and_top_product():
 def test_a_one_row_table_has_one_month_and_no_trend():
     facts = compute_facts(monthly_orders([250]))
     assert facts.orders == 1 and facts.best_month.revenue == 250.0 and facts.trend is None
+
+
+def test_several_orders_in_one_month_make_one_month_with_their_sum():
+    frame = monthly_orders([100, 50, 25])
+    frame["Date"] = pd.Timestamp("2023-05-31")
+    facts = compute_facts(frame)
+    assert facts.best_month == facts.worst_month
+    assert facts.best_month.revenue == 175.0 and facts.trend is None
+    assert any("found 1" in note for note in facts.notes)
+
+
+def test_data_without_a_complete_month_says_why_there_is_no_trend_and_no_anomaly():
+    frame = monthly_orders([100.0])
+    frame["Date"] = pd.Timestamp("2023-01-15")
+    facts = compute_facts(frame)
+    assert facts.best_month is None and facts.trend is None
+    assert any("trend" in note and "found 0" in note for note in facts.notes)
+    assert "found 0" in facts.anomalies_note
+
+
+def test_a_first_month_that_starts_after_day_1_is_kept_with_a_note():
+    frame = monthly_orders([1000.0] * 8)
+    frame.loc[0, ["Date", "Revenue"]] = [pd.Timestamp("2023-01-31"), 30.0]
+    facts = compute_facts(frame)
+    assert facts.worst_month.period == "2023-01"
+    assert any("first month (2023-01)" in note and "day 31" in note for note in facts.notes)
+
+
+def test_a_first_month_that_starts_on_day_1_has_no_note():
+    frame = monthly_orders([100.0, 200.0])
+    frame.loc[0, "Date"] = pd.Timestamp("2023-01-01")
+    assert not any("first month" in note for note in compute_facts(frame).notes)
 
 
 def test_a_partial_last_month_is_left_out_of_the_months_and_the_note_says_so():
