@@ -129,3 +129,23 @@ def test_the_page_states_the_rules_of_the_facts():
         "first and the second half",
     ):
         assert phrase in text, phrase
+
+
+def test_the_page_lists_every_function_a_model_may_ask_for_and_the_safety_rules():
+    from sales_insights.ai.tools import MAX_ROWS, registry
+
+    text = PAGE.read_text()
+    start = text.index("## Functions a model may ask for")
+    section = text[
+        start : text.find("\n## ", start + 1) if text.find("\n## ", start + 1) != -1 else len(text)
+    ]
+    for tool in registry():
+        assert f"`{tool.name}`" in section, tool.name
+    for phrase in (
+        f"{MAX_ROWS} rows",
+        "No `eval`",
+        "closed schema",
+        "ToolError",
+        "never an instruction",
+    ):
+        assert phrase in section, phrase
