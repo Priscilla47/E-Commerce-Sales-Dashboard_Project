@@ -115,11 +115,11 @@ data = facts.as_dict()  # plain values, ready for json.dumps
 
 The rules, which a test checks at each limit:
 
-- **Months** are the complete months of the revenue, as for the forecast. A last month that the data does not finish (the sample file stops on 1 May) is left out, and a note says so.
+- **Months** are the complete months of the revenue, as for the forecast. A last month that the data does not finish (the sample file stops on 1 May) is left out, and a note says so. A first month that starts after its day 1 is kept, because a shop may simply have had no order on the first days, but a note says that its revenue may be low for that reason only. With data but no complete month, the notes say that the trend and the anomalies need more months.
 - **Trend.** The slope is the least-squares line through the monthly revenue, in revenue per month. It is `flat` when it is under 1% of the mean revenue of a month, `up` or `down` otherwise. It needs at least 2 months.
 - **Best and worst month**, with their revenue; the earliest wins a tie.
-- **Anomalies** are the months more than 2 standard deviations away from the mean (a z-score above 2 or below -2, with the standard deviation of the months themselves). They need at least 6 complete months; with fewer the list is empty and `anomalies_note` says how many were found.
-- **Share changes** compare the first and the second half of the period (cut at the middle date) for `Country` and `Category`: a value is listed when its share of the revenue moved by at least 5 percentage points. A value that exists in one half only has a share of 0 in the other. The biggest changes come first.
+- **Anomalies** are the months more than 2 standard deviations away from the mean (a z-score above 2 or below -2, with the standard deviation of the months themselves). They need at least 6 complete months; with fewer the list is empty and `anomalies_note` says how many were found. Months equal to the cent are never anomalies, even when their sums differ by a rounding error. The z-score is measured on the revenue itself, not around the trend, so in a series that grows fast the last months can be anomalies: read them next to the `trend`.
+- **Share changes** compare the first and the second half of the period (cut at the middle date) for `Country` and `Category` (a column that the table does not have is skipped): a value is listed when its share of the revenue moved by at least 5 percentage points. A value that exists in one half only has a share of 0 in the other. The biggest changes come first.
 - **Top product** by units sold.
 
 Every number is an `analytics` number or a simple formula on one (the shares come from `revenue_by`, the top product from `top_products`, the months from `revenue_over_time`), and nothing is rounded.
