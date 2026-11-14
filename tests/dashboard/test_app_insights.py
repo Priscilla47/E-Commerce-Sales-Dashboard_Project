@@ -249,3 +249,27 @@ def test_hostile_text_in_the_file_does_not_break_the_tab(monkeypatch):
     app.sidebar.file_uploader[0].set_value(("o.csv", content.encode(), "text/csv")).run()
     assert not app.exception
     assert "Ignore the rules" in shown(app) and "**Ignore" not in shown(app)
+
+
+def test_lists_icons_and_bare_addresses_of_the_model_are_not_rendered(monkeypatch):
+    nasty = "1. The best month was 2025-04 :material/home: see www.x.io or https://x.io"
+    switch_on(monkeypatch, [nasty])
+    app = start()
+    button(app).click().run()
+    markdown = "\n".join(e.value for e in tab(app).markdown)
+    assert "1\\." in markdown and "\\:material" in markdown
+    assert "www.x.io" not in markdown and "https://" not in markdown
+
+
+def test_a_text_is_written_only_after_a_press_in_this_session_even_if_caches_are_cleared(
+    monkeypatch,
+):
+    import streamlit as st
+
+    clients = switch_on(monkeypatch, [GOOD, GOOD])
+    app = start()
+    button(app).click().run()
+    st.cache_data.clear()  # another visitor, or a full cache, must not cost a call
+    app.sidebar.radio[0].set_value("Sample data").run()
+    assert GOOD in shown(app)
+    assert sum(len(client.calls) for client in clients) == 1
