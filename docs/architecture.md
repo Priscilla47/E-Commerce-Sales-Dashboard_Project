@@ -54,7 +54,7 @@ The calculations, as pure functions on the table that `load_orders` returns: `re
 
 ### `cli`
 
-The command line. `main.py` builds the `argparse` parser, loads the file, validates it, calls one analytics function per option (for `--forecast`, the forecast report of the `ai` package) and formats the answers; it is the only place that prints and the only place that decides an exit code (0, or 84 for a usage or data error). It holds no calculation: a figure the command line prints is a figure an analytics function returns.
+The command line. `main.py` builds the `argparse` parser, loads the file, validates it, calls one analytics function per option (for `--forecast`, the forecast report of the `ai` package, and for `--ask`, the answer of its question-answering code) and formats the answers; it is the only place that prints and the only place that decides an exit code (0, or 84 for a usage or data error). It holds no calculation: a figure the command line prints is a figure an analytics function returns.
 
 ### `dashboard`
 

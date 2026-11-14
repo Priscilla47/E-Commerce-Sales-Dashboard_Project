@@ -27,6 +27,7 @@ A CLI that reads an orders CSV and answers questions about it.
 | `-t N`                     | The N best-selling products                                  |
 | `--by country\|category\|month` | Revenue, orders and share of the total for each value  |
 | `--forecast N`             | Forecast the revenue of the next N months (1 to 12), with its error |
+| `--ask QUESTION`           | Answer a question in plain language (needs the AI settings)  |
 | `--validate`               | Check the data and print what is wrong with it               |
 
 Put the CSV path last. Options can be combined and are answered in the order given. The exit code is 0 on success and 84 for a usage or data error (the message goes to stderr).
