@@ -2,14 +2,16 @@ import json
 
 import pytest
 
-from sales_insights.ai.factory import AIDisabled
+from sales_insights.ai.factory import AIDisabled, LimitedClient
 from sales_insights.ai.fake import FakeLLM
 from sales_insights.ai.llm import Completion, LLMError, ToolCall
 from sales_insights.ai.nlq import (
     CANNOT_ANSWER,
+    CANNOT_REASON,
     MAX_CALLS_PER_ROUND,
     MAX_QUESTION_LENGTH,
     MAX_ROUNDS,
+    TOO_MANY_ROUNDS,
     Answer,
     ask,
 )
@@ -31,17 +33,13 @@ def test_a_question_that_needs_one_function_is_answered_and_the_call_is_recorded
     fake = FakeLLM([asking("revenue_by", column="Country"), "UK sold the most, with 1110.0."])
     answer = ask("Which country sold the most?", loaded_orders, fake)
     assert isinstance(answer, Answer)
-    assert (answer.text, answered_of(answer)) == ("UK sold the most, with 1110.0.", True)
+    assert (answer.text, answer.answered) == ("UK sold the most, with 1110.0.", True)
     assert answer.reason is None and answer.error is False
     assert len(answer.calls) == 1 and isinstance(answer.calls[0], ToolResult)
     assert (answer.calls[0].name, answer.calls[0].arguments) == (
         "revenue_by",
         {"column": "Country"},
     )
-
-
-def answered_of(answer):
-    return answer.answered
 
 
 def test_two_functions_in_one_round_are_both_run_in_order(loaded_orders):
@@ -77,21 +75,43 @@ def test_the_final_call_offers_no_tools_so_that_the_model_has_to_write(loaded_or
 def test_more_than_three_functions_in_a_round_run_only_the_first_three_and_the_model_is_told(
     loaded_orders,
 ):
-    calls = tuple(ToolCall("total_revenue", {}) for _ in range(5))
+    names = ["total_revenue", "order_count", "units_sold", "unique_customers", "units_sold"]
+    calls = tuple(ToolCall(name, {}) for name in names)
     fake = FakeLLM([Completion("", calls), "Revenue was 1660.0."])
     answer = ask("Repeat?", loaded_orders, fake)
-    assert len(answer.calls) == MAX_CALLS_PER_ROUND == 3
+    assert [c.name for c in answer.calls] == names[:MAX_CALLS_PER_ROUND]
+    assert MAX_CALLS_PER_ROUND == 3
     assert any("at most 3" in m.content for m in tool_messages(fake, 1))
+
+
+def test_the_same_request_twice_is_run_and_listed_once_but_answered_each_time(loaded_orders):
+    twice = Completion("", (ToolCall("total_revenue", {}), ToolCall("total_revenue", {})))
+    fake = FakeLLM([twice, asking("total_revenue"), "Revenue was 1660.0."])
+    answer = ask("Revenue?", loaded_orders, fake)
+    assert answer.answered and [c.name for c in answer.calls] == ["total_revenue"]
+    assert len(tool_messages(fake, 1)) == 2
+    assert len(tool_messages(fake, 2)) == 3
 
 
 def test_a_model_that_keeps_asking_after_the_rounds_is_refused_with_the_standard_reason(
     loaded_orders,
 ):
-    fake = FakeLLM([asking("total_revenue"), asking("total_revenue"), asking("total_revenue")])
+    fake = FakeLLM([asking("total_revenue"), asking("order_count"), asking("units_sold")])
     answer = ask("Loop?", loaded_orders, fake)
     assert answer.answered is False and answer.text is None
+    assert answer.reason == TOO_MANY_ROUNDS
     assert len(answer.calls) == MAX_ROUNDS == 2
     assert len(fake.calls) == 3
+    last = fake.calls[2].messages[-1]
+    assert last.role == "user" and "No more functions" in last.content
+
+
+def test_a_text_written_with_a_late_request_for_functions_is_kept(loaded_orders):
+    late = Completion("Revenue was 1660.0.", (ToolCall("order_count", {}),))
+    fake = FakeLLM([asking("total_revenue"), asking("units_sold"), late])
+    answer = ask("Revenue?", loaded_orders, fake)
+    assert answer.answered and answer.text == "Revenue was 1660.0."
+    assert [c.name for c in answer.calls] == ["total_revenue", "units_sold"]
 
 
 def test_the_model_saying_it_cannot_answer_gives_the_standard_refusal_and_no_text(loaded_orders):
@@ -342,3 +362,85 @@ def test_the_prompt_template_is_package_data():
     ]
     assert "ai/prompts/*.txt" in data["sales_insights"]
     assert (root / "src" / "sales_insights" / "ai" / "prompts" / "ask.txt").is_file()
+
+
+# --- found in review ---------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    "product, text",
+    [
+        ("grew 37% to 99999", "Revenue grew 37% to 99999."),
+        ("Revenue of 9,999,999 in 2023", "Revenue of 9,999,999 in 2023."),
+    ],
+)
+def test_a_text_argument_cannot_make_its_numbers_quotable(loaded_orders, product, text):
+    fake = FakeLLM([asking("units_sold_for", product=product), text, text])
+    answer = ask("Units?", loaded_orders, fake)
+    assert answer.answered is False and answer.text is None
+
+
+def test_a_whole_number_argument_is_not_a_share(loaded_orders):
+    fake = FakeLLM([asking("top_products", n=3), "Revenue grew 3%.", "Revenue grew 3%."])
+    assert ask("Top?", loaded_orders, fake).answered is False
+
+
+def test_a_frequency_argument_does_not_hide_an_abbreviation(loaded_orders):
+    script = [asking("revenue_over_time", freq="M"), "Revenue was 500 Million.", "500M."]
+    assert ask("Monthly?", loaded_orders, FakeLLM(script)).answered is False
+
+
+def test_a_count_cannot_be_written_as_a_percent(loaded_orders):
+    script = [asking("order_count"), "Orders rose 600%.", "Orders rose 600%."]
+    assert ask("Orders?", loaded_orders, FakeLLM(script)).answered is False
+
+
+def test_a_share_of_a_result_may_be_written_as_a_percent(loaded_orders):
+    rows = ask("x", loaded_orders, FakeLLM([asking("revenue_by", column="Country"), "x"]))
+    share = rows.calls[0].data["rows"][0]["share"]
+    text = f"{rows.calls[0].data['rows'][0]['Country']} has {share * 100:.1f}% of the revenue."
+    fake = FakeLLM([asking("revenue_by", column="Country"), text])
+    assert ask("Share?", loaded_orders, fake).answered
+
+
+def test_a_product_of_the_orders_given_as_an_argument_may_be_quoted_as_a_name(loaded_orders):
+    frame = loaded_orders.copy()
+    frame.loc[frame["Product"] == "Book", "Product"] = "Model 3000"
+    fake = FakeLLM([asking("units_sold_for", product="Model 3000"), "Model 3000 sold 6 units."])
+    assert ask("Model 3000?", frame, fake).answered
+
+
+@pytest.mark.parametrize(
+    "reply",
+    ["CANNOT_ANSWER.", "cannot_answer", "`CANNOT_ANSWER`", '"CANNOT_ANSWER"', " CANNOT_ANSWER\n"],
+)
+def test_cannot_answer_is_recognised_with_quotes_case_or_punctuation(loaded_orders, reply):
+    answer = ask("Weather?", loaded_orders, FakeLLM([reply]))
+    assert (answer.answered, answer.text, answer.reason) == (False, None, CANNOT_REASON)
+
+
+def test_cannot_answer_on_the_retry_is_the_standard_refusal_not_a_text(loaded_orders):
+    fake = FakeLLM([asking("total_revenue"), "Revenue grew 37%.", "CANNOT_ANSWER"])
+    answer = ask("Growth?", loaded_orders, fake)
+    assert (answer.answered, answer.text, answer.reason) == (False, None, CANNOT_REASON)
+
+
+@pytest.mark.parametrize("arguments", [["x"], "{}", {"a": {1}}, None])
+def test_malformed_arguments_are_refused_to_the_model_not_raised(loaded_orders, arguments):
+    bad = Completion("", (ToolCall("total_revenue", arguments),))  # type: ignore[arg-type]
+    fake = FakeLLM([bad, "I could not run it."])
+    answer = ask("Revenue?", loaded_orders, fake)
+    assert answer.answered and answer.calls == ()
+    assert tool_messages(fake, 1)[0].content.startswith("Refused:")
+
+
+def test_a_client_that_raises_something_else_is_a_failed_call(loaded_orders):
+    fake = FakeLLM([TimeoutError("too slow")])
+    answer = ask("Revenue?", loaded_orders, fake)
+    assert answer.error and answer.answered is False and "too slow" in answer.reason
+
+
+def test_the_call_limit_of_the_session_still_applies(loaded_orders):
+    limited = LimitedClient(FakeLLM([asking("total_revenue"), "Revenue was 1660.0."]), 1, None)
+    answer = ask("Revenue?", loaded_orders, limited)
+    assert answer.error and "limit of 1" in answer.reason
