@@ -145,7 +145,7 @@ sales-insights: warning: With less than a year of history the forecast repeats t
 
 The last line of the answer is the error the method makes when it forecasts the most recent month it knows (here April), trained on the months before. With a longer history it is measured on the last 3 months. MAE is the mean absolute error, in the unit of the revenue; MAPE is the same error in percent of the real value (`n/a` when a real value is 0).
 
-**A question in plain language** (`--ask`). It needs a model: set `SALES_AI_PROVIDER` and `SALES_AI_API_KEY` first (see [the AI guide](ai.md)). The model only chooses which functions to call; every number of the answer was returned by one of them, and the functions are listed so that you can see where it came from. This example is not run by the page tests with a real model: they run it with a scripted one.
+**A question in plain language** (`--ask`). It needs a model: set `SALES_AI_PROVIDER` and `SALES_AI_API_KEY` first (see [the AI guide](ai.md)). The project ships no provider, by design: one is added by registering a function that builds its client (see [Provider names](ai.md#provider-names)); until then `--ask` says `No provider is installed`. The model only chooses which functions to call; every number of the answer was returned by one of them, and the functions are listed so that you can see where it came from. The answer is printed on one line, without control characters and with the key replaced by `***`, so the text of a model can neither change the terminal nor print a list of functions of its own. This example is not run by the page tests with a real model: they run it with a scripted one.
 
 ```text
 $ sales-insights --ask "What sells best?" data/sample_orders.csv
@@ -181,7 +181,7 @@ Number of Book sold:  176
 
 ## Exit codes and errors
 
-The exit code is **0** when the command worked and **84** for a usage error or a data error. Messages are written to the error output (stderr) and start with `sales-insights: error: `. The answers themselves go to the normal output (stdout), so `sales-insights -T data.csv > total.txt` only stores the answer.
+The exit code is **0** when the command worked and **84** for a usage error, a data error or a question that could not be answered. Messages are written to the error output (stderr) and start with `sales-insights: error: `. The answers themselves go to the normal output (stdout), so `sales-insights -T data.csv > total.txt` only stores the answer.
 
 | Message | Cause | Fix |
 |---------|-------|-----|
@@ -195,6 +195,12 @@ The exit code is **0** when the command worked and **84** for a usage error or a
 | `The AI features are switched off. Set SALES_AI_API_KEY to switch them on.` | `--ask` without a key. | Set the variables of [the AI guide](ai.md). |
 | `The text contained numbers that are not in the results: 37%` | `--ask`: the model wrote a number that no function returned, twice, so no text is shown. | Ask again, or in other words. |
 | `I can't answer that with the data and functions I have.` | `--ask` with a question that the functions cannot answer (the weather, a cause, a forecast). | Ask about revenue, products, customers, countries, categories or months. |
+| `The AI features are switched off. Set SALES_AI_PROVIDER to the provider to use.` | `--ask` with a key but no provider. | Set `SALES_AI_PROVIDER` (see [the AI guide](ai.md)). |
+| `No provider is installed, so 'x' cannot be used` | `--ask` with a provider name, but no provider registered in this installation. | Register one with `register_provider` (see [the AI guide](ai.md#provider-names)). |
+| `SALES_AI_MAX_CALLS must be a whole number from 1 to 10000, not 'many'` | `--ask` with a bad limit of calls. | Use a whole number from 1 to 10000, or leave it unset (20). |
+| `The question is empty` | `--ask` with an empty question, or only spaces. | Write the question. |
+| `The question is longer than 500 characters` | `--ask` with a question of more than 500 characters. | Ask a shorter question. |
+| `The language model could not answer: The limit of 1 calls for this session is reached` | `--ask` when the call failed: a timeout, an error of the provider, or the limit of `SALES_AI_MAX_CALLS` reached by one question. | Try again, or raise the limit. |
 | `Wrong number of products` | `-t N` with an N below 0 or above the number of products. | Choose N between 0 and the number of products (`-u` lists them). |
 
 Problems with the file itself (not found, wrong columns, a value that cannot be read, a file that is not UTF-8) use the same exit code and are listed in [Data format](data-schema.md#errors-you-may-see).

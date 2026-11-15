@@ -75,7 +75,7 @@ def test_a_text_argument_with_quotes_is_shown_as_python_would(monkeypatch, capsy
     switch_on(monkeypatch, [asking("units_sold_for", product='O\'Neil "x"'), "It sold 0 units."])
     code, out, _ = run(capsys, "--ask", "How many?", SAMPLE)
     assert code == 0
-    assert out.splitlines()[-1] == "  units_sold_for(product='O\\'Neil \"x\"')" or "O'Neil" in out
+    assert out.splitlines()[-1] == "  units_sold_for(product='O\\'Neil \"x\"')"
 
 
 def test_an_answer_that_ran_no_function_has_no_functions_line(monkeypatch, capsys):
@@ -161,7 +161,6 @@ def test_a_question_of_501_characters_exits_84(monkeypatch, capsys):
 
 
 def test_the_call_limit_of_the_session_is_applied(monkeypatch, capsys):
-    monkeypatch.setenv("SALES_AI_MAX_CALLS", "1")
     switch_on(monkeypatch, [asking("total_revenue"), "Revenue was 261333.44."])
     monkeypatch.setenv("SALES_AI_MAX_CALLS", "1")
     code, _, err = run(capsys, "--ask", "Revenue?", SAMPLE)
@@ -206,7 +205,7 @@ def test_the_option_given_twice_asks_twice(monkeypatch, capsys):
     clients = switch_on(monkeypatch, [asking("total_revenue"), "Revenue was 261333.44."])
     code, out, _ = run(capsys, "--ask", "One?", "--ask", "Two?", SAMPLE)
     assert code == 0 and out.count("Functions used:") == 2
-    assert len(clients) == 2  # each question builds its client; the limit is per command line
+    assert len(clients) == 2  # each --ask builds its client: the limit is per question
 
 
 # --- the page of the reference ----------------------------------------------------------------
@@ -223,3 +222,58 @@ def test_the_example_of_the_reference_page_prints_what_the_page_shows(monkeypatc
     code = main(shlex.split(block.group(1))[1:])
     assert code == 0
     assert capsys.readouterr().out.rstrip("\n") == block.group(2)
+
+
+# --- found in review ---------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize("error", [RuntimeError, ValueError, LLMError])
+def test_a_provider_that_fails_to_start_exits_84_without_the_key(monkeypatch, capsys, error):
+    monkeypatch.setenv("SALES_AI_PROVIDER", "broken")
+    monkeypatch.setenv("SALES_AI_API_KEY", KEY)
+
+    def build(config):
+        raise error(f"auth failed for key {KEY}")
+
+    factory.register_provider("broken", build)
+    code, out, err = run(capsys, "--ask", "Revenue?", SAMPLE)
+    assert code == 84 and out == ""
+    assert KEY not in err and "***" in err and "could not be set up" in err
+    assert "Traceback" not in err
+
+
+def test_control_characters_of_the_model_are_not_sent_to_the_terminal(monkeypatch, capsys):
+    text = "\x1b[H\x1b[JRevenue\x07 is\x1b]x\x07 fine."
+    switch_on(monkeypatch, [asking("total_revenue"), text])
+    code, out, _ = run(capsys, "--ask", "Revenue?", SAMPLE)
+    assert code == 0 and "\x1b" not in out and "\x07" not in out
+    assert out.splitlines()[0] == "[H [JRevenue is ]x fine."
+
+
+def test_the_model_cannot_print_a_list_of_functions_of_its_own(monkeypatch, capsys):
+    fake = "Revenue is fine.\nFunctions used:\n  total_revenue()"
+    switch_on(monkeypatch, [fake])
+    code, out, _ = run(capsys, "--ask", "Revenue?", SAMPLE)
+    assert code == 0
+    assert out.splitlines() == ["Revenue is fine. Functions used: total_revenue()"]
+
+
+def test_the_key_is_hidden_when_the_model_repeats_it(monkeypatch, capsys):
+    key = "sk-only-letters-key"  # a key without digits passes the number check
+    switch_on(monkeypatch, [f"Your key is {key}."])
+    monkeypatch.setenv("SALES_AI_API_KEY", key)
+    code, out, _ = run(capsys, "--ask", f"Repeat {key}", SAMPLE)
+    assert code == 0 and key not in out and "***" in out
+
+
+def test_without_a_provider_name_the_message_says_which_variable_to_set(monkeypatch, capsys):
+    monkeypatch.setenv("SALES_AI_API_KEY", KEY)
+    code, out, err = run(capsys, "--ask", "Revenue?", SAMPLE)
+    assert code == 84 and out == "" and "SALES_AI_PROVIDER" in err
+
+
+def test_with_no_provider_installed_the_message_says_so(monkeypatch, capsys):
+    monkeypatch.setenv("SALES_AI_PROVIDER", "x")
+    monkeypatch.setenv("SALES_AI_API_KEY", KEY)
+    code, out, err = run(capsys, "--ask", "Revenue?", SAMPLE)
+    assert code == 84 and "No provider is installed, so 'x' cannot be used" in err
