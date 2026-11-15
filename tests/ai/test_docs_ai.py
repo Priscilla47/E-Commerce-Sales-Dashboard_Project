@@ -173,3 +173,33 @@ def test_the_questions_section_runs_its_example_and_states_the_limits(monkeypatc
         "never an order row",
     ):
         assert phrase in section, phrase
+
+
+def test_the_page_lists_good_questions_that_are_in_the_evaluation_set_and_how_to_run_it():
+    import json
+
+    text = PAGE.read_text()
+    start = text.index("## Good questions and the evaluation set")
+    end = text.find("\n## ", start + 1)
+    section = text[start : end if end != -1 else len(text)]
+    shipped = {
+        c["question"]: c for c in json.loads((ROOT / "data" / "eval_questions.json").read_text())
+    }
+    listed = re.findall(r"^- `([^`]+)`", section, re.M)
+    assert len(listed) >= 8
+    for question in listed:
+        assert question in shipped, question
+    quoted = [q for q in re.findall(r"`([^`]+)`", section) if q in shipped]
+    assert any(shipped[q]["must_refuse"] for q in quoted), "the page shows a refused question"
+    assert any(not shipped[q]["must_refuse"] for q in quoted)
+    assert {q for q in quoted if shipped[q]["must_refuse"]} == {
+        q for q, c in shipped.items() if c["must_refuse"]
+    }, "the page names every question that must be refused"
+    assert "python -m sales_insights.ai.evaluation" in section
+    for phrase in (
+        "Passed 24 of 24",
+        "exit code 84",
+        "data/eval_questions.json",
+        "one client for each question",
+    ):
+        assert phrase in section, phrase
