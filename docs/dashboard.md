@@ -87,6 +87,21 @@ If the text has a number that is not in the facts, the model is asked once more;
 
 What the check proves, and what it does not, is explained in [the AI guide](ai.md#written-insights).
 
+## The ask tab
+
+The fourth tab, **Ask**, answers questions typed in plain language, such as "Which country sold the most?". It needs the same settings as the Insights tab and, like it, says so and names `SALES_AI_API_KEY` when the AI is switched off (there is then no question box). A bad `SALES_AI_MAX_CALLS` or an unknown provider is explained, never raised.
+
+Type a question at the bottom of the tab. The history of the session is shown as a conversation, oldest first, and each answer has an expander, **How this was answered**, that shows how many orders it was made from (the filters of the sidebar apply, so the same question can have different answers after you change them), the functions that were run with their arguments, such as `top_products(n=1)`, and the data each one returned. The answer is written by a language model from those results only, and every number in it is checked against them; the method is explained in [the AI guide](ai.md#questions-in-plain-language).
+
+- A question that the functions cannot answer (the weather, a cause, a forecast) shows `I can't answer that with the data and functions I have.`
+- A text with a number that no function returned is not shown: the tab says `No text was written` and the reason.
+- A call that fails (a timeout, a limit reached) shows `The call failed` and the reason, and asking again works.
+- A question must be 1 to 500 characters; an empty or too long one adds nothing to the history.
+- A session cannot make more calls than `SALES_AI_MAX_CALLS` (20 by default); the Insights tab and the Ask tab share that limit, and the tab says when it is reached.
+- **Clear the conversation** empties the history. Questions, answers and names from your file are shown as plain text.
+
+The same questions can be asked from the terminal with `sales-insights --ask` (see [the command-line reference](cli.md)).
+
 ## What the page says about your data
 
 A file can be in one of three states.
