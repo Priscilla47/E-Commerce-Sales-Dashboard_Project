@@ -14,6 +14,7 @@ from sales_insights.ai.tools import (
     registry,
     run_tool,
     tool_definitions,
+    validate_call,
 )
 from sales_insights.analytics.breakdowns import revenue_by
 from sales_insights.analytics.products import (
@@ -447,3 +448,13 @@ def test_whole_numbers_stay_whole_next_to_a_float_column():
     frame["Country"] = None
     rows = run_tool(call("revenue_by", column="Country"), frame).data["rows"]
     assert all(type(row["orders"]) is int for row in rows)
+
+
+def test_validate_call_accepts_a_good_call_and_refuses_a_bad_one_without_running_anything():
+    validate_call(ToolCall("top_products", {"n": 3}))
+    with pytest.raises(ToolError, match="Unknown function"):
+        validate_call(ToolCall("eval", {}))
+    with pytest.raises(ToolError, match="n"):
+        validate_call(ToolCall("top_products", {"n": "3"}))
+    with pytest.raises(ToolError, match="Missing"):
+        validate_call(ToolCall("top_products", {}))

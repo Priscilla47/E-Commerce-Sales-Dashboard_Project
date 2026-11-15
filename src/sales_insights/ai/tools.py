@@ -248,6 +248,18 @@ def _cut(data: dict[str, Any], total: int) -> dict[str, Any]:
     return data
 
 
+def validate_call(call: ToolCall) -> None:
+    """Check a request against the registry without running it.
+
+    Raises:
+        ToolError: the function is not in the registry or its arguments do not match its schema.
+    """
+    tool = _TOOLS.get(call.name) if isinstance(call.name, str) else None
+    if tool is None:
+        raise ToolError(f"Unknown function {call.name!r}")
+    _check_arguments(tool, call.arguments)
+
+
 def run_tool(call: ToolCall, orders: pd.DataFrame) -> ToolResult:
     """Check a request of a model and run the function it asks for.
 

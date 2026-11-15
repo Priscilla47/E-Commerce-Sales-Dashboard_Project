@@ -62,7 +62,7 @@ The interactive dashboard, built with Streamlit (an optional extra). It follows 
 
 ### `ai`
 
-The AI-assisted features: questions in plain language, written insights and revenue forecasting. It holds the revenue forecast (a statistical model, which both interfaces use), the statistical facts and the checked written insights, the registry of functions a model may ask for, the answers to questions that use it, the interface to a language model, the settings and a fake client for tests, described in [the AI guide](ai.md). The Ask tab and the `--ask` command use the answers. The rule that matters here is the third principle: it starts from figures computed by `analytics`; the forecast and the facts are statistics on those figures, made by code, and a language model only turns them into words, it never calculates. It must not import an interface.
+The AI-assisted features: questions in plain language, written insights and revenue forecasting. It holds the revenue forecast (a statistical model, which both interfaces use), the statistical facts and the checked written insights, the registry of functions a model may ask for, the answers to questions that use it, the interface to a language model, the settings and a fake client for tests, described in [the AI guide](ai.md), and an evaluation set with a runner that scores a model on questions. The Ask tab and the `--ask` command use the answers. The rule that matters here is the third principle: it starts from figures computed by `analytics`; the forecast and the facts are statistics on those figures, made by code, and a language model only turns them into words, it never calculates. It must not import an interface.
 
 ## Data flow of a request
 
