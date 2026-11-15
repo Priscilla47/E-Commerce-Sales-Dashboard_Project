@@ -276,14 +276,14 @@ def _show_insights(orders) -> None:
         result = Insights(None, False, str(error), error=True)
     if result.error:
         st.session_state.pop("insights_for", None)  # a failure is tried again only when asked
-        st.warning(str(result.reason))
+        st.warning(plain(str(result.reason)))
         st.markdown(_facts_list(facts))
         return
     if result.grounded:
         st.markdown(plain(result.text))
         st.caption("Every number in this text was checked against the facts below.")
     else:
-        st.warning(f"No text was written: {result.reason}")
+        st.warning(f"No text was written: {plain(result.reason or '')}")
     with st.expander("The facts behind the text", expanded=not result.grounded):
         st.markdown(_facts_list(facts))
 
@@ -296,9 +296,9 @@ def _show_turn(turn: Turn) -> None:
         if status == "answered":
             st.markdown(plain(turn.answer.text))
         elif status == "failed":
-            st.warning(f"The call failed: {turn.answer.reason}")
+            st.warning(f"The call failed. {plain(turn.answer.reason or '')}")
         else:
-            st.warning(f"No text was written: {turn.answer.reason}")
+            st.warning(f"No text was written: {plain(turn.answer.reason or '')}")
         with st.expander("How this was answered"):
             st.caption(
                 f"Made from {_plural(turn.orders, 'order')} (the filters of the sidebar apply)."
@@ -306,12 +306,8 @@ def _show_turn(turn: Turn) -> None:
             if not turn.answer.calls:
                 st.caption("No function was run.")
             for call in turn.answer.calls:
-                st.markdown(f"`{_plain_code(call_title(call))}`")
+                st.text(call_title(call))  # plain text: a product name is shown as written
                 st.code(call_data(call), language="json")
-
-
-def _plain_code(text: str) -> str:
-    return text.replace("`", "'")
 
 
 def _show_ask(orders) -> None:
@@ -329,13 +325,19 @@ def _show_ask(orders) -> None:
         )
         return
 
+    try:
+        client = _session_client(config)  # an unknown provider is said before any question
+    except LLMError as error:
+        st.warning(plain(str(error)))
+        return
     history: list[Turn] = st.session_state.setdefault("chat", [])
     question = st.chat_input("Ask a question about the sales")
     if question is not None:
         try:
-            answer = ask(question, orders, _session_client(config))
-        except (ValueError, TypeError, LLMError) as error:
-            st.warning(str(error))
+            with st.spinner("Answering..."):
+                answer = ask(question, orders, client)
+        except (ValueError, TypeError) as error:
+            st.warning(plain(str(error)))
         else:
             history.append(Turn(question.strip(), answer, order_count(orders)))
     if history and st.button("Clear the conversation"):

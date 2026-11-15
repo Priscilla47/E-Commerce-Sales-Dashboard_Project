@@ -124,3 +124,16 @@ def test_the_limited_client_does_not_show_the_key_in_its_repr():
 def test_a_limit_below_one_is_refused():
     with pytest.raises(ValueError):
         LimitedClient(FakeLLM([]), limit=0, secret=KEY)
+
+
+@pytest.mark.parametrize("error", [RuntimeError, ImportError, ValueError, LLMError])
+def test_a_provider_that_fails_to_build_its_client_is_an_llm_error_without_the_key(error):
+    def build(config):
+        raise error(f"cannot start with {config.api_key}")
+
+    register_provider("broken", build)
+    with pytest.raises(LLMError) as failure:
+        build_client(enabled(provider="broken"))
+    message = str(failure.value)
+    assert KEY not in message and "***" in message
+    assert message.startswith("The provider 'broken' could not be set up")

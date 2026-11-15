@@ -66,6 +66,7 @@ def shown(app):
     parts = [e.value for e in box.markdown] + [e.value for e in box.warning]
     parts += [e.value for e in box.info] + [e.value for e in box.caption]
     parts += [e.value for e in box.code]
+    parts += [e.value for e in box.text]
     return "\n".join(str(part) for part in parts)
 
 
@@ -230,3 +231,61 @@ def test_a_hostile_product_name_in_the_file_does_not_break_the_tab(monkeypatch):
     app.sidebar.file_uploader[0].set_value(("o.csv", content.encode(), "text/csv")).run()
     app = say(app, "Best?")
     assert not app.exception
+
+
+# --- found in review ---------------------------------------------------------------------------
+
+
+def test_the_reason_of_a_failure_is_shown_as_text_not_as_markdown(monkeypatch):
+    switch_on(monkeypatch, [LLMError("see [click](http://evil.example) **bold** :material/home:")])
+    app = say(start(), "Revenue?")
+    warning = "\n".join(e.value for e in tab(app).warning)
+    assert "[click](http://evil.example)" not in warning and "\\[click\\]" in warning
+    assert "**bold**" not in warning and "\\:material" in warning
+
+
+def test_an_unknown_provider_is_explained_before_any_question(monkeypatch):
+    monkeypatch.setenv("SALES_AI_PROVIDER", "nowhere")
+    monkeypatch.setenv("SALES_AI_API_KEY", KEY)
+    app = start()
+    assert not app.exception
+    assert "No provider is installed" in shown(app) or "Unknown provider" in shown(app)
+    assert len(app.chat_input) == 0
+
+
+def test_a_provider_that_fails_to_start_is_explained_not_raised(monkeypatch):
+    monkeypatch.setenv("SALES_AI_PROVIDER", "broken")
+    monkeypatch.setenv("SALES_AI_API_KEY", KEY)
+
+    def build(config):
+        raise RuntimeError(f"SDK not installed for {config.api_key}")
+
+    factory.register_provider("broken", build)
+    app = start()
+    assert not app.exception
+    assert "could not be set up" in shown(app) and KEY not in shown(app)
+
+
+def test_after_the_limit_the_model_is_not_called_again(monkeypatch):
+    clients = switch_on(monkeypatch, [asking("total_revenue"), "Revenue was 261333.44."])
+    monkeypatch.setenv("SALES_AI_MAX_CALLS", "2")
+    app = start()
+    for question in ("Revenue?", "Again?", "Once more?"):
+        app = say(app, question)
+    assert sum(len(client.calls) for client in clients) == 2
+    assert "limit of 2" in shown(app)
+
+
+def test_a_hostile_product_name_is_shown_as_written_in_the_functions_used(monkeypatch):
+    name = "Pen `x` **y** [z](http://e)"
+    switch_on(monkeypatch, [asking("units_sold_for", product=name), "It sold none."])
+    app = say(start(), "Pen?")
+    assert f"units_sold_for(product={name!r})" in [e.value for e in tab(app).text]
+    markdown = "\n".join(e.value for e in tab(app).markdown)
+    assert "[z](http://e)" not in markdown
+
+
+def test_the_question_is_kept_without_its_surrounding_spaces(monkeypatch):
+    switch_on(monkeypatch, ["CANNOT_ANSWER"])
+    app = say(start(), "   Weather?   ")
+    assert app.session_state["chat"][0].question == "Weather?"

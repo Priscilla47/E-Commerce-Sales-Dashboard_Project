@@ -135,7 +135,36 @@ ERROR_SCENARIOS = {
         "{cannot}",
         "data/sample_orders.csv",
     ],
+    "The AI features are switched off. Set SALES_AI_PROVIDER to the provider to use.": [
+        "--ask",
+        "{key_only}",
+        "data/sample_orders.csv",
+    ],
+    "No provider is installed, so 'x' cannot be used": [
+        "--ask",
+        "{no_provider}",
+        "data/sample_orders.csv",
+    ],
+    "SALES_AI_MAX_CALLS must be a whole number from 1 to 10000, not 'many'": [
+        "--ask",
+        "{bad_limit}",
+        "data/sample_orders.csv",
+    ],
+    "The question is empty": ["--ask", "{empty}", "data/sample_orders.csv"],
+    "The question is longer than 500 characters": ["--ask", "{long}", "data/sample_orders.csv"],
+    "The language model could not answer: The limit of 1 calls for this session is reached": [
+        "--ask",
+        "{limited}",
+        "data/sample_orders.csv",
+    ],
     "Wrong number of products": ["-t", "99", "data/sample_orders.csv"],
+}
+
+# Settings of the scenarios that need a key without a working provider.
+ERROR_SETTINGS = {
+    "{key_only}": {"SALES_AI_API_KEY": "sk-test-secret-123456"},
+    "{no_provider}": {"SALES_AI_PROVIDER": "x", "SALES_AI_API_KEY": "sk-test-secret-123456"},
+    "{bad_limit}": {"SALES_AI_API_KEY": "sk-test-secret-123456", "SALES_AI_MAX_CALLS": "many"},
 }
 
 
@@ -163,7 +192,19 @@ def test_every_documented_error_is_what_the_command_prints(
             "Revenue grew 37%.",
         ],
         "{cannot}": ["CANNOT_ANSWER"],
+        "{limited}": [Completion("", (ToolCall("total_revenue", {}),)), "Revenue was 261333.44."],
+        "{empty}": ["unused"],
+        "{long}": ["unused"],
     }
+    questions = {"{empty}": " ", "{long}": "x" * 501}  # every other scenario asks "Revenue?"
+    if "{limited}" in argv:
+        monkeypatch.setenv("SALES_AI_MAX_CALLS", "1")
+    for placeholder, settings in ERROR_SETTINGS.items():
+        if placeholder in argv:
+            for name, value in settings.items():
+                monkeypatch.setenv(name, value)
+            monkeypatch.setattr(factory, "_PROVIDERS", {})
+            argv = [a.replace(placeholder, "Revenue?") for a in argv]
     for placeholder, script in scripts.items():
         if placeholder in argv:  # a scripted model, switched on only for these scenarios
             monkeypatch.setenv("SALES_AI_PROVIDER", "fake")
@@ -171,7 +212,7 @@ def test_every_documented_error_is_what_the_command_prints(
             monkeypatch.setitem(
                 factory._PROVIDERS, "fake", lambda config, s=script: FakeLLM(list(s))
             )
-            argv = [a.replace(placeholder, "Revenue?") for a in argv]
+            argv = [a.replace(placeholder, questions.get(placeholder, "Revenue?")) for a in argv]
     argv = [argument.replace("{two_months}", str(short)) for argument in argv]
     assert main(argv) == 84
     captured = capsys.readouterr()
