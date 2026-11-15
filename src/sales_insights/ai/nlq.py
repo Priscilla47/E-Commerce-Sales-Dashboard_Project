@@ -7,9 +7,11 @@ and data returned by a function is always marked as data, not instructions. See 
 """
 
 import json
-from dataclasses import dataclass
+from collections.abc import Iterator
+from dataclasses import dataclass, replace
 from decimal import Decimal
 from importlib.resources import files
+from itertools import count
 
 import pandas as pd
 
@@ -109,36 +111,40 @@ def _key(name: object, arguments: object) -> str:
 
 
 def _run_round(
-    completion: Completion, orders: pd.DataFrame, calls: list[ToolResult]
+    completion: Completion,
+    orders: pd.DataFrame,
+    calls: list[ToolResult],
+    numbers: Iterator[int],
 ) -> list[Message]:
     """Run the functions a model asked for; the messages that tell it what happened.
 
-    A request that was already run in this question is answered again but not run or listed
-    twice.
+    The assistant message carries every request, each with an id (``call_1``, ``call_2``, ...
+    for a request that came without one), and every request gets a ``tool`` message with its
+    id: the result, a refusal, or a note that it was not run. A request that was already run in
+    this question is answered again but not run or listed twice.
     """
-    asked = completion.tool_calls
-    messages = [
-        Message(
-            "assistant",
-            "Calling " + ", ".join(f"{c.name} {_arguments_text(c.arguments)}" for c in asked),
-        )
-    ]
+    asked = tuple(
+        call if isinstance(call.id, str) and call.id else replace(call, id=f"call_{next(numbers)}")
+        for call in completion.tool_calls
+    )
+    messages = [Message("assistant", completion.text, tool_calls=asked)]
     done = {_key(c.name, c.arguments): c for c in calls}
-    for call in asked[:MAX_CALLS_PER_ROUND]:
+    for position, call in enumerate(asked):
+        if position >= MAX_CALLS_PER_ROUND:
+            note = f"Ignored: at most {MAX_CALLS_PER_ROUND} functions in one round."
+            messages.append(Message("tool", note, tool_call_id=call.id))
+            continue
         result = done.get(_key(call.name, call.arguments))
         if result is None:
             try:
                 result = run_tool(call, orders)
             except ToolError as error:
-                messages.append(Message("tool", f"Refused: {error}"))
+                messages.append(Message("tool", f"Refused: {error}", tool_call_id=call.id))
                 continue
             calls.append(result)
             done[_key(call.name, call.arguments)] = result
-        messages.append(Message("tool", _DATA + json.dumps(result.data, allow_nan=False)))
-    if len(asked) > MAX_CALLS_PER_ROUND:
-        messages.append(
-            Message("tool", f"Ignored: at most {MAX_CALLS_PER_ROUND} functions in one round.")
-        )
+        content = _DATA + json.dumps(result.data, allow_nan=False)
+        messages.append(Message("tool", content, tool_call_id=call.id))
     return messages
 
 
@@ -168,6 +174,7 @@ def ask(question: str, orders: pd.DataFrame, client: LLMClient | None) -> Answer
         raise AIDisabled(f"The AI features are switched off. Set {API_KEY} to switch them on.")
     messages = [Message("system", _rules()), Message("user", question)]
     calls: list[ToolResult] = []
+    numbers = count(1)  # the ids given to requests that came without one
 
     def failure(error: LLMError) -> Answer:
         return Answer(
@@ -185,7 +192,7 @@ def ask(question: str, orders: pd.DataFrame, client: LLMClient | None) -> Answer
             return failure(error)
         if not completion.tool_calls or last:
             break
-        messages = [*messages, *_run_round(completion, orders, calls)]
+        messages = [*messages, *_run_round(completion, orders, calls, numbers)]
 
     text = completion.text
     if completion.tool_calls and not text.strip():  # still asking for functions at the end

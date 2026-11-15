@@ -444,3 +444,61 @@ def test_the_call_limit_of_the_session_still_applies(loaded_orders):
     limited = LimitedClient(FakeLLM([asking("total_revenue"), "Revenue was 1660.0."]), 1, None)
     answer = ask("Revenue?", loaded_orders, limited)
     assert answer.error and "limit of 1" in answer.reason
+
+
+# --- ids that pair a request with its result ----------------------------------------------------
+
+
+def second_call_messages(fake):
+    return list(fake.calls[1].messages)
+
+
+def test_the_assistant_message_carries_the_requests_and_each_result_its_id(loaded_orders):
+    both = Completion("", (ToolCall("total_revenue", {}), ToolCall("order_count", {})))
+    fake = FakeLLM([both, "Revenue was 1660.0 over 6 orders."])
+    ask("Revenue and orders?", loaded_orders, fake)
+    assistant, *tools = second_call_messages(fake)[2:]
+    assert assistant.role == "assistant"
+    assert [c.id for c in assistant.tool_calls] == ["call_1", "call_2"]
+    assert [c.name for c in assistant.tool_calls] == ["total_revenue", "order_count"]
+    assert [t.tool_call_id for t in tools] == ["call_1", "call_2"]
+
+
+def test_an_id_given_by_the_model_is_kept(loaded_orders):
+    given = Completion("", (ToolCall("total_revenue", {}, "abc"), ToolCall("order_count", {})))
+    fake = FakeLLM([given, "Revenue was 1660.0 over 6 orders."])
+    ask("Revenue and orders?", loaded_orders, fake)
+    assistant, *tools = second_call_messages(fake)[2:]
+    assert [c.id for c in assistant.tool_calls] == ["abc", "call_1"]
+    assert [t.tool_call_id for t in tools] == ["abc", "call_1"]
+
+
+def test_a_refused_request_gets_its_id_too(loaded_orders):
+    fake = FakeLLM([asking("eval"), "I could not answer."])
+    ask("Run?", loaded_orders, fake)
+    (tool,) = tool_messages(fake, 1)
+    assert tool.tool_call_id == "call_1" and tool.content.startswith("Refused:")
+
+
+def test_an_ignored_fourth_request_is_answered_with_its_id(loaded_orders):
+    names = ["total_revenue", "order_count", "units_sold", "unique_customers"]
+    fake = FakeLLM([Completion("", tuple(ToolCall(n, {}) for n in names)), "Revenue was 1660.0."])
+    ask("All?", loaded_orders, fake)
+    tools = tool_messages(fake, 1)
+    assert [t.tool_call_id for t in tools] == ["call_1", "call_2", "call_3", "call_4"]
+    assert tools[3].content.startswith("Ignored:")
+
+
+def test_the_numbering_goes_on_in_the_second_round(loaded_orders):
+    fake = FakeLLM([asking("total_revenue"), asking("order_count"), "Revenue was 1660.0."])
+    ask("Revenue?", loaded_orders, fake)
+    assistants = [m for m in fake.calls[2].messages if m.role == "assistant"]
+    assert [m.tool_calls[0].id for m in assistants] == ["call_1", "call_2"]
+
+
+def test_the_same_request_twice_is_answered_with_each_id(loaded_orders):
+    twice = Completion("", (ToolCall("total_revenue", {}), ToolCall("total_revenue", {})))
+    fake = FakeLLM([twice, "Revenue was 1660.0."])
+    answer = ask("Revenue?", loaded_orders, fake)
+    assert [t.tool_call_id for t in tool_messages(fake, 1)] == ["call_1", "call_2"]
+    assert len(answer.calls) == 1

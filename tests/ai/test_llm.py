@@ -51,3 +51,37 @@ def test_a_class_with_complete_is_an_llm_client():
 
     assert isinstance(Mine(), LLMClient)
     assert not isinstance(object(), LLMClient)
+
+
+# --- ids that pair a request with its result ----------------------------------------------------
+
+
+def test_a_tool_call_has_an_empty_id_unless_one_is_given():
+    assert ToolCall("total_revenue").id == ""
+    assert ToolCall("total_revenue", {}, "abc").id == "abc"
+
+
+def test_an_assistant_message_may_carry_tool_calls_and_a_tool_message_an_id():
+    calls = (ToolCall("total_revenue", {}, "call_1"),)
+    assert Message("assistant", "", tool_calls=calls).tool_calls == calls
+    assert Message("tool", "Data", tool_call_id="call_1").tool_call_id == "call_1"
+    plain = Message("user", "hi")
+    assert plain.tool_calls == () and plain.tool_call_id is None
+
+
+@pytest.mark.parametrize("role", ["system", "user", "tool"])
+def test_only_an_assistant_message_carries_tool_calls(role):
+    with pytest.raises(ValueError, match="assistant"):
+        Message(role, "x", tool_calls=(ToolCall("total_revenue"),))
+
+
+@pytest.mark.parametrize("role", ["system", "user", "assistant"])
+def test_only_a_tool_message_carries_a_tool_call_id(role):
+    with pytest.raises(ValueError, match="tool message"):
+        Message(role, "x", tool_call_id="call_1")
+
+
+def test_a_message_with_ids_is_still_frozen():
+    message = Message("tool", "x", tool_call_id="call_1")
+    with pytest.raises(AttributeError):
+        message.tool_call_id = "call_2"  # type: ignore[misc]

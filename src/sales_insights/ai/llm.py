@@ -16,30 +16,45 @@ class LLMError(Exception):
 
 
 @dataclass(frozen=True)
+class ToolCall:
+    """The model asks for one of the functions it was offered, with these arguments.
+
+    ``id`` pairs the request with its result; a provider gives one, and ``ask`` gives one to a
+    request that has none.
+    """
+
+    name: str
+    arguments: Mapping[str, Any] = field(default_factory=dict)
+    id: str = ""
+
+
+@dataclass(frozen=True)
 class Message:
     """One message of a conversation.
 
+    An ``assistant`` message may carry the ``tool_calls`` it made, and a ``tool`` message the
+    ``tool_call_id`` of the request it answers, so that a provider can pair them.
+
     Raises:
-        ValueError: ``role`` is not one of ``system``, ``user``, ``assistant`` or ``tool``.
+        ValueError: ``role`` is not one of ``system``, ``user``, ``assistant`` or ``tool``, or
+            ``tool_calls`` or ``tool_call_id`` is given to another role.
         TypeError: ``content`` is not text.
     """
 
     role: str
     content: str
+    tool_calls: tuple[ToolCall, ...] = ()
+    tool_call_id: str | None = None
 
     def __post_init__(self) -> None:
         if self.role not in ROLES:
             raise ValueError(f"role must be one of {', '.join(ROLES)}, not {self.role!r}")
         if not isinstance(self.content, str):
             raise TypeError(f"The content of a message must be text, not {self.content!r}")
-
-
-@dataclass(frozen=True)
-class ToolCall:
-    """The model asks for one of the functions it was offered, with these arguments."""
-
-    name: str
-    arguments: Mapping[str, Any] = field(default_factory=dict)
+        if self.tool_calls and self.role != "assistant":
+            raise ValueError("Only an assistant message can carry tool calls")
+        if self.tool_call_id is not None and self.role != "tool":
+            raise ValueError("Only a tool message can carry a tool call id")
 
 
 @dataclass(frozen=True)
