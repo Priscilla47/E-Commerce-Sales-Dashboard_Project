@@ -185,3 +185,18 @@ def test_the_texts_quoted_for_the_insights_tab_are_the_ones_of_the_page():
     with pytest.raises(AIDisabled) as error:
         build_client(load_config({}))
     assert str(error.value) in TEXT
+
+
+# --- the ask tab ------------------------------------------------------------------------------
+
+
+def test_the_page_describes_the_ask_tab_and_its_controls():
+    for phrase in ("## The ask tab", "**Ask**", "How this was answered", "Clear the conversation"):
+        assert phrase in TEXT, phrase
+    for word in ("SALES_AI_MAX_CALLS", "filters", "ai.md#questions-in-plain-language", "--ask"):
+        assert word in TEXT, word
+
+
+def test_the_page_says_what_a_refusal_and_a_failure_look_like_in_the_ask_tab():
+    assert "I can't answer that with the data and functions I have." in TEXT
+    assert "The call failed" in TEXT and "No text was written" in TEXT

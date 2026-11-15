@@ -393,3 +393,9 @@ def test_the_example_does_not_break_the_dependency_rule():
 
 def test_the_readme_links_to_the_page():
     assert "docs/architecture.md" in (ROOT / "README.md").read_text()
+
+
+def test_the_architecture_page_says_the_questions_are_built_and_nothing_is_planned_about_them():
+    text = section("Packages")
+    assert "`--ask`" in text and "Ask" in text
+    assert "a chat page and a command to ask are planned" not in DOC

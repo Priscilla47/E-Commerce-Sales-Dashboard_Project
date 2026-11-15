@@ -16,6 +16,7 @@ from sales_insights.ai.facts import Facts, compute_facts
 from sales_insights.ai.forecast import forecast_with_error
 from sales_insights.ai.insights import Insights, write_insights
 from sales_insights.ai.llm import LLMError
+from sales_insights.ai.nlq import ask
 from sales_insights.analytics.filters import available_values, filter_orders
 from sales_insights.analytics.products import unique_products
 from sales_insights.analytics.revenue import order_count
@@ -26,6 +27,7 @@ from sales_insights.dashboard.charts import (
     revenue_over_time_chart,
     top_products_chart,
 )
+from sales_insights.dashboard.chat_view import Turn, call_data, call_title, status_of
 from sales_insights.dashboard.data_source import (
     SAMPLE_PATH,
     LoadedData,
@@ -274,16 +276,75 @@ def _show_insights(orders) -> None:
         result = Insights(None, False, str(error), error=True)
     if result.error:
         st.session_state.pop("insights_for", None)  # a failure is tried again only when asked
-        st.warning(str(result.reason))
+        st.warning(plain(str(result.reason)))
         st.markdown(_facts_list(facts))
         return
     if result.grounded:
         st.markdown(plain(result.text))
         st.caption("Every number in this text was checked against the facts below.")
     else:
-        st.warning(f"No text was written: {result.reason}")
+        st.warning(f"No text was written: {plain(result.reason or '')}")
     with st.expander("The facts behind the text", expanded=not result.grounded):
         st.markdown(_facts_list(facts))
+
+
+def _show_turn(turn: Turn) -> None:
+    with st.chat_message("user"):
+        st.markdown(plain(turn.question))
+    with st.chat_message("assistant"):
+        status = status_of(turn)
+        if status == "answered":
+            st.markdown(plain(turn.answer.text))
+        elif status == "failed":
+            st.warning(f"The call failed. {plain(turn.answer.reason or '')}")
+        else:
+            st.warning(f"No text was written: {plain(turn.answer.reason or '')}")
+        with st.expander("How this was answered"):
+            st.caption(
+                f"Made from {_plural(turn.orders, 'order')} (the filters of the sidebar apply)."
+            )
+            if not turn.answer.calls:
+                st.caption("No function was run.")
+            for call in turn.answer.calls:
+                st.text(call_title(call))  # plain text: a product name is shown as written
+                st.code(call_data(call), language="json")
+
+
+def _show_ask(orders) -> None:
+    """The Ask tab: a question box, and the history of the session with the functions used."""
+    try:
+        config = load_config(os.environ)
+        if not config.enabled:
+            build_client(config)  # raises AIDisabled with the variable to set
+    except ConfigError as error:
+        st.warning(str(error))
+        return
+    except AIDisabled as error:
+        st.info(
+            f"{error} Questions are answered by a language model, from functions that code runs."
+        )
+        return
+
+    try:
+        client = _session_client(config)  # an unknown provider is said before any question
+    except LLMError as error:
+        st.warning(plain(str(error)))
+        return
+    history: list[Turn] = st.session_state.setdefault("chat", [])
+    question = st.chat_input("Ask a question about the sales")
+    if question is not None:
+        try:
+            with st.spinner("Answering..."):
+                answer = ask(question, orders, client)
+        except (ValueError, TypeError) as error:
+            st.warning(plain(str(error)))
+        else:
+            history.append(Turn(question.strip(), answer, order_count(orders)))
+    if history and st.button("Clear the conversation"):
+        history.clear()
+        st.rerun()
+    for turn in history:
+        _show_turn(turn)
 
 
 def main() -> None:
@@ -297,13 +358,15 @@ def main() -> None:
     _show_findings(loaded.report)
     orders = _filtered(loaded.orders)
     _show_cards(orders)
-    overview, forecast, insights = st.tabs(["Overview", "Forecast", "Insights"])
+    overview, forecast, insights, asking = st.tabs(["Overview", "Forecast", "Insights", "Ask"])
     with overview:
         _show_charts(orders)
     with forecast:
         _show_forecast(orders)
     with insights:
         _show_insights(orders)
+    with asking:
+        _show_ask(orders)
 
 
 main()

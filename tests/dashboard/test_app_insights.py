@@ -72,7 +72,7 @@ def shown(at):
 
 
 def test_the_page_has_overview_forecast_and_insights_tabs():
-    assert [item.label for item in start().tabs] == ["Overview", "Forecast", "Insights"]
+    assert [item.label for item in start().tabs] == ["Overview", "Forecast", "Insights", "Ask"]
 
 
 def test_with_no_key_the_tab_says_it_is_off_names_the_variable_and_has_no_button():
@@ -126,7 +126,8 @@ def test_with_a_key_there_is_a_button_and_no_text_before_it_is_pressed(monkeypat
     app = start()
     assert button(app) is not None
     assert GOOD not in shown(app)
-    assert clients == []  # nothing is asked of the model until the button is pressed
+    # A client may be ready (the Ask tab shares it), but nothing is asked of the model.
+    assert sum(len(client.calls) for client in clients) == 0
 
 
 def test_pressing_the_button_shows_the_text_and_the_facts_it_was_checked_against(monkeypatch):

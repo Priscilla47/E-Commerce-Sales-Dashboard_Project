@@ -76,3 +76,9 @@ def test_the_project_layout_of_the_readme_does_not_call_a_built_package_planned(
         if "dashboard/" in line or "ai/" in line:
             assert "planned" not in line, line
     assert "forecast" in layout
+
+
+def test_the_readme_lists_the_ask_option_and_the_ask_tab_and_ticks_the_roadmap():
+    assert "`--ask QUESTION`" in README
+    assert "**Ask** tab" in section("Dashboard")
+    assert "- [x] A chat page and a command to ask a question" in section("Roadmap")

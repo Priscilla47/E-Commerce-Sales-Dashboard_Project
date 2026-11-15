@@ -109,7 +109,7 @@ pip install -e ".[dashboard]"
 streamlit run src/sales_insights/dashboard/app.py
 ```
 
-Streamlit prints a link, usually `http://localhost:8501`. In the sidebar, choose **Sample data** (the file in `data/`) or **Upload a CSV** to load your own orders file (the columns are in [Data format](docs/data-schema.md)). Four cards show **Revenue**, **Orders**, **Average order value** and **Customers**, three charts show the revenue over time, the revenue by country or category and the best-selling products, a **Forecast** tab estimates the revenue of the next months, with its error, and an **Insights** tab lists the facts about the sales and, when you set `SALES_AI_API_KEY` (see [docs/ai.md](docs/ai.md)), has a language model word them, with every number checked; the **Period**, **Countries** and **Categories** filters in the sidebar change them all. A file that cannot be loaded shows what to change instead of a figure. The page is described, with screenshots, in [docs/dashboard.md](docs/dashboard.md).
+Streamlit prints a link, usually `http://localhost:8501`. In the sidebar, choose **Sample data** (the file in `data/`) or **Upload a CSV** to load your own orders file (the columns are in [Data format](docs/data-schema.md)). Four cards show **Revenue**, **Orders**, **Average order value** and **Customers**, three charts show the revenue over time, the revenue by country or category and the best-selling products, a **Forecast** tab estimates the revenue of the next months, with its error, an **Ask** tab (or `--ask` on the command line) answers questions in plain language, with the functions it used shown, and an **Insights** tab lists the facts about the sales and, when you set `SALES_AI_API_KEY` (see [docs/ai.md](docs/ai.md)), has a language model word them, with every number checked; the **Period**, **Countries** and **Categories** filters in the sidebar change them all. A file that cannot be loaded shows what to change instead of a figure. The page is described, with screenshots, in [docs/dashboard.md](docs/dashboard.md).
 
 ![The dashboard on the sample data](docs/images/dashboard-overview.png)
 
@@ -142,8 +142,8 @@ pre-commit run --all-files
 - [x] Interactive dashboard
 - [x] Revenue forecasting, with its error
 - [x] Written insights, with the numbers checked against the facts
-- [x] Answers to questions in plain language (code, not yet a page)
-- [ ] A chat page and a command to ask a question
+- [x] Answers to questions in plain language, checked against the functions that were run
+- [x] A chat page and a command to ask a question
 - [ ] Docker image and deployment guide
 
 ## Contributing

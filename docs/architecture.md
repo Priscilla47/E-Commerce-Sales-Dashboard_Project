@@ -4,7 +4,7 @@ This page explains how the project is organised, so that you can find your way i
 
 ## Goal and design principles
 
-The project turns a CSV file of e-commerce orders into answers: how much was sold, what sells best, who buys what and where. It has two interfaces, a command line and a dashboard, and an AI layer: the forecast and the written insights are built, and a chat page and a command to ask a question are planned.
+The project turns a CSV file of e-commerce orders into answers: how much was sold, what sells best, who buys what and where. It has two interfaces, a command line and a dashboard, and an AI layer: the forecast, the written insights and the answers to questions are all built.
 
 Four principles shape the code:
 
@@ -58,11 +58,11 @@ The command line. `main.py` builds the `argparse` parser, loads the file, valida
 
 ### `dashboard`
 
-The interactive dashboard, built with Streamlit (an optional extra). It follows the same pattern as the command line: load, call analytics, draw. `app.py` is the page and the only module that imports Streamlit; it asks for a data source, shows the filters, the cards and the charts, and the problems found in the data. `data_source.py` loads the sample file or an upload and describes the problems of the validation report in words, `kpis.py` turns the four key figures into labels, `selection.py` turns the choices of the filters into arguments of `analytics`, `charts.py` builds the Plotly figures (each one the plain result of an analytics function, drawn) and `theme.py` holds the colours. Everything but `app.py` can be used and tested without Streamlit. It does not import `cli`. The page is described, with screenshots, in [the dashboard guide](dashboard.md).
+The interactive dashboard, built with Streamlit (an optional extra). It follows the same pattern as the command line: load, call analytics, draw. `app.py` is the page and the only module that imports Streamlit; it asks for a data source, shows the filters, the cards, the charts, the forecast, the insights, the conversation of the Ask tab, and the problems found in the data. `data_source.py` loads the sample file or an upload and describes the problems of the validation report in words, `kpis.py` turns the four key figures into labels, `selection.py` turns the choices of the filters into arguments of `analytics`, `charts.py` builds the Plotly figures (each one the plain result of an analytics function, drawn), `theme.py` holds the colours, `forecast_view.py` turns the forecast report into labels, `facts_view.py` writes the facts as lines and escapes text from a file or a model so that Markdown shows it as written, and `chat_view.py` formats the history of the Ask tab. Everything but `app.py` can be used and tested without Streamlit. It does not import `cli`. The page is described, with screenshots, in [the dashboard guide](dashboard.md).
 
 ### `ai`
 
-The AI-assisted features: questions in plain language, written insights and revenue forecasting. So far it holds the revenue forecast (a statistical model, which both interfaces use), the statistical facts and the checked written insights, the registry of functions a model may ask for, the answers to questions that use it, the interface to a language model, the settings and a fake client for tests, described in [the AI guide](ai.md). The rule that matters here is the third principle: it starts from figures computed by `analytics`; the forecast and the facts are statistics on those figures, made by code, and a language model only turns them into words, it never calculates. It must not import an interface.
+The AI-assisted features: questions in plain language, written insights and revenue forecasting. It holds the revenue forecast (a statistical model, which both interfaces use), the statistical facts and the checked written insights, the registry of functions a model may ask for, the answers to questions that use it, the interface to a language model, the settings and a fake client for tests, described in [the AI guide](ai.md). The Ask tab and the `--ask` command use the answers. The rule that matters here is the third principle: it starts from figures computed by `analytics`; the forecast and the facts are statistics on those figures, made by code, and a language model only turns them into words, it never calculates. It must not import an interface.
 
 ## Data flow of a request
 
