@@ -160,7 +160,7 @@
   "must_refuse": false
  },
  {
-  "question": "How many Books were sold?",
+  "question": "How many units of the product Book were sold?",
   "expected_calls": [
    {
     "name": "units_sold_for",
@@ -175,7 +175,7 @@
   "must_refuse": false
  },
  {
-  "question": "Which country sold the most?",
+  "question": "Which country brought in the most revenue?",
   "expected_calls": [
    {
     "name": "revenue_by",
@@ -236,7 +236,8 @@
    "Electronics",
    [
     "85.2%",
-    "85.22%"
+    "85.22%",
+    "85%"
    ]
   ],
   "must_refuse": false
