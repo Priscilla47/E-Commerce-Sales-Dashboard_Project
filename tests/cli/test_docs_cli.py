@@ -6,6 +6,9 @@ from pathlib import Path
 
 import pytest
 
+from sales_insights.ai import factory
+from sales_insights.ai.fake import FakeLLM
+from sales_insights.ai.llm import Completion, ToolCall
 from sales_insights.cli.main import main
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -61,6 +64,7 @@ def test_the_options_of_the_help_are_exactly_the_options_of_the_page(monkeypatch
             "-t",
             "--by",
             "--forecast",
+            "--ask",
             "--validate",
         }
     )
@@ -116,7 +120,51 @@ ERROR_SCENARIOS = {
     "argument --by: invalid choice: 'colour'": ["--by", "colour", "data/sample_orders.csv"],
     "months must be from 1 to 12, not 13": ["--forecast", "13", "data/sample_orders.csv"],
     "The forecast needs at least 3 months of history, found 2": ["--forecast", "3", "{two_months}"],
+    "The AI features are switched off. Set SALES_AI_API_KEY to switch them on.": [
+        "--ask",
+        "Revenue?",
+        "data/sample_orders.csv",
+    ],
+    "The text contained numbers that are not in the results: 37%": [
+        "--ask",
+        "{refused}",
+        "data/sample_orders.csv",
+    ],
+    "I can't answer that with the data and functions I have.": [
+        "--ask",
+        "{cannot}",
+        "data/sample_orders.csv",
+    ],
+    "The AI features are switched off. Set SALES_AI_PROVIDER to the provider to use.": [
+        "--ask",
+        "{key_only}",
+        "data/sample_orders.csv",
+    ],
+    "No provider is installed, so 'x' cannot be used": [
+        "--ask",
+        "{no_provider}",
+        "data/sample_orders.csv",
+    ],
+    "SALES_AI_MAX_CALLS must be a whole number from 1 to 10000, not 'many'": [
+        "--ask",
+        "{bad_limit}",
+        "data/sample_orders.csv",
+    ],
+    "The question is empty": ["--ask", "{empty}", "data/sample_orders.csv"],
+    "The question is longer than 500 characters": ["--ask", "{long}", "data/sample_orders.csv"],
+    "The language model could not answer: The limit of 1 calls for this session is reached": [
+        "--ask",
+        "{limited}",
+        "data/sample_orders.csv",
+    ],
     "Wrong number of products": ["-t", "99", "data/sample_orders.csv"],
+}
+
+# Settings of the scenarios that need a key without a working provider.
+ERROR_SETTINGS = {
+    "{key_only}": {"SALES_AI_API_KEY": "sk-test-secret-123456"},
+    "{no_provider}": {"SALES_AI_PROVIDER": "x", "SALES_AI_API_KEY": "sk-test-secret-123456"},
+    "{bad_limit}": {"SALES_AI_API_KEY": "sk-test-secret-123456", "SALES_AI_MAX_CALLS": "many"},
 }
 
 
@@ -130,11 +178,41 @@ def test_every_documented_error_is_what_the_command_prints(
     monkeypatch, capsys, tmp_path, message, argv
 ):
     monkeypatch.chdir(ROOT)
+    for name in ("SALES_AI_PROVIDER", "SALES_AI_MODEL", "SALES_AI_API_KEY", "SALES_AI_MAX_CALLS"):
+        monkeypatch.delenv(name, raising=False)
     short = tmp_path / "two_months.csv"
     short.write_text(
         "OrderID,Date,Product,Category,UnitPrice,Quantity,CustomerID,Country\n"
         "1,2025-01-31,Book,Books,10,1,C1,France\n2,2025-02-28,Book,Books,10,1,C2,France\n"
     )
+    scripts = {
+        "{refused}": [
+            Completion("", (ToolCall("total_revenue", {}),)),
+            "Revenue grew 37%.",
+            "Revenue grew 37%.",
+        ],
+        "{cannot}": ["CANNOT_ANSWER"],
+        "{limited}": [Completion("", (ToolCall("total_revenue", {}),)), "Revenue was 261333.44."],
+        "{empty}": ["unused"],
+        "{long}": ["unused"],
+    }
+    questions = {"{empty}": " ", "{long}": "x" * 501}  # every other scenario asks "Revenue?"
+    if "{limited}" in argv:
+        monkeypatch.setenv("SALES_AI_MAX_CALLS", "1")
+    for placeholder, settings in ERROR_SETTINGS.items():
+        if placeholder in argv:
+            for name, value in settings.items():
+                monkeypatch.setenv(name, value)
+            monkeypatch.setattr(factory, "_PROVIDERS", {})
+            argv = [a.replace(placeholder, "Revenue?") for a in argv]
+    for placeholder, script in scripts.items():
+        if placeholder in argv:  # a scripted model, switched on only for these scenarios
+            monkeypatch.setenv("SALES_AI_PROVIDER", "fake")
+            monkeypatch.setenv("SALES_AI_API_KEY", "sk-test-secret-123456")
+            monkeypatch.setitem(
+                factory._PROVIDERS, "fake", lambda config, s=script: FakeLLM(list(s))
+            )
+            argv = [a.replace(placeholder, questions.get(placeholder, "Revenue?")) for a in argv]
     argv = [argument.replace("{two_months}", str(short)) for argument in argv]
     assert main(argv) == 84
     captured = capsys.readouterr()

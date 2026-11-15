@@ -1,18 +1,26 @@
 """The ``sales-insights`` command line.
 
 ``sales-insights [options] FILE`` loads an orders CSV file and prints one answer per option,
-in the order the options are given. Exit codes: 0 on success, 84 for a usage error or a data
-error (the code the first version of the tool already used). Errors go to stderr.
+in the order the options are given. Exit codes: 0 on success, 84 for a usage error, a data
+error or a question that could not be answered (the code the first version of the tool already
+used). Errors go to stderr.
 """
 
 import argparse
+import os
 import sys
+import unicodedata
 from collections.abc import Callable, Sequence
 from typing import NoReturn
 
 import pandas as pd
 
+from sales_insights.ai.config import load_config
+from sales_insights.ai.factory import AIDisabled, build_client
 from sales_insights.ai.forecast import METHOD_LABELS, forecast_with_error
+from sales_insights.ai.llm import LLMError
+from sales_insights.ai.nlq import ask
+from sales_insights.ai.tools import ToolResult
 from sales_insights.analytics import breakdowns, products, revenue, timeseries
 from sales_insights.data.loader import load_orders
 from sales_insights.data.schema import SchemaError
@@ -27,7 +35,8 @@ BY_CHOICES = (*BY_COLUMNS, "month")
 
 EPILOG = """\
 Options are answered in the order they are given, one after the other.
-Exit codes: 0 on success, 84 for a usage error or a data error (messages go to stderr).
+Exit codes: 0 on success, 84 for a usage error, a data error or a question that could not be
+answered (messages go to stderr).
 
 example: sales-insights -T -t 3 data/sample_orders.csv
 """
@@ -103,6 +112,13 @@ def build_parser() -> argparse.ArgumentParser:
         type=int,
         metavar="N",
         help="forecast the revenue of the next N months (1 to 12), with its error",
+    )
+    parser.add_argument(
+        "--ask",
+        dest="ask",
+        action=_Request,
+        metavar="QUESTION",
+        help="answer a question in plain language (needs the AI settings, see docs/ai.md)",
     )
     parser.add_argument(
         "--validate",
@@ -215,6 +231,39 @@ def _forecast(orders: pd.DataFrame, months: int) -> None:
         print(f"{PROG}: warning: {warning}", file=sys.stderr)
 
 
+def _show_call(call: ToolResult) -> str:
+    arguments = ", ".join(f"{name}={value!r}" for name, value in call.arguments.items())
+    return f"  {call.name}({arguments})"
+
+
+def _printable(text: str, secret: str | None) -> str:
+    """The model's text on one line, without control characters and without the key.
+
+    The text is the model's, so it must not move the cursor, clear the screen or start a line
+    of its own: a line "Functions used:" in it would look like the list that code prints.
+    """
+    if secret:
+        text = text.replace(secret, "***")
+    text = "".join(" " if unicodedata.category(c) in ("Cc", "Zl", "Zp") else c for c in text)
+    return " ".join(text.split())
+
+
+def _ask(orders: pd.DataFrame, question: str) -> None:
+    """Answer a question with the configured model; every failure is a ValueError (exit 84)."""
+    config = load_config(os.environ)
+    try:
+        answer = ask(question, orders, build_client(config))
+    except (AIDisabled, LLMError) as error:
+        raise ValueError(str(error)) from None
+    if not answer.answered:
+        raise ValueError(_printable(answer.reason or "", config.api_key))
+    print(_printable(answer.text or "", config.api_key))
+    if answer.calls:
+        print("Functions used:")
+        for call in answer.calls:
+            print(_show_call(call))
+
+
 def _validate(_orders: pd.DataFrame, _value: None, report: ValidationReport) -> None:
     print(report.summary())
 
@@ -227,6 +276,7 @@ _ANSWERS: dict[str, Callable[[pd.DataFrame, object], None]] = {
     "top": _top,
     "by": _by,
     "forecast": _forecast,
+    "ask": _ask,
 }
 
 
