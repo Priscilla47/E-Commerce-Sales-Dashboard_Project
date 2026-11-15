@@ -1,5 +1,5 @@
 # The dashboard and the command line in one image. Build and run: see docs/deployment.md.
-FROM python:3.12-slim
+FROM python:3.12.16-slim
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
@@ -17,10 +17,13 @@ COPY pyproject.toml README.md LICENSE ./
 COPY src ./src
 COPY data/sample_orders.csv ./data/sample_orders.csv
 COPY .streamlit ./.streamlit
+# No program keeps a setuid or setgid bit: nothing in the container can gain privileges.
 RUN pip install -e ".[dashboard]" \
-    && useradd --create-home --uid 10001 --shell /usr/sbin/nologin app
+    && groupadd --gid 10001 app \
+    && useradd --create-home --uid 10001 --gid 10001 --shell /usr/sbin/nologin app \
+    && find / -xdev -type f -perm /6000 -exec chmod a-s {} +
 
-USER app
+USER 10001:10001
 
 EXPOSE 8501
 
