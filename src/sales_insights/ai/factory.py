@@ -85,7 +85,8 @@ def build_client(config: AIConfig) -> LLMClient:
 
     Raises:
         AIDisabled: there is no key or no provider; the message says which variable to set.
-        LLMError: the provider is not registered.
+        LLMError: the provider is not registered, or building its client failed (the message
+            never has the key).
     """
     if not config.api_key:
         raise AIDisabled(f"The AI features are switched off. Set {API_KEY} to switch them on.")
@@ -99,7 +100,12 @@ def build_client(config: AIConfig) -> LLMClient:
         if not known:
             raise LLMError(f"No provider is installed, so {config.provider!r} cannot be used")
         raise LLMError(f"Unknown provider {config.provider!r}; known providers: {known}")
-    return LimitedClient(factory(config), config.max_calls, config.api_key)
+    try:
+        client = factory(config)
+    except Exception as error:  # the provider's own code: its message may hold the key
+        message = str(error).replace(config.api_key, "***")
+        raise LLMError(f"The provider {config.provider!r} could not be set up: {message}") from None
+    return LimitedClient(client, config.max_calls, config.api_key)
 
 
 __all__ = ["MAX_CALLS", "AIDisabled", "LimitedClient", "build_client", "register_provider"]

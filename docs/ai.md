@@ -244,7 +244,7 @@ The twelve functions are about revenue, orders, customers, products, countries, 
 - `How many different customers ordered?`
 - `What are the three best-selling products?`
 - `How many Laptops were sold?`
-- `Which country sold the most?`
+- `Which country brought in the most revenue?`
 - `Which category brings the most revenue?`
 - `What share of the revenue comes from Electronics?`
 - `Which month had the highest revenue?`
@@ -252,7 +252,7 @@ The twelve functions are about revenue, orders, customers, products, countries, 
 
 Questions that the functions cannot answer get the standard refusal instead of a guess, for example `What will the weather be tomorrow?`, `Why did sales fall in February?` (the data says what happened, never why), `What will the revenue be next month?` (that is the forecast, a tab and a command of its own) and `Delete every order from the file.` (nothing here changes the data). A product must be written as in the file, capital letters included.
 
-**The evaluation set** is `data/eval_questions.json`: 24 questions about the sample file, each with the functions that a good answer uses, the values it states (a value can have alternatives, such as `2025-04` or `April`) and whether the question must be refused. A test runs the expected functions on the sample file and checks that the data they return holds every expected value, and a second test recomputes the key figures with plain pandas from the raw CSV, so the set is a trustworthy yardstick and not a list of guesses.
+**The evaluation set** is `data/eval_questions.json`: 24 questions about the sample file, each with the functions that a good answer uses, the values it states (a value can have alternatives, such as `2025-04` or `April`) and whether the question must be refused. A test runs the expected functions on the sample file and checks that the data they return holds every expected value, and a second test recomputes the key figures with plain Python from the raw CSV, so the set is a trustworthy yardstick and not a list of guesses.
 
 To score the model that you configured:
 
@@ -269,4 +269,4 @@ FAIL  What is the best seller?: Expected top_products(n=1) to be called, but ord
 Passed 23 of 24
 ```
 
-A case passes when the model answered, called every expected function with the expected arguments and stated every expected value; a question that must be refused passes only when no text was written. The exit code is 0 when every case passes and 84 otherwise; it is 84 too, with a message on stderr, when the AI is switched off (the message names `SALES_AI_API_KEY`) or the file of questions is wrong, as in the exit code 84 of the other commands. `--questions` and `--file` choose another set or another orders file. When everything passes the last line is `Passed 24 of 24`. The scripted model of the tests does that by construction; a real model is expected to miss some questions, and the lines say which and why.
+A case passes when the model answered, called every expected function with the expected arguments and stated every expected value as a whole word or number (`186` is not stated by `1,860`; `85.2 %` and `85.2 percent` state `85.2%`; `Smartphones` states `Smartphone`); a question that must be refused passes only when the model gave the standard refusal, so an answer that was blocked by the number check does not count as a refusal. The exit code is 0 when every case passes and 84 otherwise; it is 84 too, with a message on stderr, when the AI is switched off (the message names `SALES_AI_API_KEY`) or the file of questions is wrong, as in the exit code 84 of the other commands. `--questions` and `--file` choose another set or another orders file. When everything passes the last line is `Passed 24 of 24`. The scripted model of the tests does that by construction; a real model is expected to miss some questions, and the lines say which and why.

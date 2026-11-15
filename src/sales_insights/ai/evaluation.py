@@ -24,7 +24,7 @@ import pandas as pd
 from sales_insights.ai.config import ConfigError, load_config
 from sales_insights.ai.factory import AIDisabled, build_client
 from sales_insights.ai.llm import LLMClient, LLMError, ToolCall
-from sales_insights.ai.nlq import MAX_QUESTION_LENGTH, Answer, ask
+from sales_insights.ai.nlq import CANNOT_REASON, MAX_QUESTION_LENGTH, Answer, ask
 from sales_insights.ai.tools import ToolError, validate_call
 from sales_insights.data.loader import load_orders
 from sales_insights.data.schema import SchemaError
@@ -35,8 +35,19 @@ DEFAULT_QUESTIONS = "data/eval_questions.json"
 DEFAULT_FILE = "data/sample_orders.csv"
 
 
+_FIELDS = ("question", "expected_calls", "expected_values", "must_refuse")
+
+
 class CaseError(ValueError):
     """The file of questions cannot be used."""
+
+
+class _Parser(argparse.ArgumentParser):
+    """Usage errors exit with 84, as for the command line, instead of 2."""
+
+    def error(self, message: str):
+        self.print_usage(sys.stderr)
+        self.exit(EXIT_ERROR, f"{self.prog}: error: {message}\n")
 
 
 @dataclass(frozen=True)
@@ -80,11 +91,16 @@ def _case(index: int, item: object) -> Case:
     where = f"Case {index}"
     if not isinstance(item, dict):
         raise CaseError(f"{where} must be an object, not {item!r}")
-    for field in ("question", "expected_calls", "expected_values", "must_refuse"):
+    for field in _FIELDS:
         if field not in item:
             raise CaseError(f"{where}: missing field '{field}'")
+    extra = sorted(set(item) - set(_FIELDS))
+    if extra:
+        raise CaseError(f"{where}: unknown field '{extra[0]}'")
     question = item["question"]
-    if not isinstance(question, str) or not 1 <= len(question.strip()) <= MAX_QUESTION_LENGTH:
+    if isinstance(question, str):
+        question = question.strip()  # as ask() reads it, so " Q? " is a duplicate of "Q?"
+    if not isinstance(question, str) or not 1 <= len(question) <= MAX_QUESTION_LENGTH:
         raise CaseError(
             f"{where}: 'question' must be text of 1 to {MAX_QUESTION_LENGTH} characters"
         )
@@ -112,7 +128,7 @@ def _case(index: int, item: object) -> Case:
         alternatives = (
             (value,) if isinstance(value, str) else tuple(value) if isinstance(value, list) else ()
         )
-        if not alternatives or not all(isinstance(a, str) and a for a in alternatives):
+        if not alternatives or not all(isinstance(a, str) and a.strip() for a in alternatives):
             raise CaseError(f"{where}: a value is text, or a list of texts of which any will do")
         expected_values.append(alternatives)
     if item["must_refuse"] and (expected_calls or expected_values):
@@ -137,7 +153,7 @@ def load_cases(path: str | Path) -> list[Case]:
         data = json.loads(Path(path).read_text(encoding="utf-8"))
     except OSError as error:
         raise CaseError(f"Cannot read {path}: {error.strerror or error}") from None
-    except ValueError:
+    except (ValueError, RecursionError):  # RecursionError: nested too deep to be a set of cases
         raise CaseError(f"{path} is not valid JSON") from None
     if not isinstance(data, list) or not data:
         raise CaseError(f"{path} must hold a non-empty list of cases")
@@ -157,6 +173,8 @@ def _judge(case: Case, answer: Answer) -> str | None:
     if case.must_refuse:
         if answer.answered:
             return f"This question should have been refused, but the model answered: {answer.text}"
+        if answer.reason != CANNOT_REASON:  # a blocked answer is not a refusal
+            return f"This question should have been refused, but the model tried: {answer.reason}"
         return None
     if not answer.answered:
         return answer.reason
@@ -174,10 +192,19 @@ def _judge(case: Case, answer: Answer) -> str | None:
 
 
 def _states(text: str, value: str) -> bool:
-    """``value`` is in ``text`` as a whole word or number: 186 is not in 1,860 or 1186, and
-    thousands separators of the text are ignored (1,660.0 states 1660.0)."""
+    """``value`` is in ``text`` as a whole word or number, read as the number check reads it.
+
+    186 is not in 1,860, 1186 or 186.5, but 500.00 states 500; thousands separators are ignored
+    (1,660.0 states 1660.0); ``85.2 %``, ``85.2 percent`` and ``85.2 per cent`` state 85.2%; and a
+    name may be written in the plural (Smartphones states Smartphone).
+    """
     plain = re.sub(r"(?<=\d),(?=\d{3})", "", text)
-    return re.search(rf"(?<![\w.]){re.escape(value)}(?!\w|\.\d)", plain) is not None
+    plain = re.sub(r"(?<=\d)\s?(?:%|percent\b|per\s?cent\b)", "%", plain, flags=re.I)
+    if any(c.isdigit() for c in value):
+        pattern = rf"(?<![\w.]){re.escape(value)}(?:\.0+)?(?!\w|\.\d)"
+    else:
+        pattern = rf"(?<![\w.]){re.escape(value)}(?:s|es)?(?!\w)"
+    return re.search(pattern, plain) is not None
 
 
 def run_evaluation(
@@ -213,7 +240,7 @@ def _fail(message: str) -> int:
 
 def main(argv: Sequence[str] | None = None) -> int:
     """Run the evaluation with the model of the environment; 0 when every case passes, else 84."""
-    parser = argparse.ArgumentParser(prog=PROG, description="Score a model on the questions.")
+    parser = _Parser(prog=PROG, description="Score a model on the questions.")
     parser.add_argument("--questions", default=DEFAULT_QUESTIONS, help="the file of questions")
     parser.add_argument(
         "--file", default=DEFAULT_FILE, help="the orders file the questions are about"

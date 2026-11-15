@@ -126,7 +126,8 @@ def test_with_a_key_there_is_a_button_and_no_text_before_it_is_pressed(monkeypat
     app = start()
     assert button(app) is not None
     assert GOOD not in shown(app)
-    assert clients == []  # nothing is asked of the model until the button is pressed
+    # A client may be ready (the Ask tab shares it), but nothing is asked of the model.
+    assert sum(len(client.calls) for client in clients) == 0
 
 
 def test_pressing_the_button_shows_the_text_and_the_facts_it_was_checked_against(monkeypatch):

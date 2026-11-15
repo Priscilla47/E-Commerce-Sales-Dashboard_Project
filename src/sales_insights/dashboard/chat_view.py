@@ -19,7 +19,7 @@ class Turn:
 def call_title(call: ToolResult) -> str:
     """A function that was run with its arguments, on one line: ``top_products(n=1)``."""
     arguments = ", ".join(f"{name}={value!r}" for name, value in call.arguments.items())
-    return f"{call.name}({arguments})".replace("\n", " ")
+    return f"{call.name}({arguments})"  # repr keeps it on one line
 
 
 def call_data(call: ToolResult) -> str:
