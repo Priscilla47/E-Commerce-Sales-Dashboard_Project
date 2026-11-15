@@ -621,3 +621,22 @@ def test_run_as_a_program_help_exits_with_0():
     done = run_as_a_program("-h")
     assert (done.returncode, done.stderr) == (0, "")
     assert "usage: sales-insights" in done.stdout
+
+
+def test_a_reader_that_closes_the_pipe_early_gets_no_traceback(tmp_path):
+    rows = [HEADER] + [
+        f"{i},2025-01-31,Product {i:05d},Books,1,1,C{i},France" for i in range(1, 30001)
+    ]
+    big = tmp_path / "big.csv"
+    big.write_text("\n".join(rows) + "\n")
+    process = subprocess.Popen(
+        [sys.executable, "-m", "sales_insights.cli.main", "-u", str(big)],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        env={**os.environ, "PYTHONPATH": str(ROOT / "src")},
+    )
+    process.stdout.read(10)  # as `| head -c 10`
+    process.stdout.close()
+    error = process.stderr.read().decode()
+    assert process.wait(timeout=60) == 0
+    assert "Traceback" not in error and "BrokenPipe" not in error
