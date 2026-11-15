@@ -113,6 +113,17 @@ Streamlit prints a link, usually `http://localhost:8501`. In the sidebar, choose
 
 ![The dashboard on the sample data](docs/images/dashboard-overview.png)
 
+## Docker
+
+The image holds the dashboard and the command line, runs as a user without privileges and needs no local Python:
+
+```bash
+docker compose up --build                                          # the dashboard on http://localhost:8501
+docker run --rm sales-insights sales-insights -T data/sample_orders.csv   # the command line
+```
+
+Settings, your own data, the hardening of the container and what a deployment on a server needs are in the [deployment guide](docs/deployment.md).
+
 ## Development
 
 ```bash
@@ -144,7 +155,7 @@ pre-commit run --all-files
 - [x] Written insights, with the numbers checked against the facts
 - [x] Answers to questions in plain language, checked against the functions that were run
 - [x] A chat page and a command to ask a question
-- [ ] Docker image and deployment guide
+- [x] Docker image and deployment guide
 
 ## Contributing
 
