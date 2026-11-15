@@ -13,4 +13,6 @@ services:
       - /tmp
     cap_drop:
       - ALL  # the dashboard needs no Linux capability (8501 is not a privileged port)
+    security_opt:
+      - no-new-privileges:true  # see docs/deployment.md for hosts where this cannot start
     restart: unless-stopped
