@@ -1,0 +1,16 @@
+# The dashboard on http://localhost:8501. Start it with: docker compose up --build
+services:
+  dashboard:
+    build: .
+    image: sales-insights
+    ports:
+      - "8501:8501"
+    env_file:
+      - path: .env
+        required: false  # without it the AI features are switched off
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop:
+      - ALL  # the dashboard needs no Linux capability (8501 is not a privileged port)
+    restart: unless-stopped

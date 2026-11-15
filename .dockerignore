@@ -1,0 +1,23 @@
+# Only what the image needs goes into the build: the source, the sample file and the settings.
+.git
+.github
+.env
+.env.*
+!.env.example
+_private
+.venv
+venv
+**/__pycache__
+**/*.py[cod]
+*.egg-info
+.pytest_cache
+.ruff_cache
+.coverage
+htmlcov
+build
+dist
+tests
+docs
+.serena
+.vscode
+.idea
