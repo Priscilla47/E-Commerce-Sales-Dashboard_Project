@@ -85,3 +85,20 @@ def test_a_message_with_ids_is_still_frozen():
     message = Message("tool", "x", tool_call_id="call_1")
     with pytest.raises(AttributeError):
         message.tool_call_id = "call_2"  # type: ignore[misc]
+
+
+@pytest.mark.parametrize(
+    "fields",
+    [
+        {"tool_calls": [ToolCall("total_revenue")]},  # a list, not a tuple
+        {"tool_calls": ("total_revenue",)},  # text, not a ToolCall
+    ],
+)
+def test_tool_calls_must_be_a_tuple_of_tool_calls(fields):
+    with pytest.raises(TypeError, match="tool_calls"):
+        Message("assistant", "", **fields)
+
+
+def test_a_tool_call_id_must_be_text():
+    with pytest.raises(TypeError, match="tool_call_id"):
+        Message("tool", "x", tool_call_id=5)  # type: ignore[arg-type]
