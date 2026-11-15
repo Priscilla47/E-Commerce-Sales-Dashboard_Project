@@ -1,3 +1,4 @@
+import calendar
 import csv
 import json
 from pathlib import Path
@@ -14,6 +15,7 @@ from sales_insights.ai.evaluation import (
     main,
     run_evaluation,
 )
+from sales_insights.ai.fake import FakeLLM
 from sales_insights.ai.llm import Completion, LLMError, Message, ToolCall
 from sales_insights.ai.tools import registry
 from sales_insights.data.loader import load_orders
@@ -109,17 +111,28 @@ def test_running_the_expected_calls_returns_every_expected_value_not_a_hardcoded
         allowed = _allowed(results, orders)
         text = json.dumps([dict(r.data) for r in results], ensure_ascii=False)
         for alternatives in case.expected_values:
-            # A value with digits must pass the number check of an answer; a name must be in
-            # the data the functions returned.
-            assert any(
-                unknown_numbers(alt, allowed) == []
-                if any(c.isdigit() for c in alt)
-                else alt in text
-                for alt in alternatives
-            ), (case.question, alternatives)
+            # Every alternative is proven, not just one: a value with digits must pass the
+            # number check of an answer, a month name must be the month of the best returned
+            # period, and any other name must be in the data the functions returned.
+            for alt in alternatives:
+                if any(c.isdigit() for c in alt):
+                    assert unknown_numbers(alt, allowed) == [], (case.question, alt)
+                elif alt in MONTHS:
+                    assert MONTHS[alt] == _best_period(results)[5:], (case.question, alt)
+                else:
+                    assert alt in text, (case.question, alt)
 
 
-def test_the_key_figures_of_the_set_are_recomputed_with_plain_pandas_from_the_raw_file(cases):
+MONTHS = {name: f"{i:02d}" for i, name in enumerate(calendar.month_name) if name}
+
+
+def _best_period(results):
+    """The period with the highest revenue in the returned rows (for a month named in words)."""
+    rows = [row for r in results for row in r.data.get("rows", [])]
+    return max(rows, key=lambda row: row["revenue"])["period"][:7]
+
+
+def test_the_key_figures_of_the_set_are_recomputed_with_plain_python_from_the_raw_file(cases):
     with open(SAMPLE, newline="") as handle:
         rows = list(csv.DictReader(handle))
     revenue = [float(r["UnitPrice"]) * int(r["Quantity"]) for r in rows]
@@ -156,7 +169,7 @@ def test_the_key_figures_of_the_set_are_recomputed_with_plain_pandas_from_the_ra
         country[r["Country"]] = country.get(r["Country"], 0) + amount
         category[r["Category"]] = category.get(r["Category"], 0) + amount
     first, second = sorted(country.items(), key=lambda item: -item[1])[:2]
-    assert values("Which country sold the most?") == [first[0], f"{first[1]:.2f}"]
+    assert values("Which country brought in the most revenue?") == [first[0], f"{first[1]:.2f}"]
     assert values("Which country is second by revenue?") == [second[0], f"{second[1]:.2f}"]
     best = max(category.items(), key=lambda item: item[1])
     assert values("Which category brings the most revenue?") == [best[0], f"{best[1]:.2f}"]
@@ -344,9 +357,7 @@ def test_the_report_text_has_a_line_for_each_case_and_the_total(cases, orders):
     report = run_evaluation(cases, orders, fresh(Oracle(cases, wrong="What is the total revenue?")))
     lines = format_report(report).splitlines()
     assert len(lines) == len(cases) + 1
-    assert lines[0] == "FAIL  What is the total revenue?"[: len(lines[0])] or lines[0].startswith(
-        "FAIL"
-    )
+    assert lines[0].startswith("FAIL  What is the total revenue?: Expected total_revenue()")
     assert lines[-1] == f"Passed {len(cases) - 1} of {len(cases)}"
     assert sum(line.startswith("PASS") for line in lines) == len(cases) - 1
 
@@ -438,7 +449,11 @@ def test_the_messages_sent_never_contain_an_order_row(cases, orders):
         ("It sold 1186 units.", "186", False),
         ("It was 186.5.", "186", False),
         ("The best month was 2025-04.", "2025-04", True),
-        ("Laptops led.", "Laptop", False),
+        ("Laptops led.", "Laptop", True),
+        ("Laptopping led.", "Laptop", False),
+        ("It was 500.00 orders.", "500", True),
+        ("Its share is 85.2 %.", "85.2%", True),
+        ("Its share is 85.2 percent.", "85.2%", True),
         ("Laptop led.", "Laptop", True),
     ],
 )
@@ -446,3 +461,95 @@ def test_a_value_is_stated_only_as_a_whole_word_or_number(text, value, states):
     from sales_insights.ai.evaluation import _states
 
     assert _states(text, value) is states
+
+
+# --- found in review ---------------------------------------------------------------------------
+
+
+def refusal_case(cases):
+    return next(case for case in cases if case.must_refuse)
+
+
+@pytest.mark.parametrize(
+    "script",
+    [
+        ["Next month revenue will be 80,000.", "It will be 80,000."],  # blocked, not refused
+        [Completion("", (ToolCall("total_revenue", {}),))] * 3,  # kept asking, never refused
+    ],
+)
+def test_a_question_to_refuse_fails_when_the_model_tried_to_answer(cases, orders, script):
+    case = refusal_case(cases)
+    report = run_evaluation([case], orders, lambda: FakeLLM(list(script)))
+    assert report.passed == 0 and "tried" in report.results[0].reason
+
+
+def test_a_question_to_refuse_fails_when_the_call_failed(cases, orders):
+    case = refusal_case(cases)
+    report = run_evaluation([case], orders, lambda: FakeLLM([LLMError("timed out")]))
+    reason = report.results[0].reason
+    assert report.passed == 0 and reason.startswith("The language model could not answer")
+
+
+def test_the_right_function_with_other_arguments_fails(cases, orders):
+    case = next(c for c in cases if c.question == "What are the three best-selling products?")
+    script = [
+        Completion("", (ToolCall("top_products", {"n": 5}),)),
+        "Smartphone 186, Book 176, Desk Lamp 175.",
+    ]
+    report = run_evaluation([case], orders, lambda: FakeLLM(script))
+    assert report.passed == 0 and "top_products(n=3)" in report.results[0].reason
+
+
+GOOD_CASE = {
+    "question": "Q?",
+    "expected_calls": [{"name": "order_count", "arguments": {}}],
+    "expected_values": ["500"],
+    "must_refuse": False,
+}
+
+
+@pytest.mark.parametrize(
+    "change, message",
+    [
+        ({"expected_valuse": []}, "unknown field 'expected_valuse'"),
+        ({"expected_values": [" "]}, "a value is text"),
+    ],
+)
+def test_a_misspelt_field_or_a_blank_value_is_refused(tmp_path, change, message):
+    path = tmp_path / "cases.json"
+    path.write_text(json.dumps([{**GOOD_CASE, **change}]))
+    with pytest.raises(CaseError, match=message):
+        load_cases(path)
+
+
+def test_questions_that_differ_only_by_spaces_are_duplicates(tmp_path):
+    path = tmp_path / "cases.json"
+    path.write_text(json.dumps([GOOD_CASE, {**GOOD_CASE, "question": " Q? "}]))
+    with pytest.raises(CaseError, match="twice"):
+        load_cases(path)
+
+
+def test_a_file_nested_too_deep_is_not_valid_json(tmp_path):
+    path = tmp_path / "cases.json"
+    path.write_text("[" * 100_000)
+    with pytest.raises(CaseError, match="not valid JSON"):
+        load_cases(path)
+
+
+def test_an_unknown_option_of_the_script_exits_84(capsys):
+    with pytest.raises(SystemExit) as stopped:
+        main(["--bogus"])
+    assert stopped.value.code == 84 and "unrecognized arguments" in capsys.readouterr().err
+
+
+def test_a_provider_that_fails_to_start_exits_84_without_the_key(provider, capsys, monkeypatch):
+    monkeypatch.setenv("SALES_AI_PROVIDER", "broken")
+    monkeypatch.setenv("SALES_AI_API_KEY", KEY)
+
+    def build(config):
+        raise RuntimeError(f"SDK missing {config.api_key}")
+
+    factory.register_provider("broken", build)
+    code = main(["--questions", str(CASES), "--file", str(SAMPLE)])
+    err = capsys.readouterr().err
+    assert code == 84 and KEY not in err and "could not be set up" in err
