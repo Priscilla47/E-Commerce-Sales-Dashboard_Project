@@ -27,8 +27,15 @@ print(reply.tool_calls)  # functions the model asks for, none here
 - `Message(role, content, tool_calls=(), tool_call_id=None)`: `role` is `system`, `user`, `assistant` or `tool`. Only an `assistant` message may carry the `tool_calls` it made, and only a `tool` message the `tool_call_id` of the request it answers.
 - `Completion(text, tool_calls=())`: what came back. A `ToolCall` has a `name`, its `arguments` and an `id` (empty when the provider gave none).
 
-The ids let a provider pair each result with its request, as most function-calling interfaces require. An adapter for a provider maps them one to one: the `tool_calls` of an `assistant` message become the provider's list of calls (id, name, arguments as JSON), and each `tool` message becomes the result for its `tool_call_id`. The fake client of the tests ignores them.
 - `LLMError`: a call failed, timed out, or went over the limit of the session.
+
+The ids let a provider pair each result with its request, as function-calling interfaces require. Within one question every id is unique: `ask` keeps the model's own id, and gives `call_1`, `call_2`, ... to a request that has none, has one that is not text, or repeats an id already used. What an adapter for a provider has to do:
+
+- Map the `tool_calls` of an `assistant` message to the provider's list of calls (id, name, arguments as JSON), and each `tool` message to the result for its `tool_call_id`.
+- Drop an empty `content` next to `tool_calls`: some providers refuse an empty text.
+- Keep the function definitions when `tools` is `None` but the history holds calls (the last call of a question and the retry do that): some providers refuse a history of calls without definitions. Send the definitions with "no function may be called", or write the history as text.
+
+The fake client of the tests ignores ids.
 
 ## Switching the AI on or off
 
