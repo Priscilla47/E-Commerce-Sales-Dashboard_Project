@@ -14,23 +14,35 @@ CI = (ROOT / ".github" / "workflows" / "ci.yml").read_text()
 PAGES = {"README.md": README, "CONTRIBUTING.md": CONTRIBUTING, "CHANGELOG.md": CHANGELOG}
 
 
+STALE = re.compile(
+    r"\b(?:is|are)\s+planned\b|\bto come\b(?!\s+(?:up|back|in|out))|\bearly stage\b"
+    r"|\bbeing restructured\b|\bwill come once\b",
+    re.I,
+)
+
+
 @pytest.mark.parametrize("name", sorted(PAGES))
 def test_no_page_calls_a_built_feature_planned_or_to_come(name):
-    text = PAGES[name].lower()
-    for phrase in ("planned", "to come", "early stage", "being restructured", "will come"):
-        assert phrase not in text, (name, phrase)
+    assert not STALE.search(PAGES[name]), STALE.search(PAGES[name])
+
+
+def test_the_stale_wording_check_does_not_catch_ordinary_sentences():
+    assert not STALE.search("so the change can be planned; ideas to come up with")
+    assert STALE.search("The chat page is planned.") and STALE.search("insights to come")
 
 
 def test_the_package_description_does_not_call_a_feature_planned():
     assert "planned" not in (ROOT / "pyproject.toml").read_text()
 
 
-def test_the_layout_of_the_readme_lists_every_package():
+def test_the_layout_of_the_readme_lists_every_package_under_the_source():
     layout = re.search(r"## Project layout\n(.*?)\n## ", README, re.S).group(1)
-    packages = [p.name for p in (ROOT / "src" / "sales_insights").iterdir() if p.is_dir()]
-    for package in packages:
-        if package != "__pycache__":
-            assert f"{package}/" in layout, package
+    source = layout[layout.index("src/sales_insights/") : layout.index("tests/")]
+    listed = set(re.findall(r"── (\w+)/", source))
+    packages = {
+        p.name for p in (ROOT / "src" / "sales_insights").iterdir() if (p / "__init__.py").is_file()
+    }
+    assert listed == packages
 
 
 def test_the_readme_links_every_guide_the_contribution_guide_and_the_changelog():
@@ -39,11 +51,21 @@ def test_the_readme_links_every_guide_the_contribution_guide_and_the_changelog()
     assert "CONTRIBUTING.md" in README and "CHANGELOG.md" in README
 
 
+def slugs(text: str) -> set[str]:
+    """The anchors GitHub gives to the headings of a page."""
+    headings = re.findall(r"^#+ (.+)$", text, re.M)
+    return {re.sub(r"[^\w\- ]", "", h).strip().lower().replace(" ", "-") for h in headings}
+
+
 @pytest.mark.parametrize("name", sorted(PAGES))
-def test_the_links_of_the_page_work(name):
-    for link in re.findall(r"\]\(([^)#]+)(?:#[^)]*)?\)", PAGES[name]):
-        if not link.startswith("http"):
-            assert (ROOT / link).exists(), (name, link)
+def test_the_links_and_anchors_of_the_page_work(name):
+    for page, anchor in re.findall(r"\]\(([^)#\s]*)(?:#([^)\s]+))?\)", PAGES[name]):
+        if page.startswith("http"):
+            continue
+        target = ROOT / page if page else ROOT / name
+        assert target.exists(), (name, page)
+        if anchor:
+            assert anchor in slugs(target.read_text()), (name, page, anchor)
 
 
 def test_the_contribution_guide_runs_the_checks_of_the_ci():
@@ -55,7 +77,7 @@ def test_the_contribution_guide_runs_the_checks_of_the_ci():
 
 
 def test_the_contribution_guide_names_the_rules_and_the_branch():
-    for word in ("Conventional Commits", "develop", "FakeLLM", "Closes #", "72 characters"):
+    for word in ("Conventional Commits", "develop", "FakeLLM", "Closes #", "72 characters", "Fork"):
         assert word in CONTRIBUTING, word
 
 
@@ -65,11 +87,22 @@ def test_the_changelog_has_an_unreleased_section_with_added_changed_and_fixed():
         assert heading in unreleased, heading
 
 
-def test_the_issue_numbers_of_the_changelog_are_well_formed_and_cover_the_fixes():
-    numbers = [int(n) for n in re.findall(r"#(\d+)", CHANGELOG)]
-    assert numbers and all(0 < n < 1000 for n in numbers)
-    fixed = re.search(r"### Fixed\n(.*?)(?=\n## |\Z)", CHANGELOG, re.S).group(1)
-    assert {"#9", "#10", "#11"} <= set(re.findall(r"#\d+", fixed))
+REPOSITORY = "https://github.com/Priscilla47/E-Commerce-Sales-Dashboard_Project"
+
+
+def test_every_issue_of_the_changelog_is_a_link_to_that_issue():
+    links = re.findall(r"\[#(\d+)\]\(([^)]+)\)", CHANGELOG)
+    assert links
+    for number, url in links:
+        assert url == f"{REPOSITORY}/issues/{number}", (number, url)
+    bare = re.findall(r"(?<!\[)#\d+", CHANGELOG)
+    assert bare == [], bare  # a bare #n is not a link in a rendered file
+
+
+def test_the_changelog_fixes_cite_the_three_bug_issues_and_unreleased_has_a_link():
+    fixed = re.search(r"### Fixed\n(.*?)(?=\n## |\n\[|\Z)", CHANGELOG, re.S).group(1)
+    assert set(re.findall(r"\[#(\d+)\]", fixed)) == {"9", "10", "11"}
+    assert f"[Unreleased]: {REPOSITORY}/compare/main...develop" in CHANGELOG
 
 
 TEMPLATES = sorted((ROOT / ".github" / "ISSUE_TEMPLATE").glob("*.yml"))
@@ -91,3 +124,9 @@ def test_the_pull_request_template_asks_for_tests_docs_and_the_issue():
     text = (ROOT / ".github" / "PULL_REQUEST_TEMPLATE.md").read_text()
     for phrase in ("Closes #", "tests", "documentation", "Conventional Commits"):
         assert phrase in text, phrase
+
+
+def test_the_pages_say_that_ci_is_started_by_hand_and_that_no_provider_ships():
+    assert "workflow_dispatch" in CI
+    assert "started by hand" in CONTRIBUTING and "started by hand" in README
+    assert "no provider" in README and "ai.md#provider-names" in README

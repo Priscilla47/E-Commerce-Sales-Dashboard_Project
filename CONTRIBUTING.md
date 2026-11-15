@@ -6,8 +6,10 @@ Thank you for helping. This page says how to set up the project, the rules a cha
 
 You need Linux or macOS and Python 3.11 or newer.
 
+Fork the repository on GitHub, then clone your fork:
+
 ```bash
-git clone git@github.com:Priscilla47/E-Commerce-Sales-Dashboard_Project.git
+git clone git@github.com:<your-account>/E-Commerce-Sales-Dashboard_Project.git
 cd E-Commerce-Sales-Dashboard_Project
 python3 -m venv .venv
 source .venv/bin/activate
@@ -19,7 +21,7 @@ pre-commit install
 
 ## Run the checks
 
-The same checks as the CI workflow (`.github/workflows/ci.yml`):
+The same checks as the CI workflow (`.github/workflows/ci.yml`). The workflow is started by hand from the Actions tab and does not run on every push, so run them yourself:
 
 ```bash
 ruff check .
@@ -40,9 +42,9 @@ All three must pass before a pull request is opened.
 ## Propose a change
 
 1. Open an issue first for anything larger than a typo (templates: bug, feature, question), so that the change can be agreed on.
-2. Branch from `develop`: `feat/<issue>-<topic>`, `fix/<issue>-<topic>` or `docs/<issue>-<topic>`.
+2. Branch from `develop` and name the branch after the type of the change and the issue: `feat/12-revenue-analytics`, `fix/9-top-n-products`, `docs/16-cli-reference`, and the same for `test/`, `refactor/`, `chore/` and `ci/`.
 3. Open a pull request to `develop` and fill in the template: what changed, why, how to test it, and `Closes #<issue>`.
-4. `main` only receives `develop` for a release.
+4. `main` only receives `develop` for a release. GitHub closes an issue by itself only when a pull request with `Closes #n` reaches the default branch (`main`), so the issues of a release are closed when `develop` is merged into `main`.
 
 ## Report a bug
 

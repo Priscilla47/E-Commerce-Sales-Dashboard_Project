@@ -4,13 +4,13 @@
 
 A Python tool that turns an e-commerce orders CSV into answers: revenue, best-selling products, customers, countries and categories, from the command line or an interactive dashboard, with a revenue forecast and an AI layer that writes insights and answers questions in plain language without ever inventing a number.
 
-> **Status: feature-complete for a first release.** Everything on the roadmap below is built, tested (more than 1,500 unit tests) and documented. The AI features are optional and switched off until a provider and a key are set.
+> **Status: feature-complete for a first release.** Everything on the roadmap below is built, tested (more than 1,500 unit tests) and documented. The AI features are optional: no provider of a language model ships with the project, by design, so they stay switched off until you register one and set its key (see [Provider names](docs/ai.md#provider-names)). Every path of the AI layer is tested with a scripted fake model.
 
 ## Features
 
 - **Command line** (`sales-insights`): totals, best sellers, a product's units and customers, revenue by country, category or month, a forecast, a data check and questions in plain language. See [the command-line reference](docs/cli.md).
 - **Dashboard** (Streamlit): key figures, charts, filters by period, country and category, and tabs for the forecast, the insights and questions. See [the dashboard guide](docs/dashboard.md).
-- **Data checks**: a file with wrong columns, values or encodings is explained, line by line, instead of crashing. See [Data format](docs/data-schema.md).
+- **Data checks**: a file with wrong columns, values or encodings is explained, with the lines concerned, instead of crashing. See [Data format](docs/data-schema.md).
 - **Revenue forecast** with its error, measured against a naive baseline, so its accuracy is shown next to it.
 - **Written insights and answers to questions**, worded by a language model from numbers that code computed. See [How the AI stays honest](#how-the-ai-stays-honest).
 - **Container image** and a [deployment guide](docs/deployment.md).
@@ -119,7 +119,7 @@ pip install -e ".[dashboard]"
 streamlit run src/sales_insights/dashboard/app.py
 ```
 
-Streamlit prints a link, usually `http://localhost:8501`. In the sidebar, choose **Sample data** (the file in `data/`) or **Upload a CSV** to load your own orders file (the columns are in [Data format](docs/data-schema.md)). Four cards show **Revenue**, **Orders**, **Average order value** and **Customers**, three charts show the revenue over time, the revenue by country or category and the best-selling products, a **Forecast** tab estimates the revenue of the next months, with its error, an **Ask** tab (or `--ask` on the command line) answers questions in plain language, with the functions it used shown, and an **Insights** tab lists the facts about the sales and, when you set `SALES_AI_API_KEY` (see [docs/ai.md](docs/ai.md)), has a language model word them, with every number checked; the **Period**, **Countries** and **Categories** filters in the sidebar change them all. A file that cannot be loaded shows what to change instead of a figure. The page is described, with screenshots, in [docs/dashboard.md](docs/dashboard.md).
+Streamlit prints a link, usually `http://localhost:8501`. In the sidebar, choose **Sample data** (the file in `data/`) or **Upload a CSV** to load your own orders file (the columns are in [Data format](docs/data-schema.md)). Four cards show **Revenue**, **Orders**, **Average order value** and **Customers**, three charts show the revenue over time, the revenue by country or category and the best-selling products, a **Forecast** tab estimates the revenue of the next months, with its error, an **Ask** tab (or `--ask` on the command line) answers questions in plain language, with the functions it used shown, and an **Insights** tab lists the facts about the sales and, once a provider is registered and `SALES_AI_API_KEY` is set (see [docs/ai.md](docs/ai.md)), has a language model word them, with every number checked; the **Period**, **Countries** and **Categories** filters in the sidebar change them all. A file that cannot be loaded shows what to change instead of a figure. The page is described, with screenshots, in [docs/dashboard.md](docs/dashboard.md).
 
 ![The dashboard on the sample data](docs/images/dashboard-overview.png)
 
@@ -145,7 +145,7 @@ pre-commit install
 pytest
 ```
 
-Every feature and every fix comes with unit tests. Tests live in `tests/` and use small fixtures that can be checked by hand.
+Every feature and every fix comes with unit tests. The CI workflow is started by hand from the Actions tab, so run these checks locally before you push. Tests live in `tests/` and use small fixtures that can be checked by hand.
 
 Code style is checked by [ruff](https://docs.astral.sh/ruff/) (settings in `pyproject.toml`). `pre-commit install` runs ruff, a trailing-whitespace fixer and an end-of-file fixer before every commit; to run the same checks yourself:
 
@@ -167,7 +167,7 @@ pre-commit run --all-files
 - [x] A chat page and a command to ask a question
 - [x] Docker image and deployment guide
 
-Ideas for later: a provider package for a language model, customer segmentation (RFM), cohort retention, export of a report, a cloud storage backend.
+Ideas for later: a provider package for a language model (the interface and its checks are ready, see [Provider names](docs/ai.md#provider-names)), customer segmentation (RFM), cohort retention, export of a report, a cloud storage backend.
 
 ## Contributing
 
