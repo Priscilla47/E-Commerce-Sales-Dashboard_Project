@@ -1,0 +1,58 @@
+name: Bug report
+description: Something does not work as expected
+title: "bug: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report a bug. Please fill in as much as you can.
+  - type: textarea
+    id: description
+    attributes:
+      label: What happened?
+      description: A clear and concise description of the problem.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce
+      description: The exact command or action, and the data you used.
+      placeholder: |
+        1. Run `sales-insights -t 3 data/sample_orders.csv`
+        2. See the error
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+      description: What you expected to happen instead.
+    validations:
+      required: true
+  - type: textarea
+    id: output
+    attributes:
+      label: Output or error message
+      description: Paste the full output or traceback. Please remove any private data.
+      render: shell
+  - type: input
+    id: version
+    attributes:
+      label: Python version
+      placeholder: "3.12.3"
+  - type: input
+    id: os
+    attributes:
+      label: Operating system
+      placeholder: "Ubuntu 24.04"
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Before submitting
+      options:
+        - label: I searched existing issues and this has not been reported yet
+          required: true
+        - label: I removed any private or sensitive data from this report
+          required: true

@@ -2,20 +2,26 @@
 
 [![CI](https://github.com/Priscilla47/E-Commerce-Sales-Dashboard_Project/actions/workflows/ci.yml/badge.svg)](https://github.com/Priscilla47/E-Commerce-Sales-Dashboard_Project/actions/workflows/ci.yml)
 
-A Python tool to explore e-commerce order data: revenue, best-selling products, customers, a revenue forecast and an interactive dashboard, with AI-assisted insights to come.
+A Python tool that turns an e-commerce orders CSV into answers: revenue, best-selling products, customers, countries and categories, from the command line or an interactive dashboard, with a revenue forecast and an AI layer that writes insights and answers questions in plain language without ever inventing a number.
 
-> **Status: early stage, being restructured.** The command-line tool, the dashboard and the revenue forecast work today. The questions and insights written by a language model are on the roadmap below.
+> **Status: feature-complete for a first release.** Everything on the roadmap below is built, tested (more than 1,500 unit tests) and documented. The AI features are optional: no provider of a language model ships with the project, by design, so they stay switched off until you register one and set its key (see [Provider names](docs/ai.md#provider-names)). Every path of the AI layer is tested with a scripted fake model.
 
-## Goals
+## Features
 
-- Turn a raw orders CSV into clear answers: how much did we sell, what sells best, who buys what, and where.
-- Offer two ways to use it: a command-line tool and an interactive dashboard, both built on the same analytics code.
-- Add an AI layer that answers questions in plain language, writes short insights about trends, and forecasts revenue. Numbers are always computed by code; the language model only interprets them.
-- Stay simple to install, easy to read, and well documented.
+- **Command line** (`sales-insights`): totals, best sellers, a product's units and customers, revenue by country, category or month, a forecast, a data check and questions in plain language. See [the command-line reference](docs/cli.md).
+- **Dashboard** (Streamlit): key figures, charts, filters by period, country and category, and tabs for the forecast, the insights and questions. See [the dashboard guide](docs/dashboard.md).
+- **Data checks**: a file with wrong columns, values or encodings is explained, with the lines concerned, instead of crashing. See [Data format](docs/data-schema.md).
+- **Revenue forecast** with its error, measured against a naive baseline, so its accuracy is shown next to it.
+- **Written insights and answers to questions**, worded by a language model from numbers that code computed. See [How the AI stays honest](#how-the-ai-stays-honest).
+- **Container image** and a [deployment guide](docs/deployment.md).
 
-## What works today
+## How the AI stays honest
 
-A CLI that reads an orders CSV and answers questions about it.
+The language model never calculates. For the insights it receives statistical facts computed by pandas; for a question it may only ask for one of twelve registered analytics functions, whose arguments are checked before they run. Every number of its text is then checked against the numbers that code returned, and a text with an invented, abbreviated or unverifiable number is retried once and then refused. Data from the file is always marked as data, never as instructions, and the functions used are shown next to every answer. The method, its tests and its limits are in [the AI guide](docs/ai.md).
+
+## Command line
+
+`sales-insights` reads an orders CSV and answers one question per option.
 
 | Option                     | Description                                                  |
 |----------------------------|--------------------------------------------------------------|
@@ -88,14 +94,18 @@ See [Data format](docs/data-schema.md) for the full description, the loading rul
 ```
 .
 ├── src/sales_insights/
-│   ├── analytics/   revenue, products, breakdowns and time series
+│   ├── analytics/   revenue, products, breakdowns, time series and filters
 │   ├── cli/         command-line interface
 │   ├── data/        data loading, validation and storage
-│   ├── dashboard/   interactive dashboard
-│   └── ai/          revenue forecast and the interface to a language model
+│   ├── dashboard/   interactive dashboard and its views
+│   └── ai/          forecast, facts, insights, questions, the number check and the model interface
 ├── tests/           unit tests
-└── data/
-    └── sample_orders.csv
+├── docs/            guides and decision records
+├── data/
+│   ├── sample_orders.csv
+│   └── eval_questions.json
+├── Dockerfile
+└── docker-compose.yml
 ```
 
 How the pieces fit together, the rule about what may import what, and how to add a function are described in [Architecture](docs/architecture.md). The choices behind them are explained in the [decision records](docs/decisions/README.md).
@@ -109,7 +119,7 @@ pip install -e ".[dashboard]"
 streamlit run src/sales_insights/dashboard/app.py
 ```
 
-Streamlit prints a link, usually `http://localhost:8501`. In the sidebar, choose **Sample data** (the file in `data/`) or **Upload a CSV** to load your own orders file (the columns are in [Data format](docs/data-schema.md)). Four cards show **Revenue**, **Orders**, **Average order value** and **Customers**, three charts show the revenue over time, the revenue by country or category and the best-selling products, a **Forecast** tab estimates the revenue of the next months, with its error, an **Ask** tab (or `--ask` on the command line) answers questions in plain language, with the functions it used shown, and an **Insights** tab lists the facts about the sales and, when you set `SALES_AI_API_KEY` (see [docs/ai.md](docs/ai.md)), has a language model word them, with every number checked; the **Period**, **Countries** and **Categories** filters in the sidebar change them all. A file that cannot be loaded shows what to change instead of a figure. The page is described, with screenshots, in [docs/dashboard.md](docs/dashboard.md).
+Streamlit prints a link, usually `http://localhost:8501`. In the sidebar, choose **Sample data** (the file in `data/`) or **Upload a CSV** to load your own orders file (the columns are in [Data format](docs/data-schema.md)). Four cards show **Revenue**, **Orders**, **Average order value** and **Customers**, three charts show the revenue over time, the revenue by country or category and the best-selling products, a **Forecast** tab estimates the revenue of the next months, with its error, an **Ask** tab (or `--ask` on the command line) answers questions in plain language, with the functions it used shown, and an **Insights** tab lists the facts about the sales and, once a provider is registered and `SALES_AI_API_KEY` is set (see [docs/ai.md](docs/ai.md)), has a language model word them, with every number checked; the **Period**, **Countries** and **Categories** filters in the sidebar change them all. A file that cannot be loaded shows what to change instead of a figure. The page is described, with screenshots, in [docs/dashboard.md](docs/dashboard.md).
 
 ![The dashboard on the sample data](docs/images/dashboard-overview.png)
 
@@ -135,7 +145,7 @@ pre-commit install
 pytest
 ```
 
-Every feature and every fix comes with unit tests. Tests live in `tests/` and use small fixtures that can be checked by hand.
+Every feature and every fix comes with unit tests. The CI workflow is started by hand from the Actions tab, so run these checks locally before you push. Tests live in `tests/` and use small fixtures that can be checked by hand.
 
 Code style is checked by [ruff](https://docs.astral.sh/ruff/) (settings in `pyproject.toml`). `pre-commit install` runs ruff, a trailing-whitespace fixer and an end-of-file fixer before every commit; to run the same checks yourself:
 
@@ -147,7 +157,7 @@ pre-commit run --all-files
 
 ## Roadmap
 
-- [ ] Restructure into a proper Python package with tests and CI
+- [x] Restructure into a proper Python package with tests and CI
 - [x] Data loading with validation and clear error messages
 - [x] More analytics: revenue by country, category and time period
 - [x] Interactive dashboard
@@ -157,6 +167,12 @@ pre-commit run --all-files
 - [x] A chat page and a command to ask a question
 - [x] Docker image and deployment guide
 
+Ideas for later: a provider package for a language model (the interface and its checks are ready, see [Provider names](docs/ai.md#provider-names)), customer segmentation (RFM), cohort retention, export of a report, a cloud storage backend.
+
 ## Contributing
 
-The project is changing quickly, so a contribution guide will come once the new structure is in place. Issues and suggestions are welcome.
+Contributions are welcome. [CONTRIBUTING.md](CONTRIBUTING.md) explains how to set up the project, the rules a change follows and how to open a pull request; [CHANGELOG.md](CHANGELOG.md) lists what changed.
+
+## Licence
+
+MIT, see [LICENSE](LICENSE).

@@ -315,14 +315,20 @@ def main(argv: Sequence[str] | None = None) -> int:
             file=sys.stderr,
         )
 
-    for name, value in args.requests:
-        try:
-            if name == "validate":
-                _validate(orders, value, report)
-            else:
-                _ANSWERS[name](orders, value)
-        except ValueError as error:
-            return _fail(str(error))
+    try:
+        for name, value in args.requests:
+            try:
+                if name == "validate":
+                    _validate(orders, value, report)
+                else:
+                    _ANSWERS[name](orders, value)
+            except ValueError as error:
+                return _fail(str(error))
+    except BrokenPipeError:
+        # The reader of the output stopped early (``| head``): stop quietly, as other commands
+        # do, and send what is left to /dev/null so that the exit does not raise again.
+        os.dup2(os.open(os.devnull, os.O_WRONLY), sys.stdout.fileno())
+        return EXIT_OK
 
     return EXIT_ERROR if validating and not report.is_valid else EXIT_OK
 
