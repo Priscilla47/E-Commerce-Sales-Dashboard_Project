@@ -60,7 +60,7 @@ def months_file(count):
 
 
 def test_the_page_has_an_overview_a_forecast_and_an_insights_tab(app):
-    assert [tab.label for tab in app.tabs] == ["Overview", "Forecast", "Insights"]
+    assert [tab.label for tab in app.tabs] == ["Overview", "Forecast", "Insights", "Ask"]
     assert not app.exception
 
 

@@ -16,6 +16,7 @@ from sales_insights.ai.facts import Facts, compute_facts
 from sales_insights.ai.forecast import forecast_with_error
 from sales_insights.ai.insights import Insights, write_insights
 from sales_insights.ai.llm import LLMError
+from sales_insights.ai.nlq import ask
 from sales_insights.analytics.filters import available_values, filter_orders
 from sales_insights.analytics.products import unique_products
 from sales_insights.analytics.revenue import order_count
@@ -26,6 +27,7 @@ from sales_insights.dashboard.charts import (
     revenue_over_time_chart,
     top_products_chart,
 )
+from sales_insights.dashboard.chat_view import Turn, call_data, call_title, status_of
 from sales_insights.dashboard.data_source import (
     SAMPLE_PATH,
     LoadedData,
@@ -286,6 +288,63 @@ def _show_insights(orders) -> None:
         st.markdown(_facts_list(facts))
 
 
+def _show_turn(turn: Turn) -> None:
+    with st.chat_message("user"):
+        st.markdown(plain(turn.question))
+    with st.chat_message("assistant"):
+        status = status_of(turn)
+        if status == "answered":
+            st.markdown(plain(turn.answer.text))
+        elif status == "failed":
+            st.warning(f"The call failed: {turn.answer.reason}")
+        else:
+            st.warning(f"No text was written: {turn.answer.reason}")
+        with st.expander("How this was answered"):
+            st.caption(
+                f"Made from {_plural(turn.orders, 'order')} (the filters of the sidebar apply)."
+            )
+            if not turn.answer.calls:
+                st.caption("No function was run.")
+            for call in turn.answer.calls:
+                st.markdown(f"`{_plain_code(call_title(call))}`")
+                st.code(call_data(call), language="json")
+
+
+def _plain_code(text: str) -> str:
+    return text.replace("`", "'")
+
+
+def _show_ask(orders) -> None:
+    """The Ask tab: a question box, and the history of the session with the functions used."""
+    try:
+        config = load_config(os.environ)
+        if not config.enabled:
+            build_client(config)  # raises AIDisabled with the variable to set
+    except ConfigError as error:
+        st.warning(str(error))
+        return
+    except AIDisabled as error:
+        st.info(
+            f"{error} Questions are answered by a language model, from functions that code runs."
+        )
+        return
+
+    history: list[Turn] = st.session_state.setdefault("chat", [])
+    question = st.chat_input("Ask a question about the sales")
+    if question is not None:
+        try:
+            answer = ask(question, orders, _session_client(config))
+        except (ValueError, TypeError, LLMError) as error:
+            st.warning(str(error))
+        else:
+            history.append(Turn(question.strip(), answer, order_count(orders)))
+    if history and st.button("Clear the conversation"):
+        history.clear()
+        st.rerun()
+    for turn in history:
+        _show_turn(turn)
+
+
 def main() -> None:
     st.set_page_config(page_title="Sales insights", layout="wide")
     st.title("Sales insights")
@@ -297,13 +356,15 @@ def main() -> None:
     _show_findings(loaded.report)
     orders = _filtered(loaded.orders)
     _show_cards(orders)
-    overview, forecast, insights = st.tabs(["Overview", "Forecast", "Insights"])
+    overview, forecast, insights, asking = st.tabs(["Overview", "Forecast", "Insights", "Ask"])
     with overview:
         _show_charts(orders)
     with forecast:
         _show_forecast(orders)
     with insights:
         _show_insights(orders)
+    with asking:
+        _show_ask(orders)
 
 
 main()

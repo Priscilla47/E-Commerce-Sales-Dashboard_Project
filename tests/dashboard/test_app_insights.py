@@ -72,7 +72,7 @@ def shown(at):
 
 
 def test_the_page_has_overview_forecast_and_insights_tabs():
-    assert [item.label for item in start().tabs] == ["Overview", "Forecast", "Insights"]
+    assert [item.label for item in start().tabs] == ["Overview", "Forecast", "Insights", "Ask"]
 
 
 def test_with_no_key_the_tab_says_it_is_off_names_the_variable_and_has_no_button():
