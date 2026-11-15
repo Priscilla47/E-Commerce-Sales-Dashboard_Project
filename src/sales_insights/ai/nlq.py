@@ -7,9 +7,10 @@ and data returned by a function is always marked as data, not instructions. See 
 """
 
 import json
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from decimal import Decimal
 from importlib.resources import files
+from itertools import count
 
 import pandas as pd
 
@@ -104,41 +105,58 @@ def _check_question(question: str) -> str:
     return question
 
 
+class _Ids:
+    """The ids of the requests of one question: each is used once, across every round."""
+
+    def __init__(self) -> None:
+        self._used: set[str] = set()
+        self._numbers = count(1)
+
+    def take(self, wanted: object) -> str:
+        """``wanted`` when it is text not used yet, otherwise the next free ``call_N``."""
+        if not (isinstance(wanted, str) and wanted) or wanted in self._used:
+            wanted = next(f"call_{n}" for n in self._numbers if f"call_{n}" not in self._used)
+        self._used.add(wanted)
+        return wanted
+
+
 def _key(name: object, arguments: object) -> str:
     return f"{name!r}:{_arguments_text(arguments)}"
 
 
 def _run_round(
-    completion: Completion, orders: pd.DataFrame, calls: list[ToolResult]
+    completion: Completion,
+    orders: pd.DataFrame,
+    calls: list[ToolResult],
+    ids: "_Ids",
 ) -> list[Message]:
     """Run the functions a model asked for; the messages that tell it what happened.
 
-    A request that was already run in this question is answered again but not run or listed
-    twice.
+    The assistant message carries every request, each with an id unique in the question (the
+    model's own, or ``call_1``, ``call_2``, ... when it gave none, gave one that is not text, or
+    repeated one), and every request gets a ``tool`` message with its
+    id: the result, a refusal, or a note that it was not run. A request that was already run in
+    this question is answered again but not run or listed twice.
     """
-    asked = completion.tool_calls
-    messages = [
-        Message(
-            "assistant",
-            "Calling " + ", ".join(f"{c.name} {_arguments_text(c.arguments)}" for c in asked),
-        )
-    ]
+    asked = tuple(replace(call, id=ids.take(call.id)) for call in completion.tool_calls)
+    messages = [Message("assistant", completion.text, tool_calls=asked)]
     done = {_key(c.name, c.arguments): c for c in calls}
-    for call in asked[:MAX_CALLS_PER_ROUND]:
+    for position, call in enumerate(asked):
+        if position >= MAX_CALLS_PER_ROUND:
+            note = f"Ignored: at most {MAX_CALLS_PER_ROUND} functions in one round."
+            messages.append(Message("tool", note, tool_call_id=call.id))
+            continue
         result = done.get(_key(call.name, call.arguments))
         if result is None:
             try:
                 result = run_tool(call, orders)
             except ToolError as error:
-                messages.append(Message("tool", f"Refused: {error}"))
+                messages.append(Message("tool", f"Refused: {error}", tool_call_id=call.id))
                 continue
             calls.append(result)
             done[_key(call.name, call.arguments)] = result
-        messages.append(Message("tool", _DATA + json.dumps(result.data, allow_nan=False)))
-    if len(asked) > MAX_CALLS_PER_ROUND:
-        messages.append(
-            Message("tool", f"Ignored: at most {MAX_CALLS_PER_ROUND} functions in one round.")
-        )
+        content = _DATA + json.dumps(result.data, allow_nan=False)
+        messages.append(Message("tool", content, tool_call_id=call.id))
     return messages
 
 
@@ -168,6 +186,7 @@ def ask(question: str, orders: pd.DataFrame, client: LLMClient | None) -> Answer
         raise AIDisabled(f"The AI features are switched off. Set {API_KEY} to switch them on.")
     messages = [Message("system", _rules()), Message("user", question)]
     calls: list[ToolResult] = []
+    ids = _Ids()
 
     def failure(error: LLMError) -> Answer:
         return Answer(
@@ -185,7 +204,7 @@ def ask(question: str, orders: pd.DataFrame, client: LLMClient | None) -> Answer
             return failure(error)
         if not completion.tool_calls or last:
             break
-        messages = [*messages, *_run_round(completion, orders, calls)]
+        messages = [*messages, *_run_round(completion, orders, calls, ids)]
 
     text = completion.text
     if completion.tool_calls and not text.strip():  # still asking for functions at the end
