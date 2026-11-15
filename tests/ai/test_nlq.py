@@ -502,3 +502,75 @@ def test_the_same_request_twice_is_answered_with_each_id(loaded_orders):
     answer = ask("Revenue?", loaded_orders, fake)
     assert [t.tool_call_id for t in tool_messages(fake, 1)] == ["call_1", "call_2"]
     assert len(answer.calls) == 1
+
+
+def all_ids(fake):
+    """Every id of the last conversation, from the requests and from the results."""
+    messages = fake.calls[-1].messages
+    requests = [c.id for m in messages if m.role == "assistant" for c in m.tool_calls]
+    results = [m.tool_call_id for m in messages if m.role == "tool"]
+    return requests, results
+
+
+def test_a_model_id_that_looks_generated_does_not_make_a_duplicate(loaded_orders):
+    given = Completion("", (ToolCall("total_revenue", {}, "call_1"), ToolCall("order_count", {})))
+    fake = FakeLLM([given, "Revenue was 1660.0 over 6 orders."])
+    ask("Both?", loaded_orders, fake)
+    requests, results = all_ids(fake)
+    assert requests == ["call_1", "call_2"] and results == requests
+
+
+def test_an_id_used_in_an_earlier_round_is_replaced(loaded_orders):
+    script = [
+        asking("total_revenue"),
+        Completion("", (ToolCall("order_count", {}, "call_1"),)),
+        "Revenue was 1660.0 over 6 orders.",
+    ]
+    fake = FakeLLM(script)
+    ask("Both?", loaded_orders, fake)
+    requests, results = all_ids(fake)
+    assert requests == ["call_1", "call_2"] and results == requests
+
+
+def test_a_model_that_repeats_its_own_id_gets_unique_ids(loaded_orders):
+    script = [
+        Completion("", (ToolCall("total_revenue", {}, "0"), ToolCall("order_count", {}, "0"))),
+        Completion("", (ToolCall("units_sold", {}, "0"),)),
+        "Revenue was 1660.0.",
+    ]
+    fake = FakeLLM(script)
+    ask("All?", loaded_orders, fake)
+    requests, results = all_ids(fake)
+    assert requests == ["0", "call_1", "call_2"] and results == requests
+    assert len(set(requests)) == len(requests)
+
+
+@pytest.mark.parametrize("bad", [None, 7])
+def test_an_id_that_is_not_text_is_replaced(loaded_orders, bad):
+    fake = FakeLLM([Completion("", (ToolCall("total_revenue", {}, bad),)), "Revenue was 1660.0."])
+    ask("Revenue?", loaded_orders, fake)
+    assert all_ids(fake) == (["call_1"], ["call_1"])
+
+
+def test_the_text_the_model_wrote_with_its_requests_is_kept(loaded_orders):
+    fake = FakeLLM([Completion("Let me look.", (ToolCall("total_revenue", {}),)), "It is 1660.0."])
+    ask("Revenue?", loaded_orders, fake)
+    assistant = next(m for m in fake.calls[1].messages if m.role == "assistant")
+    assert assistant.content == "Let me look."
+
+
+def test_a_refused_request_in_second_place_gets_its_own_id(loaded_orders):
+    both = Completion("", (ToolCall("total_revenue", {}), ToolCall("eval", {})))
+    fake = FakeLLM([both, "Revenue was 1660.0."])
+    ask("Revenue?", loaded_orders, fake)
+    tools = tool_messages(fake, 1)
+    assert [t.tool_call_id for t in tools] == ["call_1", "call_2"]
+    assert tools[1].content.startswith("Refused:")
+
+
+def test_the_same_request_twice_gets_its_result_twice(loaded_orders):
+    twice = Completion("", (ToolCall("total_revenue", {}), ToolCall("total_revenue", {})))
+    fake = FakeLLM([twice, "Revenue was 1660.0."])
+    ask("Revenue?", loaded_orders, fake)
+    first, second = tool_messages(fake, 1)
+    assert first.content == second.content and "1660.0" in second.content

@@ -21,7 +21,9 @@ With Docker Compose, from the root of the project:
 docker compose up --build
 ```
 
-Then open `http://localhost:8501`. `docker-compose.yml` reads `.env` when there is one (see [the settings](#settings)), runs the container with a read-only file system (only `/tmp` can be written) and without any Linux capability (`cap_drop: ALL`), and restarts it unless you stop it.
+Then open `http://localhost:8501`. `docker-compose.yml` reads `.env` when there is one (see [the settings](#settings)), runs the container with a read-only file system (only `/tmp` can be written), without any Linux capability (`cap_drop: ALL`) and with `no-new-privileges` (no process can gain privileges, even through a program that has the setuid bit; the image also removes those bits), and restarts it unless you stop it. The `env_file` entry with `required: false` needs Docker Compose 2.24 or later.
+
+On some hosts every container fails to start with `no-new-privileges` (`exec ...: operation not permitted`); the snap package of Docker on Ubuntu is one, because of its AppArmor profile. That is the host, not the image: `docker run --rm --security-opt no-new-privileges:true python:3.12-slim true` fails the same way. On such a host, remove the `security_opt` lines locally; `cap_drop: ALL` and the user without privileges still apply.
 
 Without Compose:
 
@@ -38,12 +40,7 @@ The same image runs `sales-insights`; put the command after the image name:
 
 ```bash
 docker run --rm sales-insights sales-insights -T data/sample_orders.csv
-docker run -d --name check --read-only --tmpfs /tmp --cap-drop ALL -p 8501:8501 sales-insights
-curl http://localhost:8501/_stcore/health             # ok
-docker rm -f check
 ```
-
-These checks were run on the image: the user is 10001, `/app` holds only the source, the sample file, the settings, `README.md`, `LICENSE` and `pyproject.toml`, the total is the one of the command line without Docker (`261333.44` on the sample file), and with a read-only file system and no capability the health check answers `ok` and Docker reports the container healthy.
 
 To use your own file, mount its folder, read-only:
 
@@ -51,7 +48,7 @@ To use your own file, mount its folder, read-only:
 docker run --rm -v "$PWD/my-data:/data:ro" sales-insights sales-insights --by country /data/orders.csv
 ```
 
-`--ask` needs the settings too: add `--env-file .env`. The exit codes are those of [the command-line reference](cli.md) (0, or 84 for a usage or data error).
+`--ask` needs the settings and a provider (see [the next section](#settings)). The exit codes are those of [the command-line reference](cli.md) (0, or 84 for a usage or data error, or a question that could not be answered).
 
 ## Settings
 
@@ -64,14 +61,16 @@ The container reads the variables of [`.env.example`](../.env.example), which ar
 | `SALES_AI_API_KEY` | The same; empty means switched off |
 | `SALES_AI_MAX_CALLS` | The limit of calls of one session (20 by default) |
 
-Everything else works with none of them: the cards, the charts, the forecast and the facts. Pass the key at run time (`--env-file`, or the secrets of your platform), never with `ENV` in a Dockerfile or in a committed file.
+Everything else works with none of them: the cards, the charts, the forecast and the facts.
+
+**A provider is needed too.** The project ships no provider, by design (see [Provider names](ai.md#provider-names)): with the variables set and no provider, the written insights, the Ask tab and `--ask` say `No provider is installed`. The image is read-only and runs as a user without privileges, so a provider is not added to a running container but to an image built from this one: install the provider's package and a module that calls `register_provider(name, factory)`, and import that module before the app starts, for example from a small start script that is the image's command. Then pass the variables as below. Pass the key at run time (`--env-file`, or the secrets of your platform), never with `ENV` in a Dockerfile or in a committed file.
 
 ## Deploying on a server or a cloud platform
 
 The image runs on any platform that runs containers. What it needs:
 
 - **A port.** The dashboard listens on 8501 on every interface of the container; map it, or tell the platform which port to route to.
-- **The settings as secrets**, if the AI features are wanted.
+- **The settings as secrets**, and an image with a provider (see [Settings](#settings)), if the AI features are wanted.
 - **One instance, or sticky sessions.** Streamlit keeps a session in the memory of the process that serves it: the history of the Ask tab, the written insights and the limit of calls of a session live there. Behind a load balancer, keep a visitor on the same instance.
 - **Memory.** A file of a million orders takes about 0.5 GB to load; the upload limit (50 MB) keeps one upload under that. Give the container at least 1 GB.
 - **The health check**: `/_stcore/health` answers `ok` when the dashboard is up.
@@ -95,4 +94,4 @@ curl http://localhost:8501/_stcore/health             # ok
 docker rm -f check
 ```
 
-These checks were run on the image: the user is 10001, `/app` holds only the source, the sample file, the settings, `README.md`, `LICENSE` and `pyproject.toml`, the total is the one of the command line without Docker (`261333.44` on the sample file), and with a read-only file system and no capability the health check answers `ok` and Docker reports the container healthy.
+These checks were run on the image: the user and the group are 10001, no file keeps a setuid or setgid bit (`find / -xdev -perm /6000` finds none), `/app` holds only the source, the sample file, the settings, `README.md`, `LICENSE` and `pyproject.toml`, the total is the one of the command line without Docker (`261333.44` on the sample file), and with a read-only file system and no capability the health check answers `ok` and Docker reports the container healthy.

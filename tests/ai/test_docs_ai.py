@@ -203,3 +203,22 @@ def test_the_page_lists_good_questions_that_are_in_the_evaluation_set_and_how_to
         "one client for each question",
     ):
         assert phrase in section, phrase
+
+
+def test_the_interface_example_runs_with_a_client():
+    from sales_insights.ai.fake import FakeLLM
+
+    text = PAGE.read_text()
+    section = text[text.index("## The interface") : text.index("## Switching the AI")]
+    code = re.search(r"```python\n(.*?)```", section, re.S).group(1)
+    exec(code, {"client": FakeLLM(["UK sold the most."]), "print": lambda *a: None})  # noqa: S102
+
+
+def test_the_page_says_how_an_adapter_maps_the_ids():
+    text = PAGE.read_text()
+    section = text[text.index("## The interface") : text.index("## Switching the AI")]
+    for phrase in ("tool_calls", "tool_call_id", "call_1", "unique", "Drop an empty `content`"):
+        assert phrase in section, phrase
+    assert "`Ignored:`" in text
+    # The paragraph comes after the list of the interface, not inside it.
+    assert section.index("- `LLMError`") < section.index("The ids let a provider")
